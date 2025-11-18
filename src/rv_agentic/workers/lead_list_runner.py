@@ -1,0 +1,755 @@
+"""Async lead list worker that advances pm_pipeline runs.
+
+This is a placeholder for a long-running process that:
+
+- Polls the pm_pipeline.runs table for active lead list runs
+- Calls the Lead List Agent with the run criteria
+- Uses MCP-backed tools to discover companies/contacts
+- Persists results into the company_candidates and contact_candidates tables
+
+The concrete DB I/O is left to the existing Supabase client, but the
+interface is shaped by ``pm_pipeline_tables.md``.
+"""
+
+from __future__ import annotations
+
+from typing import Any, Dict, List, Protocol
+
+import json
+import logging
+import os
+import re
+
+from agents import Runner
+from rv_agentic.agents.lead_list_agent import (
+    create_lead_list_agent,
+    LeadListOutput,
+)
+from rv_agentic.config.settings import get_settings
+from rv_agentic.services import supabase_client, retry
+from rv_agentic.services.heartbeat import WorkerHeartbeat
+from rv_agentic.workers.utils import load_env_files
+
+
+class ActiveRunsFetcher(Protocol):
+    def __call__(self) -> List[Dict[str, Any]]:
+        ...
+
+
+class RunMarker(Protocol):
+    def __call__(self, run: Dict[str, Any], status: str, error: str | None = None) -> None:
+        ...
+
+
+logger = logging.getLogger(__name__)
+
+
+load_env_files()
+
+# Ensure OPENAI_API_KEY is set for the Agents SDK when running in the worker
+_settings = get_settings()
+if _settings.openai_api_key and "OPENAI_API_KEY" not in os.environ:
+    os.environ["OPENAI_API_KEY"] = _settings.openai_api_key
+
+
+def _maybe_advance_run_stage(run_id: str) -> None:
+    if not run_id:
+        return
+    resume = supabase_client.get_run_resume_plan(run_id)
+    if not resume:
+        return
+    stage = (resume.get("stage") or "").strip()
+    companies_gap = int(resume.get("companies_gap") or 0)
+    if stage == "company_discovery" and companies_gap <= 0:
+        supabase_client.set_run_stage(run_id=run_id, stage="company_research")
+
+
+def process_run(run: Dict[str, Any], heartbeat: WorkerHeartbeat | None = None) -> None:
+    """Process a single lead list run.
+
+    ``run`` is expected to match the ``pm_pipeline.runs`` schema: it
+    should contain criteria, target_quantity, stage, etc. This function
+    delegates reasoning and tool calls to the Lead List Agent.
+    """
+
+    raw_criteria = run.get("criteria")
+    criteria: Dict[str, Any]
+    if isinstance(raw_criteria, dict):
+        criteria = raw_criteria
+    elif isinstance(raw_criteria, str):
+        # Support legacy runs where criteria was stored as a free-text string.
+        try:
+            parsed = json.loads(raw_criteria)
+            criteria = parsed if isinstance(parsed, dict) else {"natural_request": raw_criteria}
+        except Exception:
+            criteria = {"natural_request": raw_criteria}
+    else:
+        criteria = {}
+    run_id = str(run.get("id") or "")
+
+    # Update heartbeat with current task including batch progress
+    if heartbeat:
+        quantity = int(criteria.get("quantity") or run.get("target_quantity") or 0)
+        pms = criteria.get("pms") or "any"
+        state = criteria.get("state") or "any"
+
+        # Check current progress for batch status
+        existing_companies = _sb.get_pm_company_gap(run_id)
+        companies_ready = int(existing_companies.get("companies_ready") or 0) if existing_companies else 0
+
+        task_description = f"Lead discovery: {companies_ready}/{quantity} companies (PMS={pms}, State={state})"
+
+        heartbeat.update_task(
+            run_id=run_id,
+            task=task_description,
+            status="processing"
+        )
+
+    # Seed candidates from PMS subdomains when PMS is a hard requirement and we
+    # have a known PMS vendor (e.g. Buildium/AppFolio). This gives us a fast,
+    # high-quality starting pool that already satisfies PMS requirements.
+    pms_required = (criteria.get("pms") or "").strip()
+    city = (criteria.get("city") or "").strip()
+    state = (criteria.get("state") or "").strip().upper()
+    target_qty = 0
+    try:
+        target_qty = int(criteria.get("quantity") or run.get("target_quantity") or 0)
+    except Exception:
+        target_qty = 0
+
+    if pms_required:
+        oversample = float(os.getenv("PM_PMS_SEED_OVERSAMPLE", "2.0"))
+        seed_limit = int(max((target_qty or 10) * oversample, 10))
+
+        # 1) Seed from the imported PMS subdomains table, which gives us
+        #    a fast, PMS-confirmed pool of candidates.
+        try:
+            seeds = supabase_client.get_pms_subdomain_seeds(
+                pms=pms_required,
+                city=city or None,
+                state=state or None,
+                status="alive",
+                limit=seed_limit,
+            )
+        except Exception:
+            seeds = []
+
+        # Reuse the same blocked-domain list we apply after the agent run so
+        # that seeds never introduce suppressed companies into the pipeline.
+        try:
+            blocked = set(
+                (d or "").strip().lower() for d in supabase_client.get_blocked_domains()
+            )
+        except Exception:
+            blocked = set()
+
+        for row in seeds:
+            subdomain = (row.get("pms_subdomain") or "").strip()
+            real_domain = (row.get("real_domain") or "").strip()
+            company_name = (row.get("company_name") or "").strip()
+            if not subdomain and not real_domain:
+                continue
+            domain = (real_domain or subdomain).lower()
+            # Avoid inserting obviously empty/invalid domains.
+            if not domain or "." not in domain:
+                continue
+            if domain in blocked:
+                continue
+            name = company_name or domain
+            website = f"https://{domain}"
+            try:
+                # PMS subdomain seeds are already known to use the required PMS,
+                # so they can be treated as validated discovery-stage companies.
+                supabase_client.insert_company_candidate(
+                    run_id=run_id,
+                    name=name,
+                    website=website,
+                    domain=domain,
+                    state=state or "NA",
+                    discovery_source=f"pms_subdomains:{pms_required}",
+                    pms_detected=pms_required,
+                    status="validated",
+                )
+            except Exception:
+                # Ignore duplicate/conflict errors; idempotent per run/domain.
+                logger.debug(
+                    "Seed insert_company_candidate duplicate/failed for domain=%s run_id=%s",
+                    domain,
+                    run_id,
+                )
+
+        # 2) Seed from the NEO research database when available. This
+        #    gives us PMS-qualified companies even when the subdomain
+        #    import is incomplete for a region.
+        try:
+            neo_rows = supabase_client.find_company(
+                pms=pms_required,
+                city=city or None,
+                limit=seed_limit,
+            )
+        except Exception:
+            neo_rows = []
+
+        for row in neo_rows or []:
+            domain = (row.get("domain") or "").strip().lower()
+            if not domain or "." not in domain:
+                continue
+            if domain in blocked:
+                continue
+            name = (row.get("company_name") or row.get("domain") or "").strip() or domain
+            website = (row.get("company_url") or "").strip() or f"https://{domain}"
+            neo_state = (row.get("hq_state") or "").strip().upper()
+            neo_city = (row.get("target_city") or row.get("hq_city") or "").strip()
+            try:
+                supabase_client.insert_company_candidate(
+                    run_id=run_id,
+                    name=name,
+                    website=website,
+                    domain=domain,
+                    state=(neo_state or state or "NA"),
+                    discovery_source=f"neo_pms:{pms_required}",
+                    pms_detected=pms_required,
+                    status="validated",
+                )
+            except Exception:
+                logger.debug(
+                    "NEO seed insert_company_candidate duplicate/failed for domain=%s run_id=%s",
+                    domain,
+                    run_id,
+                )
+
+    # Batching logic: for large requests, break into smaller batches
+    # to improve agent performance and allow checkpointing
+    batch_size = int(os.getenv("LEAD_LIST_BATCH_SIZE", "10"))
+
+    # Check how many companies we already have
+    existing_companies = _sb.get_pm_company_gap(run_id)
+    companies_ready = int(existing_companies.get("companies_ready") or 0) if existing_companies else 0
+    companies_remaining = max(0, target_qty - companies_ready)
+
+    # Calculate batch target (minimum of batch_size and remaining)
+    batch_target = min(batch_size, companies_remaining) if companies_remaining > 0 else target_qty
+
+    # If we already have enough companies, skip agent call
+    if companies_remaining <= 0 and target_qty > 0:
+        logger.info(
+            "Run %s already has %d companies (target: %d), skipping lead list agent",
+            run_id,
+            companies_ready,
+            target_qty
+        )
+        return None
+
+    agent = create_lead_list_agent()
+    prompt = (
+        "You are running in **worker mode** for an async lead list run.\n"
+        "In this environment, plain text explanations are not enough – your primary job is to\n"
+        "**populate your structured output (LeadListOutput)** with high-quality companies and\n"
+        "contacts that meet the run criteria. Python will handle all database writes.\n\n"
+        f"Run id (for your reasoning only): {run_id}\n"
+        f"Run criteria JSON (authoritative requirements): {criteria}\n\n"
+        f"**BATCH MODE**: This run needs {target_qty} total companies. We already have {companies_ready}.\n"
+        f"For THIS batch, find {batch_target} more companies (remaining: {companies_remaining}).\n"
+        "Focus on quality over quantity - it's better to return fewer high-quality candidates.\n\n"
+        "Your success criteria in this mode:\n"
+        f"- Populate `companies` in LeadListOutput with up to {batch_target} **eligible, non-blocked** companies.\n"
+        "- For each company, populate 1–3 high-quality decision makers in `contacts` when\n"
+        "  possible, including name, title, email (verified or high-confidence), and LinkedIn URL.\n\n"
+        "You must follow this sequence:\n"
+        "1) Call get_blocked_domains_tool once to understand which domains are suppressed.\n"
+        "2) Use MCP search tools (mcp_search_web or mcp_lang_search) plus company profile tools\n"
+        "   (mcp_extract_company_profile, mcp_run_pms_analyzer) to find property management\n"
+        "   companies that fit RentVine's ICP and the criteria.\n"
+        "3) Skip any company whose domain is in the blocked domains list.\n"
+        "4) For each eligible company, add a LeadListCompany entry to your `companies` array with\n"
+        "   a normalized root domain (no protocol/path), state/city when known, and a short\n"
+        "   reason describing why it meets the criteria.\n"
+        "5) For each company you add, use MCP contact tools (mcp_get_contacts_for_company,\n"
+        "   mcp_get_verified_emails, mcp_get_linkedin_profile_url, mcp_search_web_for_person)\n"
+        "   to find 1–3 strong decision makers. Add them to your `contacts` array as\n"
+        "   LeadListContact entries, linking them to the company via company_domain.\n"
+        "6) Only stop once you have attempted to populate `companies` up to the requested\n"
+        "   quantity, or you can no longer find additional eligible companies.\n"
+        "7) Treat strict PMS/vendor requirements as **preferences**: if you cannot find companies\n"
+        "   that exactly match the PMS but that otherwise strongly fit the ICP and unit criteria,\n"
+        "   still include them in `companies` and explain the mismatch in the `reason` field.\n"
+        "8) Only return an empty `companies` array when there are truly no reasonable candidates\n"
+        "   at all; in normal cases you should always return your best-effort set of candidates.\n\n"
+        "Return your final answer in a way that conforms to the LeadListOutput schema; Python\n"
+        "will parse and persist it.\n"
+    )
+    logger.info("Processing pm_pipeline run id=%s", run.get("id"))
+    # Use retry logic for agent calls (3 attempts with exponential backoff)
+    result = retry.retry_agent_call(
+        Runner.run_sync,
+        agent,
+        prompt,
+        max_attempts=3,
+        base_delay=1.0
+    )
+
+    # Post-run primary path: use structured output for deterministic inserts.
+    from rv_agentic.services import supabase_client
+
+    companies: List[Dict[str, Any]] = []
+    contacts: List[Dict[str, Any]] = []
+
+    try:
+        typed: LeadListOutput = result.final_output_as(LeadListOutput)  # type: ignore[assignment]
+    except Exception:
+        typed = LeadListOutput()  # empty fallback
+
+    blocked = set(d.lower().strip() for d in supabase_client.get_blocked_domains())
+
+    target_quantity = 0
+    try:
+        target_quantity = int(criteria.get("quantity") or criteria.get("target_quantity") or 0)
+    except Exception:
+        target_quantity = 0
+
+    inserted = 0
+    state = (criteria.get("state") or "").strip().upper() or ""
+
+    for cc in typed.companies:
+        if target_quantity and inserted >= target_quantity:
+            break
+        domain = (cc.domain or "").lower().strip()
+        if not domain or domain in blocked:
+            continue
+        name = cc.name or domain
+        website = f"https://{domain}"
+        try:
+            row = supabase_client.insert_company_candidate(
+                run_id=run_id,
+                name=name,
+                website=website,
+                domain=domain,
+                state=(cc.state or state or "NA"),
+                discovery_source="agent_structured",
+                status="validated",
+            )
+            if row:
+                inserted += 1
+                companies.append(row)
+                logger.info(
+                    "Structured insert_company_candidate id=%s domain=%s run_id=%s",
+                    row.get("id"),
+                    domain,
+                    run_id,
+                )
+        except Exception:
+            logger.exception(
+                "Structured insert_company_candidate failed for domain=%s run_id=%s",
+                domain,
+                run_id,
+            )
+
+    if not companies:
+        # Fallback path: parse from final text (CANDIDATE_COMPANIES).
+        logger.warning(
+            "No company_candidates inserted for run %s after primary agent run; "
+            "attempting fallback extraction from final output.",
+            run_id,
+        )
+        raw_output = getattr(result, "final_output", "") or ""
+        if isinstance(raw_output, LeadListOutput):
+            # When output_type is active, final_output may already be the model.
+            # Convert to a plain string representation for fallback parsing.
+            final_text = raw_output.model_dump_json()
+        else:
+            final_text = str(raw_output)
+        try:
+            _fallback_insert_companies_from_output(
+                run_id=run_id,
+                criteria=criteria,
+                final_output=final_text,
+                supabase_client=supabase_client,
+            )
+        except Exception:  # pragma: no cover
+            logger.exception(
+                "Fallback insertion failed for run id=%s; will surface as error", run_id
+            )
+
+        companies = supabase_client._get_pm(  # type: ignore[attr-defined]
+            supabase_client.PM_COMPANY_CANDIDATES_TABLE,
+            {"run_id": f"eq.{run_id}"},
+        )
+
+    if not companies:
+        # No companies were inserted even after seeding + agent run. In a strict
+        # PMS/location scenario this likely means there are no eligible companies
+        # at all, not a pipeline failure. Mark the run as completed-without-matches
+        # so it can be inspected but does not block the async system.
+        msg = (
+            f"Lead List Agent completed without inserting any companies for run {run_id}. "
+            "This most likely indicates that no companies match the given PMS/location "
+            "constraints after reasonable search."
+        )
+        logger.warning(msg)
+        try:
+            supabase_client.update_pm_run_status(run_id=run_id, status="completed", error=msg)
+        except Exception:
+            logger.exception("Failed to update run status after empty company set for run %s", run_id)
+        return result
+
+    # Insert contacts based on structured output, mapping by company domain.
+    domain_to_company_id: Dict[str, str] = {}
+    for row in companies:
+        dom = (row.get("domain") or "").lower().strip()
+        cid = row.get("id")
+        if dom and cid:
+            domain_to_company_id[dom] = str(cid)
+
+    # Build per-company contact limits (1–3 per company).
+    per_company_counts: Dict[str, int] = {}
+
+    for ct in typed.contacts:
+        domain = (ct.company_domain or "").lower().strip()
+        if not domain:
+            continue
+        company_id = domain_to_company_id.get(domain)
+        if not company_id:
+            continue
+
+        # Enforce max 3 contacts per company.
+        count = per_company_counts.get(company_id, 0)
+        if count >= 3:
+            continue
+
+        try:
+            row = supabase_client.insert_contact_candidate(
+                run_id=run_id,
+                company_id=company_id,
+                full_name=ct.full_name,
+                title=ct.title or None,
+                email=ct.email or None,
+                linkedin_url=ct.linkedin_url or None,
+                evidence={"quality_notes": ct.quality_notes} if ct.quality_notes else None,
+                status="validated",
+            )
+            if row:
+                contacts.append(row)
+                per_company_counts[company_id] = count + 1
+                logger.info(
+                    "Structured insert_contact_candidate id=%s company_id=%s email=%s",
+                    row.get("id"),
+                    company_id,
+                    row.get("email"),
+                )
+        except Exception:
+            logger.exception(
+                "Structured insert_contact_candidate failed for company_id=%s domain=%s",
+                company_id,
+                domain,
+            )
+
+    logger.info(
+        "Completed pm_pipeline run id=%s with %d company candidate(s) and %d contact(s)",
+        run.get("id"),
+        len(companies),
+        len(contacts),
+    )
+    _maybe_advance_run_stage(str(run.get("id") or ""))
+    return result
+
+
+def _fallback_insert_companies_from_output(
+    *,
+    run_id: str,
+    criteria: Dict[str, Any],
+    final_output: str,
+    supabase_client: Any,
+) -> None:
+    """Best-effort fallback when the agent didn't call insert_company_candidate_tool.
+
+    This parses the agent's final markdown/text for likely company names + domains
+    and inserts them directly via supabase_client.insert_company_candidate, while
+    respecting blocked domains and the run's target quantity.
+    """
+
+    if not final_output or not run_id:
+        return
+
+    logger.info(
+        "Running fallback company extraction for run id=%s on output length=%d",
+        run_id,
+        len(final_output),
+    )
+
+    # Collect blocked domains so we don't re-insert suppressed companies.
+    try:
+        blocked = set(d.lower().strip() for d in supabase_client.get_blocked_domains())
+    except Exception:
+        blocked = set()
+
+    candidates: Dict[str, Dict[str, str]] = {}
+
+    # First, try to parse the explicit CANDIDATE_COMPANIES section if present.
+    lines = final_output.splitlines()
+    start_idx = None
+    for idx, line in enumerate(lines):
+        if line.strip().upper().startswith("CANDIDATE_COMPANIES:"):
+            start_idx = idx + 1
+            break
+
+    if start_idx is not None:
+        for raw in lines[start_idx:]:
+            if not raw.strip():
+                # Stop at first blank line after the section.
+                break
+            parts = [p.strip() for p in raw.split("|")]
+            if len(parts) < 2:
+                continue
+            name = parts[0] or ""
+            domain = (parts[1] or "").lower()
+            if not domain:
+                continue
+            if domain in blocked:
+                continue
+            if domain in {
+                "rentvine.com",
+                "appfolio.com",
+                "buildium.com",
+                "yardi.com",
+                "doorloop.com",
+            }:
+                continue
+            candidates.setdefault(domain, {"domain": domain, "name": name or domain})
+
+    # If the explicit section was missing or empty, fall back to heuristic parsing.
+    if not candidates:
+        domain_pattern = re.compile(r"\b([a-z0-9-]+\.[a-z]{2,})\b", re.IGNORECASE)
+        for line in lines:
+            if not line.strip():
+                continue
+            domains = domain_pattern.findall(line)
+            if not domains:
+                continue
+            for dom in domains:
+                domain = dom.lower()
+                if domain in blocked:
+                    continue
+                if domain in {
+                    "rentvine.com",
+                    "appfolio.com",
+                    "buildium.com",
+                    "yardi.com",
+                    "doorloop.com",
+                }:
+                    continue
+                name = line.strip()
+                if len(name) > 200:
+                    name = name[:200]
+                candidates.setdefault(domain, {"domain": domain, "name": name})
+
+    if not candidates:
+        logger.info(
+            "Fallback extraction found no candidate domains for run id=%s", run_id
+        )
+        return
+
+    target_quantity = 0
+    try:
+        target_quantity = int(criteria.get("quantity") or criteria.get("target_quantity") or 0)
+    except Exception:
+        target_quantity = 0
+
+    # Derive a state from criteria if present (fallback to empty string).
+    state = (criteria.get("state") or "").strip().upper() or ""
+
+    inserted = 0
+    for domain, info in candidates.items():
+        if target_quantity and inserted >= target_quantity:
+            break
+        name = info.get("name") or domain
+        website = f"https://{domain}"
+        try:
+            row = supabase_client.insert_company_candidate(
+                run_id=run_id,
+                name=name,
+                website=website,
+                domain=domain,
+                state=state or "NA",
+                discovery_source="agent_fallback",
+            )
+            if row:
+                inserted += 1
+                logger.info(
+                    "Fallback inserted company_candidate id=%s domain=%s run_id=%s",
+                    row.get("id"),
+                    domain,
+                    run_id,
+                )
+        except Exception:
+            logger.exception(
+                "Fallback insert_company_candidate failed for domain=%s run_id=%s",
+                domain,
+                run_id,
+            )
+
+    logger.info(
+        "Fallback insertion completed for run id=%s; inserted=%d candidates",
+        run_id,
+        inserted,
+    )
+
+
+def run_forever(fetch_active_runs: ActiveRunsFetcher, mark_run_complete: RunMarker, heartbeat: WorkerHeartbeat | None = None) -> None:
+    """Main loop for the worker.
+
+    ``fetch_active_runs`` should be a callable returning a list of
+    active run dicts. ``mark_run_complete`` should mark a run as
+    completed or failed. These are injected so this worker can be
+    used with Supabase, direct Postgres, or mocks for testing.
+    """
+
+    max_loops_env = os.getenv("WORKER_MAX_LOOPS")
+    run_filter_id = os.getenv("RUN_FILTER_ID", "").strip()
+    try:
+        max_loops = int(max_loops_env) if max_loops_env is not None else None
+    except ValueError:
+        max_loops = None
+    # In targeted testing mode (RUN_FILTER_ID set) but no explicit limit
+    # provided, use a small default so the worker does not run forever.
+    if max_loops is None and run_filter_id:
+        max_loops = 3
+
+    loops = 0
+    while True:
+        runs: List[Dict[str, Any]] = fetch_active_runs()
+        if not runs:
+            # Avoid busy looping when there is no work.
+            import time as _time
+
+            logger.info("No active runs found; sleeping")
+            if heartbeat:
+                heartbeat.mark_idle()
+            _time.sleep(2.0)
+            continue
+        logger.info("Found %d active run(s) to process", len(runs))
+        for run in runs:
+            try:
+                process_run(run, heartbeat)
+
+                # Check if we've met the target quantity for this run
+                run_id = run.get("id")
+                target_qty = int(run.get("target_quantity") or 0)
+
+                if target_qty > 0:
+                    # Check how many companies we have now
+                    gap_info = _sb.get_pm_company_gap(run_id)
+                    companies_ready = int(gap_info.get("companies_ready") or 0) if gap_info else 0
+                    companies_remaining = max(0, target_qty - companies_ready)
+
+                    if companies_remaining > 0:
+                        # Still need more companies - log progress but keep run active
+                        logger.info(
+                            "Run %s batch complete: %d/%d companies found, %d remaining",
+                            run_id, companies_ready, target_qty, companies_remaining
+                        )
+                        # Don't mark as complete - let it process again in next loop
+                        continue
+                    else:
+                        logger.info(
+                            "Run %s target met: %d/%d companies found",
+                            run_id, companies_ready, target_qty
+                        )
+
+                # Target met or no target specified - mark as complete
+                # On success, mark the discovery stage complete. Downstream
+                # workers use ``stage`` to drive additional work; the `status`
+                # flag is used only for queueing active vs. finished runs.
+                mark_run_complete(run, status="completed")
+            except Exception as exc:  # pragma: no cover
+                logger.exception("Error processing run id=%s", run.get("id"))
+                mark_run_complete(run, status="error", error=str(exc))
+
+        loops += 1
+        if max_loops is not None and loops >= max_loops:
+            logger.info(
+                "WORKER_MAX_LOOPS=%s reached in lead_list_runner; exiting after %s loop(s)",
+                max_loops,
+                loops,
+            )
+            break
+
+
+def _supabase_fetch_active_runs() -> List[Dict[str, Any]]:
+    """Default fetcher that pulls active runs from pm_pipeline.runs via Supabase.
+
+    When RUN_FILTER_ID is set, only that run (if active) is returned. This
+    is useful for targeted testing and limits blast radius while iterating.
+    """
+
+    run_filter_id = os.getenv("RUN_FILTER_ID")
+    if run_filter_id:
+        # When a specific run id is provided, treat it as an explicit
+        # override for debugging / targeted processing. We still only
+        # allow runs in the company_discovery stage, but we will
+        # revive runs that previously hit an error.
+        run = supabase_client.get_pm_run(run_filter_id)
+        if not run:
+            return []
+        if str(run.get("stage")) != "company_discovery":
+            return []
+        # If the run is not active (e.g. status='error'), flip it back
+        # to active so it can be reprocessed.
+        if str(run.get("status")) != "active":
+            try:
+                supabase_client.update_pm_run_status(
+                    run_id=run_filter_id,
+                    status="active",
+                )
+                run["status"] = "active"
+            except Exception:
+                # If we cannot update status, still return the run so that
+                # local testing is possible.
+                pass
+        return [run]
+
+    # By default, only process runs that are still in the company_discovery
+    # stage so that downstream workers can safely own later stages.
+    all_active = supabase_client.fetch_active_pm_runs()
+    return [r for r in all_active if str(r.get("stage")) == "company_discovery"]
+
+
+def _supabase_mark_run_complete(run: Dict[str, Any], status: str, error: str | None = None) -> None:
+    """Default marker that updates pm_pipeline.runs via Supabase."""
+
+    run_id = str(run.get("id"))
+    if not run_id:
+        return
+    supabase_client.update_pm_run_status(run_id=run_id, status=status, error=error)
+
+
+def main() -> None:
+    """Entry point for running the lead list worker with Supabase-backed pm_pipeline tables."""
+    import uuid
+
+    logging.basicConfig(
+        level=logging.INFO,
+        format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
+    )
+
+    worker_id = os.getenv("LEAD_LIST_WORKER_ID") or f"lead-list-{uuid.uuid4()}"
+    heartbeat_interval = int(os.getenv("WORKER_HEARTBEAT_INTERVAL", "30"))
+
+    logger.info("Lead list worker starting up worker_id=%s", worker_id)
+
+    # Start heartbeat monitoring
+    heartbeat = WorkerHeartbeat(
+        worker_id=worker_id,
+        worker_type="lead_list",
+        interval_seconds=heartbeat_interval
+    )
+    heartbeat.start()
+
+    try:
+        run_forever(_supabase_fetch_active_runs, _supabase_mark_run_complete, heartbeat)
+    finally:
+        # Ensure heartbeat is stopped on exit
+        heartbeat.stop()
+
+
+if __name__ == "__main__":  # pragma: no cover
+    main()

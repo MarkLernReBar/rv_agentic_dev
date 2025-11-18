@@ -2,8 +2,10 @@ import os
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
-import requests
 import json
+import requests
+import psycopg
+from psycopg.types.json import Json
 
 
 class SupabaseError(Exception):
@@ -28,6 +30,13 @@ def _base_url() -> str:
     return f"{url}/rest/v1"
 
 
+def _pg_conn():
+    dsn = os.getenv("POSTGRES_URL") or os.getenv("SUPABASE_POSTGRES_URL")
+    if not dsn:
+        raise SupabaseError("POSTGRES_URL is not set for direct Postgres access")
+    return psycopg.connect(dsn, autocommit=True)
+
+
 def _headers() -> Dict[str, str]:
     token = _env_first(
         "SUPABASE_SERVICE_KEY",
@@ -48,6 +57,31 @@ def _headers() -> Dict[str, str]:
         "Accept": "application/json",
         "Accept-Profile": profile,
         "Content-Profile": profile,
+    }
+
+
+def _headers_for_profile(profile: str) -> Dict[str, str]:
+    """Return Supabase headers for a specific PostgREST profile/schema."""
+
+    token = _env_first(
+        "SUPABASE_SERVICE_KEY",
+        "SUPABASE_SERVICE_ROLE_KEY",
+        "SUPABASE_SECRET_KEY",
+        "SUPABASE_JWT",
+        "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+        "SUPABASE_ANON_KEY",
+    )
+    if not token:
+        raise SupabaseError(
+            "Supabase key is not set (tried SERVICE/ROLE/SECRET/JWT and ANON variants)"
+        )
+    profile_name = profile.strip() or "public"
+    return {
+        "apikey": token,
+        "Authorization": f"Bearer {token}",
+        "Accept": "application/json",
+        "Accept-Profile": profile_name,
+        "Content-Profile": profile_name,
     }
 
 
@@ -77,6 +111,43 @@ MAJOR_PMS = [
     if p.strip()
 ]
 
+# pm_pipeline tables for the async lead list agent
+PM_PROFILE = os.getenv("SUPABASE_PM_PROFILE", "pm_pipeline")
+PM_RUNS_TABLE = os.getenv("SUPABASE_PM_RUNS_TABLE", "pm_pipeline.runs")
+PM_COMPANY_CANDIDATES_TABLE = os.getenv(
+    "SUPABASE_PM_COMPANY_CANDIDATES_TABLE", "pm_pipeline.company_candidates"
+)
+PM_CONTACT_CANDIDATES_TABLE = os.getenv(
+    "SUPABASE_PM_CONTACT_CANDIDATES_TABLE", "pm_pipeline.contact_candidates"
+)
+PM_COMPANY_GAP_VIEW = os.getenv(
+    "SUPABASE_PM_COMPANY_GAP_VIEW", "pm_pipeline.v_company_gap"
+)
+PM_RUN_RESUME_PLAN_VIEW = os.getenv(
+    "SUPABASE_PM_RUN_RESUME_PLAN_VIEW", "pm_pipeline.v_run_resume_plan"
+)
+PM_COMPANY_RESEARCH_QUEUE_VIEW = os.getenv(
+    "SUPABASE_PM_COMPANY_RESEARCH_QUEUE_VIEW", "pm_pipeline.v_company_research_queue"
+)
+PM_CONTACT_GAP_VIEW = os.getenv(
+    "SUPABASE_PM_CONTACT_GAP_VIEW", "pm_pipeline.v_contact_gap"
+)
+PM_CONTACT_GAP_PER_COMPANY_VIEW = os.getenv(
+    "SUPABASE_PM_CONTACT_GAP_PER_COMPANY_VIEW", "pm_pipeline.v_contact_gap_per_company"
+)
+PM_STAGING_COMPANIES_TABLE = os.getenv(
+    "SUPABASE_PM_STAGING_COMPANIES_TABLE", "pm_pipeline.staging_companies"
+)
+FOCUS_ACCOUNT_METRICS_VIEW = os.getenv(
+    "SUPABASE_FOCUS_ACCOUNT_METRICS_VIEW", "mv_focus_account_metrics"
+)
+
+# Public table with imported PMS subdomains (Buildium, AppFolio, etc.)
+PMS_SUBDOMAINS_TABLE = os.getenv("SUPABASE_PMS_SUBDOMAINS_TABLE", "public.pms_subdomains")
+PM_BLOCKED_DOMAINS_VIEW = os.getenv(
+    "SUPABASE_PM_BLOCKED_DOMAINS_VIEW", "pm_pipeline.v_blocked_domains"
+)
+
 
 def _get(path: str, params: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
     url = f"{_base_url()}/{path.lstrip('/')}"
@@ -88,6 +159,47 @@ def _get(path: str, params: Optional[Dict[str, Any]] = None) -> List[Dict[str, A
         return r.json()
     except Exception as e:
         raise SupabaseError(f"Invalid JSON from Supabase: {r.text[:500]}") from e
+
+
+def _get_pm(path: str, params: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
+    """GET helper targeting pm_pipeline objects via direct Postgres.
+
+    ``path`` is expected to be a fully-qualified table or view name.
+    """
+
+    # Direct Postgres access since pm_pipeline is not exposed via REST
+    table = path
+    clauses: List[str] = []
+    values: List[Any] = []
+    if params:
+        for key, val in params.items():
+            if key == "select":
+                continue
+            if key == "limit":
+                continue
+            if key == "order":
+                continue
+            # Expect "eq.<value>" style
+            if isinstance(val, str) and val.startswith("eq."):
+                clauses.append(f"{key} = %s")
+                values.append(val[3:])
+    where_sql = f"WHERE {' AND '.join(clauses)}" if clauses else ""
+    order_sql = ""
+    if params and "order" in params:
+        order_val = str(params["order"])
+        col = order_val
+        direction = ""
+        if "." in order_val:
+            col, dir_part = order_val.split(".", 1)
+            direction = " ASC" if dir_part.lower().startswith("asc") else " DESC"
+        order_sql = f" ORDER BY {col}{direction}"
+    limit_sql = ""
+    if params and "limit" in params:
+        limit_sql = f" LIMIT {int(params['limit'])}"
+    sql = f"SELECT * FROM {table} {where_sql}{order_sql}{limit_sql}"
+    with _pg_conn() as conn, conn.cursor(row_factory=psycopg.rows.dict_row) as cur:
+        cur.execute(sql, values)
+        return list(cur.fetchall())
 
 
 def find_company(
@@ -178,6 +290,34 @@ def _post(path: str, json_body: Dict[str, Any]) -> List[Dict[str, Any]]:
         raise SupabaseError(f"Invalid JSON from Supabase: {r.text[:500]}") from e
 
 
+def _post_pm(path: str, json_body: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """INSERT helper targeting pm_pipeline tables via direct Postgres."""
+
+    table = path
+    if not isinstance(json_body, list):
+        rows = [json_body]
+    else:
+        rows = json_body
+    if not rows:
+        return []
+    cols = sorted(rows[0].keys())
+    placeholders = ", ".join(["%s"] * len(cols))
+    col_sql = ", ".join(cols)
+    sql = f"INSERT INTO {table} ({col_sql}) VALUES ({placeholders}) RETURNING *"
+    results: List[Dict[str, Any]] = []
+    with _pg_conn() as conn, conn.cursor(row_factory=psycopg.rows.dict_row) as cur:
+        for row in rows:
+            values: List[Any] = []
+            for c in cols:
+                v = row.get(c)
+                if isinstance(v, (dict, list)):
+                    v = Json(v)
+                values.append(v)
+            cur.execute(sql, values)
+            results.append(cur.fetchone())
+    return results
+
+
 def _patch(path: str, match_params: Dict[str, Any], json_body: Dict[str, Any]) -> List[Dict[str, Any]]:
     url = f"{_base_url()}/{path.lstrip('/')}"
     timeout = float(os.getenv("HTTP_TIMEOUT", "20"))
@@ -191,6 +331,37 @@ def _patch(path: str, match_params: Dict[str, Any], json_body: Dict[str, Any]) -
         return data if isinstance(data, list) else [data]
     except Exception as e:
         raise SupabaseError(f"Invalid JSON from Supabase: {r.text[:500]}") from e
+
+
+def _patch_pm(path: str, match_params: Dict[str, Any], json_body: Dict[str, Any]) -> List[Dict[str, Any]]:
+    """UPDATE helper targeting pm_pipeline tables via direct Postgres."""
+
+    table = path
+    if not match_params:
+        return []
+    set_cols = sorted(json_body.keys())
+    set_sql = ", ".join(f"{c} = %s" for c in set_cols)
+    where_clauses: List[str] = []
+    where_values: List[Any] = []
+    for key, val in match_params.items():
+        if isinstance(val, str) and val.startswith("eq."):
+            where_clauses.append(f"{key} = %s")
+            where_values.append(val[3:])
+        else:
+            where_clauses.append(f"{key} = %s")
+            where_values.append(val)
+    where_sql = " AND ".join(where_clauses)
+    sql = f"UPDATE {table} SET {set_sql} WHERE {where_sql} RETURNING *"
+    values: List[Any] = []
+    for c in set_cols:
+        v = json_body[c]
+        if isinstance(v, (dict, list)):
+            v = Json(v)
+        values.append(v)
+    values.extend(where_values)
+    with _pg_conn() as conn, conn.cursor(row_factory=psycopg.rows.dict_row) as cur:
+        cur.execute(sql, values)
+        return list(cur.fetchall())
 
 
 def insert_enrichment_request(
@@ -633,3 +804,843 @@ def bulk_upsert_companies(companies: List[Dict[str, Any]]) -> List[Dict[str, Any
     if not data:
         raise SupabaseError("Supabase returned no rows for bulk_upsert_companies")
     return data
+
+
+# ---------------------------
+# pm_pipeline async lead list helpers
+# ---------------------------
+
+def create_pm_run(
+    *,
+    criteria: Dict[str, Any],
+    target_quantity: int,
+    contacts_min: int = 1,
+    contacts_max: int = 3,
+    target_distribution: Optional[Dict[str, Any]] = None,
+    notes: Optional[str] = None,
+    created_by: Optional[str] = None,
+) -> Dict[str, Any]:
+    """Create a new pm_pipeline.runs row."""
+
+    row: Dict[str, Any] = {
+        "criteria": criteria,
+        "target_quantity": int(target_quantity),
+        "contacts_min": int(contacts_min),
+        "contacts_max": int(contacts_max),
+        "status": "active",
+    }
+    if target_distribution is not None:
+        row["target_distribution"] = target_distribution
+    if notes is not None:
+        row["notes"] = notes
+    if created_by is not None:
+        row["created_by"] = created_by
+
+    rows = _post_pm(PM_RUNS_TABLE, [row])
+    return rows[0] if rows else {}
+
+
+def fetch_active_pm_runs(limit: Optional[int] = None) -> List[Dict[str, Any]]:
+    """Fetch active pm_pipeline runs that need processing."""
+
+    params: Dict[str, Any] = {
+        "select": "*",
+        "status": "eq.active",
+        "order": "created_at.asc",
+    }
+    if limit:
+        params["limit"] = str(int(limit))
+    try:
+        return _get_pm(PM_RUNS_TABLE, params) or []
+    except SupabaseError:
+        return []
+
+
+def insert_company_candidate(
+    *,
+    run_id: str,
+    name: str,
+    website: str,
+    domain: str,
+    state: str,
+    **extra: Any,
+) -> Optional[Dict[str, Any]]:
+    """Insert a single company candidate row for a run.
+
+    Relies on pm_pipeline.company_candidates constraints to prevent duplicates.
+    Returns the stored row, or None on duplicate/conflict.
+    """
+
+    row: Dict[str, Any] = {
+        "run_id": run_id,
+        "name": name,
+        "website": website,
+        "domain": domain.lower().strip(),
+        "state": state.upper().strip(),
+        "idem_key": extra.get("idem_key") or domain.lower().strip(),
+    }
+    # Optional fields
+    for key in (
+        "description",
+        "discovery_source",
+        "pms_detected",
+        "units_estimate",
+        "company_type",
+        "evidence",
+        "status",
+        "meets_all_requirements",
+    ):
+        if key in extra and extra[key] is not None:
+            row[key] = extra[key]
+
+    try:
+        rows = _post_pm(PM_COMPANY_CANDIDATES_TABLE, [row])
+    except Exception as e:
+        msg = str(e)
+        # Ignore duplicate key violations; treat as no-op
+        if (
+            "duplicate key" in msg
+            or "uq_cc_run_domain" in msg
+            or "uq_cc_idem" in msg
+            or "uq_company_candidates_domain" in msg
+        ):
+            return None
+        print(f"[insert_company_candidate] error: {e}")
+        raise
+    return rows[0] if rows else None
+
+
+def insert_contact_candidate(
+    *,
+    run_id: str,
+    company_id: str,
+    full_name: str,
+    title: Optional[str] = None,
+    email: Optional[str] = None,
+    linkedin_url: Optional[str] = None,
+    **extra: Any,
+) -> Optional[Dict[str, Any]]:
+    """Insert a single contact candidate row for a run/company.
+
+    Uses email / LinkedIn uniqueness constraints to avoid duplicates.
+    Returns the stored row, or None on duplicate/conflict.
+    """
+
+    row: Dict[str, Any] = {
+        "run_id": run_id,
+        "company_id": company_id,
+        "full_name": full_name,
+    }
+    if title:
+        row["title"] = title
+    if email:
+        row["email"] = email
+    if linkedin_url:
+        row["linkedin_url"] = linkedin_url
+    if "idem_key" in extra and extra["idem_key"]:
+        row["idem_key"] = extra["idem_key"]
+
+    for key in (
+        "department",
+        "seniority",
+        "quality_score",
+        "signals",
+        "evidence",
+        "status",
+        "meets_all_requirements",
+    ):
+        if key in extra and extra[key] is not None:
+            row[key] = extra[key]
+
+    try:
+        rows = _post_pm(PM_CONTACT_CANDIDATES_TABLE, [row])
+    except Exception as e:
+        msg = str(e)
+        # Treat uniqueness violations on email, LinkedIn, or idem_key as benign no-ops.
+        if (
+            "duplicate key" in msg
+            or "uq_ct_email_per_company" in msg
+            or "uq_ct_linkedin_per_company" in msg
+            or "uq_ct_idem" in msg
+        ):
+            return None
+        print(f"[insert_contact_candidate] error: {e}")
+        raise
+    return rows[0] if rows else None
+
+
+def update_pm_run_status(*, run_id: str, status: str, error: Optional[str] = None) -> Dict[str, Any]:
+    """Update the status (and optional notes) of a pm_pipeline run."""
+
+    body: Dict[str, Any] = {"status": status}
+    if error:
+        body["notes"] = error
+    rows = _patch_pm(PM_RUNS_TABLE, {"id": f"eq.{run_id}"}, body)
+    return rows[0] if rows else {}
+
+
+def get_pm_run(run_id: str) -> Optional[Dict[str, Any]]:
+    """Fetch a single pm_pipeline.runs row by id."""
+
+    if not run_id:
+        return None
+    params: Dict[str, Any] = {
+        "select": "*",
+        "id": f"eq.{run_id}",
+        "limit": "1",
+    }
+    try:
+        rows = _get_pm(PM_RUNS_TABLE, params)
+        return rows[0] if rows else None
+    except SupabaseError:
+        return None
+
+
+def get_pm_company_gap(run_id: str) -> Optional[Dict[str, Any]]:
+    """Fetch the gap metrics for a run from v_company_gap."""
+
+    if not run_id:
+        return None
+    params: Dict[str, Any] = {
+        "select": "*",
+        "run_id": f"eq.{run_id}",
+        "limit": "1",
+    }
+    try:
+        rows = _get_pm(PM_COMPANY_GAP_VIEW, params)
+        return rows[0] if rows else None
+    except SupabaseError:
+        return None
+
+
+def get_run_resume_plan(run_id: str) -> Optional[Dict[str, Any]]:
+    """Fetch stage + gap information for a run from v_run_resume_plan."""
+
+    if not run_id:
+        return None
+    params: Dict[str, Any] = {
+        "select": "*",
+        "run_id": f"eq.{run_id}",
+        "limit": "1",
+    }
+    try:
+        rows = _get_pm(PM_RUN_RESUME_PLAN_VIEW, params)
+        return rows[0] if rows else None
+    except SupabaseError:
+        return None
+
+
+def set_run_stage(*, run_id: str, stage: str, status: Optional[str] = None) -> Dict[str, Any]:
+    """Update the stage (and optionally status) of a pm_pipeline run."""
+
+    body: Dict[str, Any] = {"stage": stage}
+    if status:
+        body["status"] = status
+    rows = _patch_pm(PM_RUNS_TABLE, {"id": f"eq.{run_id}"}, body)
+    return rows[0] if rows else {}
+
+
+def has_company_research_queue(run_id: str) -> bool:
+    """Return True when there are still companies awaiting research for a run."""
+
+    if not run_id:
+        return False
+    try:
+        rows = _get_pm(
+            PM_COMPANY_RESEARCH_QUEUE_VIEW,
+            {"run_id": f"eq.{run_id}", "limit": "1"},
+        )
+        return bool(rows)
+    except SupabaseError:
+        return True
+
+
+def get_contact_gap_summary(run_id: str) -> Optional[Dict[str, Any]]:
+    """Return aggregate contact gap for a run from v_contact_gap."""
+
+    if not run_id:
+        return None
+    try:
+        rows = _get_pm(
+            PM_CONTACT_GAP_VIEW,
+            {"run_id": f"eq.{run_id}", "limit": "1"},
+        )
+        return rows[0] if rows else None
+    except SupabaseError:
+        return None
+
+
+def get_contact_gap_for_company(run_id: str, company_id: str) -> Optional[Dict[str, Any]]:
+    """Return contact gap info for a single company."""
+
+    if not run_id or not company_id:
+        return None
+    try:
+        rows = _get_pm(
+            PM_CONTACT_GAP_PER_COMPANY_VIEW,
+            {
+                "run_id": f"eq.{run_id}",
+                "company_id": f"eq.{company_id}",
+                "limit": "1",
+            },
+        )
+        return rows[0] if rows else None
+    except SupabaseError:
+        return None
+
+
+def claim_company_for_research(
+    worker_id: str,
+    lease_seconds: int = 300,
+) -> Optional[Dict[str, Any]]:
+    """Lease a company candidate that still needs research for the worker.
+
+    When RUN_FILTER_ID is set in the environment, only companies belonging
+    to that pm_pipeline.runs.id will be considered. This is primarily used
+    for targeted testing and does not affect normal multi-run operation.
+    """
+
+    import os
+
+    interval_literal = f"{int(lease_seconds)} seconds"
+    run_filter_id = os.getenv("RUN_FILTER_ID", "").strip()
+    run_filter_clause = ""
+    # Parameter order must match placeholder order in SQL:
+    # 1) optional r.id = %s in CTE
+    # 2) worker_id and lease interval in UPDATE.
+    params: list[Any] = []
+    if run_filter_id:
+        run_filter_clause = " AND r.id = %s"
+        params.append(run_filter_id)
+    params.extend([worker_id, interval_literal])
+
+    sql = f"""
+WITH candidate AS (
+    SELECT c.id
+    FROM pm_pipeline.company_candidates c
+    JOIN pm_pipeline.runs r ON r.id = c.run_id
+    LEFT JOIN pm_pipeline.company_research cr ON cr.company_id = c.id
+    WHERE r.stage = 'company_research'
+      AND c.status = ANY (ARRAY['validated','promoted'])
+      AND (c.worker_id IS NULL OR c.worker_lease_until < now())
+      AND cr.id IS NULL
+      {run_filter_clause}
+    ORDER BY c.created_at
+    LIMIT 1
+)
+UPDATE pm_pipeline.company_candidates AS c
+SET worker_id = %s,
+    worker_lease_until = now() + %s::interval
+FROM candidate
+WHERE c.id = candidate.id
+RETURNING c.id, c.run_id, c.name, c.domain, c.website, c.state;
+"""
+    with _pg_conn() as conn, conn.cursor(row_factory=psycopg.rows.dict_row) as cur:
+        cur.execute(sql, params)
+        row = cur.fetchone()
+        return row
+
+
+def release_company_lease(company_id: str) -> None:
+    """Clear worker lease info for a company candidate."""
+
+    if not company_id:
+        return
+    sql = """
+UPDATE pm_pipeline.company_candidates
+SET worker_id = NULL,
+    worker_lease_until = NULL
+WHERE id = %s
+"""
+    with _pg_conn() as conn, conn.cursor() as cur:
+        cur.execute(sql, (company_id,))
+
+
+def claim_company_for_contacts(
+    worker_id: str,
+    lease_seconds: int = 300,
+) -> Optional[Dict[str, Any]]:
+    """Lease a company that still needs contacts for the worker.
+
+    When RUN_FILTER_ID is set in the environment, only companies belonging
+    to that pm_pipeline.runs.id will be considered. This is primarily used
+    for targeted testing and does not affect normal multi-run operation.
+    """
+
+    import os
+
+    interval_literal = f"{int(lease_seconds)} seconds"
+    run_filter_id = os.getenv("RUN_FILTER_ID", "").strip()
+    run_filter_clause = ""
+    # Parameter order must match placeholder order in SQL:
+    # 1) optional r.id = %s in CTE
+    # 2) worker_id and lease interval in UPDATE.
+    params: list[Any] = []
+    if run_filter_id:
+        run_filter_clause = " AND r.id = %s"
+        params.append(run_filter_id)
+    params.extend([worker_id, interval_literal])
+
+    sql = f"""
+WITH candidate AS (
+    SELECT c.id
+    FROM pm_pipeline.v_contact_gap_per_company v
+    JOIN pm_pipeline.company_candidates c ON c.id = v.company_id
+    JOIN pm_pipeline.runs r ON r.id = c.run_id
+    WHERE r.stage = 'contact_discovery'
+      AND v.contacts_min_gap > 0
+      AND (c.worker_id IS NULL OR c.worker_lease_until < now())
+      {run_filter_clause}
+    ORDER BY v.contacts_min_gap DESC
+    LIMIT 1
+)
+UPDATE pm_pipeline.company_candidates AS c
+SET worker_id = %s,
+    worker_lease_until = now() + %s::interval
+FROM candidate
+WHERE c.id = candidate.id
+RETURNING c.id, c.run_id, c.name, c.domain, c.website, c.state;
+"""
+    with _pg_conn() as conn, conn.cursor(row_factory=psycopg.rows.dict_row) as cur:
+        cur.execute(sql, params)
+        row = cur.fetchone()
+        return row
+
+
+def insert_company_research(
+    *,
+    run_id: str,
+    company_id: str,
+    facts: Dict[str, Any],
+    signals: Optional[Dict[str, Any]] = None,
+    confidence: Optional[float] = None,
+    status: str = "complete",
+) -> Dict[str, Any]:
+    """Upsert company research facts for a run/company pair."""
+
+    sql = """
+INSERT INTO pm_pipeline.company_research
+    (run_id, company_id, facts, signals, confidence, status)
+VALUES
+    (%s, %s, %s::jsonb, %s::jsonb, %s, %s)
+ON CONFLICT (run_id, company_id)
+DO UPDATE SET
+    facts = EXCLUDED.facts,
+    signals = EXCLUDED.signals,
+    confidence = EXCLUDED.confidence,
+    status = EXCLUDED.status,
+    updated_at = now()
+RETURNING *;
+"""
+    with _pg_conn() as conn, conn.cursor(row_factory=psycopg.rows.dict_row) as cur:
+        cur.execute(
+            sql,
+            (
+                run_id,
+                company_id,
+                Json(facts or {}),
+                Json(signals or {}),
+                confidence,
+                status,
+            ),
+        )
+        row = cur.fetchone()
+        return row or {}
+    params: Dict[str, Any] = {
+        "select": "*",
+        "run_id": f"eq.{run_id}",
+        "limit": "1",
+    }
+    try:
+        rows = _get_pm(PM_COMPANY_GAP_VIEW, params)
+        return rows[0] if rows else None
+    except SupabaseError:
+        return None
+
+
+def get_pms_subdomain_seeds(
+    *,
+    pms: str,
+    city: Optional[str] = None,
+    state: Optional[str] = None,
+    status: str = "alive",
+    limit: Optional[int] = None,
+) -> List[Dict[str, Any]]:
+    """Return PMS subdomain seed rows from public.pms_subdomains.
+
+    This is used to quickly seed candidate pools for hard PMS requirements
+    (e.g. Buildium/AppFolio) before running expensive web discovery.
+    """
+
+    sql = f"SELECT * FROM {PMS_SUBDOMAINS_TABLE} WHERE pms = %s"
+    params: List[Any] = [pms]
+    if status:
+        sql += " AND status = %s"
+        params.append(status)
+    if state:
+        sql += " AND state = %s"
+        params.append(state)
+    if city:
+        sql += " AND city ILIKE %s"
+        params.append(city)
+    if limit:
+        sql += " ORDER BY created_at DESC LIMIT %s"
+        params.append(int(limit))
+    with _pg_conn() as conn, conn.cursor(row_factory=psycopg.rows.dict_row) as cur:
+        cur.execute(sql, params)
+        return list(cur.fetchall())
+
+
+def get_focus_account_metrics(limit: Optional[int] = None) -> List[Dict[str, Any]]:
+    """Fetch focus account metrics from the public.mv_focus_account_metrics view."""
+
+    params: Dict[str, Any] = {
+        "select": "owner_email,role,target,current,gap,status",
+        "order": "owner_email.asc",
+    }
+    if limit:
+        params["limit"] = str(int(limit))
+    return _get(FOCUS_ACCOUNT_METRICS_VIEW, params) or []
+
+
+def get_blocked_domains() -> List[str]:
+    """Return a list of blocked/suppressed domains from v_blocked_domains."""
+
+    try:
+        rows = _get_pm(PM_BLOCKED_DOMAINS_VIEW, {"select": "domain"})
+    except SupabaseError:
+        return []
+    domains: List[str] = []
+    for row in rows or []:
+        d = str(row.get("domain") or "").strip().lower()
+        if d:
+            domains.append(d)
+    return domains
+
+
+# ---------------------------
+# Staging companies (PMS fan-out) helpers
+# ---------------------------
+
+def fetch_eligible_staging_companies(
+    *,
+    search_run_id: str,
+    pms_required: str | None = None,
+    min_pms_confidence: float | None = None,
+    limit: int | None = None,
+) -> list[dict[str, Any]]:
+    """Fetch eligible staging companies for a given search_run.
+
+    This is used to promote PMS-qualified candidates from
+    ``pm_pipeline.staging_companies`` into ``pm_pipeline.company_candidates``.
+    """
+
+    if not search_run_id:
+        return []
+
+    clauses: list[str] = ["run_id = %s", "status = 'eligible'"]
+    values: list[Any] = [search_run_id]
+
+    if pms_required:
+        clauses.append("lower(coalesce(pms_detected, '')) = lower(%s)")
+        values.append(pms_required)
+
+    if min_pms_confidence is not None:
+        clauses.append("coalesce(pms_confidence, 0) >= %s")
+        values.append(float(min_pms_confidence))
+
+    where_sql = " AND ".join(clauses)
+    limit_sql = f" LIMIT {int(limit)}" if limit and limit > 0 else ""
+    sql = f"SELECT * FROM {PM_STAGING_COMPANIES_TABLE} WHERE {where_sql} ORDER BY created_at{limit_sql};"
+
+    with _pg_conn() as conn, conn.cursor(row_factory=psycopg.rows.dict_row) as cur:
+        cur.execute(sql, values)
+        return list(cur.fetchall())
+
+
+def promote_staging_companies_to_run(
+    *,
+    search_run_id: str,
+    pm_run_id: str,
+    pms_required: str | None = None,
+    min_pms_confidence: float | None = 0.7,
+    max_companies: int | None = None,
+) -> int:
+    """Promote eligible staging companies into pm_pipeline.company_candidates.
+
+    Args:
+        search_run_id: id from pm_pipeline.search_runs (linked to staging_companies.run_id)
+        pm_run_id: id from pm_pipeline.runs to receive company_candidates
+        pms_required: optional PMS filter; when provided, only matching rows are promoted.
+        min_pms_confidence: minimum confidence threshold for PMS analyzer.
+        max_companies: optional hard cap on how many companies to promote.
+
+    Returns:
+        Number of company_candidates rows successfully inserted (non-duplicate).
+    """
+
+    if not search_run_id or not pm_run_id:
+        return 0
+
+    candidates = fetch_eligible_staging_companies(
+        search_run_id=search_run_id,
+        pms_required=pms_required,
+        min_pms_confidence=min_pms_confidence,
+        limit=max_companies,
+    )
+    if not candidates:
+        return 0
+
+    try:
+        blocked = set(d.lower().strip() for d in get_blocked_domains())
+    except Exception:
+        blocked = set()
+
+    inserted = 0
+    for row in candidates:
+        domain = (row.get("normalized_domain") or row.get("raw_domain") or "").strip().lower()
+        if not domain or "." not in domain:
+            continue
+        if domain in blocked:
+            continue
+
+        name = (row.get("normalized_name") or row.get("raw_name") or domain).strip() or domain
+        website = (row.get("raw_website") or "").strip() or f"https://{domain}"
+        state = (row.get("normalized_state") or row.get("raw_state") or "NA").strip() or "NA"
+
+        extra: dict[str, Any] = {
+            "discovery_source": "staging_companies",
+            "pms_detected": row.get("pms_detected"),
+            "units_estimate": row.get("units_estimate"),
+            "evidence": row.get("evidence") or [],
+            "status": "validated",
+        }
+
+        try:
+            res = insert_company_candidate(
+                run_id=pm_run_id,
+                name=name,
+                website=website,
+                domain=domain,
+                state=state,
+                **extra,
+            )
+            if res:
+                inserted += 1
+        except Exception:
+            # Any hard failure should be surfaced, but duplicates are
+            # already treated as benign inside insert_company_candidate.
+            raise
+
+    return inserted
+
+
+# ============================================================================
+# Worker Heartbeat / Health Monitoring (Phase 2.2)
+# ============================================================================
+
+
+def upsert_worker_heartbeat(
+    worker_id: str,
+    worker_type: str,
+    status: str = "active",
+    current_run_id: Optional[str] = None,
+    current_task: Optional[str] = None,
+    lease_expires_at: Optional[datetime] = None,
+    metadata: Optional[Dict[str, Any]] = None,
+) -> None:
+    """Update or insert a worker heartbeat record.
+
+    This function is called periodically by workers to indicate they are alive
+    and processing tasks. It updates the last_heartbeat_at timestamp and
+    current task information.
+
+    Args:
+        worker_id: Unique identifier for the worker (e.g., 'lead-list-uuid')
+        worker_type: Type of worker ('lead_list', 'company_research', 'contact_research')
+        status: Worker status ('active', 'idle', 'processing', 'stopped')
+        current_run_id: ID of run being processed (if any)
+        current_task: Description of current task (if any)
+        lease_expires_at: When the current lease expires
+        metadata: Additional worker metadata (JSON)
+    """
+    with _pg_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT pm_pipeline.upsert_worker_heartbeat(
+                    %s, %s, %s, %s, %s, %s, %s
+                )
+                """,
+                (
+                    worker_id,
+                    worker_type,
+                    status,
+                    current_run_id,
+                    current_task,
+                    lease_expires_at,
+                    Json(metadata) if metadata else None,
+                ),
+            )
+
+
+def stop_worker(worker_id: str) -> None:
+    """Mark a worker as stopped (graceful shutdown).
+
+    This should be called by workers during graceful shutdown to indicate
+    they are no longer processing tasks.
+
+    Args:
+        worker_id: Unique identifier for the worker
+    """
+    with _pg_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT pm_pipeline.stop_worker(%s)",
+                (worker_id,),
+            )
+
+
+def get_active_workers() -> List[Dict[str, Any]]:
+    """Get list of active workers (heartbeat within last 5 minutes).
+
+    Returns:
+        List of worker dicts with heartbeat info
+    """
+    with _pg_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT
+                    worker_id,
+                    worker_type,
+                    last_heartbeat_at,
+                    status,
+                    current_run_id,
+                    current_task,
+                    lease_expires_at,
+                    started_at,
+                    seconds_since_heartbeat,
+                    metadata
+                FROM pm_pipeline.v_active_workers
+                """
+            )
+            columns = [desc[0] for desc in cur.description]
+            return [dict(zip(columns, row)) for row in cur.fetchall()]
+
+
+def get_dead_workers() -> List[Dict[str, Any]]:
+    """Get list of dead workers (no heartbeat in last 5 minutes).
+
+    Returns:
+        List of worker dicts that appear to have crashed
+    """
+    with _pg_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT
+                    worker_id,
+                    worker_type,
+                    last_heartbeat_at,
+                    status,
+                    current_run_id,
+                    current_task,
+                    lease_expires_at,
+                    started_at,
+                    seconds_since_heartbeat,
+                    metadata
+                FROM pm_pipeline.v_dead_workers
+                """
+            )
+            columns = [desc[0] for desc in cur.description]
+            return [dict(zip(columns, row)) for row in cur.fetchall()]
+
+
+def get_worker_stats() -> List[Dict[str, Any]]:
+    """Get worker statistics by type.
+
+    Returns:
+        List of stats dicts with counts for each worker type:
+        - worker_type
+        - total_workers
+        - active_workers
+        - idle_workers
+        - processing_workers
+        - dead_workers
+    """
+    with _pg_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT * FROM pm_pipeline.get_worker_stats()")
+            columns = [desc[0] for desc in cur.description]
+            return [dict(zip(columns, row)) for row in cur.fetchall()]
+
+
+def cleanup_stale_workers(stale_threshold_minutes: int = 60) -> List[Dict[str, Any]]:
+    """Clean up old stopped workers from heartbeat table.
+
+    Args:
+        stale_threshold_minutes: Remove workers stopped for this many minutes
+
+    Returns:
+        List of removed worker dicts
+    """
+    with _pg_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT * FROM pm_pipeline.cleanup_stale_workers(%s)
+                """,
+                (stale_threshold_minutes,),
+            )
+            columns = [desc[0] for desc in cur.description]
+            return [dict(zip(columns, row)) for row in cur.fetchall()]
+
+
+def release_dead_worker_leases() -> int:
+    """Release leases held by dead workers.
+
+    This should be called periodically (e.g., every minute) to clean up
+    leases from crashed workers so other workers can claim them.
+
+    Returns:
+        Number of leases released
+    """
+    dead_workers = get_dead_workers()
+    released = 0
+
+    for worker in dead_workers:
+        worker_id = worker.get("worker_id", "")
+        current_run_id = worker.get("current_run_id")
+
+        # Release company research leases
+        with _pg_conn() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    UPDATE pm_pipeline.company_candidates
+                    SET claimed_by = NULL,
+                        claim_expires_at = NULL
+                    WHERE claimed_by = %s
+                    RETURNING id
+                    """,
+                    (worker_id,),
+                )
+                released += cur.rowcount
+
+        # Release contact research leases
+        with _pg_conn() as conn:
+            with conn.cursor() as cur:
+                cur.execute(
+                    """
+                    UPDATE pm_pipeline.company_candidates
+                    SET contacts_claimed_by = NULL,
+                        contacts_claim_expires_at = NULL
+                    WHERE contacts_claimed_by = %s
+                    RETURNING id
+                    """,
+                    (worker_id,),
+                )
+                released += cur.rowcount
+
+    return released

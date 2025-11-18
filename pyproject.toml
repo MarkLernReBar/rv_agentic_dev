@@ -1,10 +1,28 @@
 [project]
-name = "repl-nix-workspace"
+name = "rv-agentic-dev"
 version = "0.1.0"
-description = "Add your description here"
+description = "RentVine agentic frontend using OpenAI Agents SDK and MCP via n8n"
 requires-python = ">=3.11"
 dependencies = [
     "openai>=1.100.0",
     "requests>=2.32.4",
     "streamlit>=1.48.1",
+    "openai-agents>=0.0.10",
+    "pydantic>=2.8.0",
+    "psycopg[binary]>=3.2.0",
 ]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+]
+
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]

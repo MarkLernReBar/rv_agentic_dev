@@ -5,6 +5,34 @@ from datetime import datetime
 
 import streamlit as st
 
+from rv_agentic.agents.company_researcher_agent import create_company_researcher_agent
+from rv_agentic.agents.contact_researcher_agent import create_contact_researcher_agent
+from rv_agentic.agents.lead_list_agent import create_lead_list_agent
+from rv_agentic.agents.sequence_enroller_agent import create_sequence_enroller_agent
+from rv_agentic.config.settings import get_settings
+from rv_agentic.services import supabase_client as _sb
+from rv_agentic.services.openai_provider import run_agent_sync
+from rv_agentic import orchestrator
+from rv_agentic.services.hubspot_client import (
+    HubSpotError as HS_E,
+    associate_note_to_company as hs_assoc_note_company,
+    associate_note_to_contact as hs_assoc_note_contact,
+    create_company as hs_create_company,
+    create_contact as hs_create_contact,
+    create_note as hs_create_note,
+    delete_note as hs_delete_note,
+    pin_note_on_company as hs_pin_note_company,
+    pin_note_on_contact as hs_pin_note_contact,
+    search_company_by_domain as hs_search_company,
+    search_contact as hs_search_contact,
+)
+from rv_agentic.services.utils import (
+    extract_domain_from_url,
+    normalize_domain,
+    validate_domain,
+)
+
+
 def _load_env_files() -> None:
     """Load environment variables from .env.local and .env if present.
     Does not override variables already present in the environment.
@@ -48,22 +76,8 @@ def _load_env_files() -> None:
 # Load env vars before creating any clients
 _load_env_files()
 
-from company_researcher import CompanyResearcher
-from contact_researcher import ContactResearcher
-from hubspot_client import HubSpotError as HS_E
-from hubspot_client import associate_note_to_company as hs_assoc_note_company
-from hubspot_client import associate_note_to_contact as hs_assoc_note_contact
-from hubspot_client import create_company as hs_create_company
-from hubspot_client import create_contact as hs_create_contact
-from hubspot_client import create_note as hs_create_note
-from hubspot_client import delete_note as hs_delete_note
-from hubspot_client import pin_note_on_company as hs_pin_note_company
-from hubspot_client import pin_note_on_contact as hs_pin_note_contact
-from hubspot_client import search_company_by_domain as hs_search_company
-from hubspot_client import search_contact as hs_search_contact
-from lead_list_generator import LeadListGenerator
-from sequence_enroller import SequenceEnroller
-from utils import extract_domain_from_url, normalize_domain, validate_domain
+# Initialize typed settings early so misconfig is visible
+_settings = get_settings()
 
 # Configure page
 st.set_page_config(
@@ -77,11 +91,12 @@ st.set_page_config(
 if "messages" not in st.session_state:
     st.session_state.messages = []
 if "agents" not in st.session_state:
+    # All agents are now backed by the OpenAI Agents SDK.
     st.session_state.agents = {
-        "Company Researcher": CompanyResearcher(),
-        "Contact Researcher": ContactResearcher(),
-        "Lead List Generator": LeadListGenerator(),
-        "Sequence Enroller": SequenceEnroller(),
+        "Company Researcher": create_company_researcher_agent(),
+        "Contact Researcher": create_contact_researcher_agent(),
+        "Lead List Generator": create_lead_list_agent(),
+        "Sequence Enroller": create_sequence_enroller_agent(),
     }
 if "current_agent" not in st.session_state:
     st.session_state.current_agent = "Company Researcher"
@@ -129,9 +144,21 @@ with st.sidebar:
 
     st.markdown("---")
 
-    st.subheader("Select Agent")
+    # Navigation
+    st.subheader("Navigation")
+    if "view_mode" not in st.session_state:
+        st.session_state.view_mode = "Agents"
+    view_mode = st.radio(
+        "View",
+        ["Agents", "Dashboard"],
+        index=0 if st.session_state.view_mode == "Agents" else 1,
+        label_visibility="collapsed",
+    )
+    st.session_state.view_mode = view_mode
 
-    # Agent selection buttons
+    st.markdown("---")
+
+    # Agent selection only in Agents view
     agents = {
         "Company Researcher": "🔍",
         "Contact Researcher": "👤",
@@ -139,74 +166,72 @@ with st.sidebar:
         "Sequence Enroller": "📧",
     }
 
-    for agent_name, icon in agents.items():
-        # Check if this is the active agent
-        is_active = st.session_state.current_agent == agent_name
+    if st.session_state.view_mode == "Agents":
+        st.subheader("Select Agent")
 
-        # Create button with conditional styling
-        if is_active:
-            # Active agent with green background and checkmark
-            st.markdown(
-                f"""
-                <div style="
-                    background-color: #d4edda; 
-                    border: 2px solid #28a745; 
-                    border-radius: 8px; 
-                    padding: 8px; 
-                    margin-bottom: 8px;
-                    text-align: center;
-                    font-weight: bold;
-                    color: #155724;
-                ">
-                    {icon} {agent_name} ✓ (Active)
-                </div>
-                """,
-                unsafe_allow_html=True,
-            )
-        else:
-            # Regular button for inactive agents
-            if st.button(
-                f"{icon} {agent_name}",
-                use_container_width=True,
-                key=f"btn_{agent_name}",
-            ):
-                st.session_state.current_agent = agent_name
-                st.session_state.messages = []  # Clear messages when switching agents
-                st.rerun()
+        for agent_name, icon in agents.items():
+            # Check if this is the active agent
+            is_active = st.session_state.current_agent == agent_name
+
+            # Create button with conditional styling
+            if is_active:
+                # Active agent with green background and checkmark
+                st.markdown(
+                    f"""
+                    <div style="
+                        background-color: #d4edda; 
+                        border: 2px solid #28a745; 
+                        border-radius: 8px; 
+                        padding: 8px; 
+                        margin-bottom: 8px;
+                        text-align: center;
+                        font-weight: bold;
+                        color: #155724;
+                    ">
+                        {icon} {agent_name} ✓ (Active)
+                    </div>
+                    """,
+                    unsafe_allow_html=True,
+                )
+            else:
+                # Regular button for inactive agents
+                if st.button(
+                    f"{icon} {agent_name}",
+                    use_container_width=True,
+                    key=f"btn_{agent_name}",
+                ):
+                    st.session_state.current_agent = agent_name
+                    st.session_state.messages = []  # Clear messages when switching agents
+                    st.rerun()
 
     st.markdown("---")
 
     # Quick Actions
-    st.subheader("Quick Actions")
-    if st.button("🔄 New Session", use_container_width=True):
-        st.session_state.messages = []
-        # Agents persist across sessions - no need to recreate
-        st.rerun()
-    if st.button("🔁 Reload Agents", use_container_width=True, help="Recreate agent objects to pick up latest code changes"):
-        try:
-            del st.session_state["agents"]
-        except Exception:
-            pass
-        st.session_state.messages = []
-        st.rerun()
-    # Removed: HubSpot Sequences quick actions and owner input.
-    # Natural language requests to view sequences are handled by the Sequence Enroller agent.
-    st.markdown("---")
+    if st.session_state.view_mode == "Agents":
+        st.subheader("Quick Actions")
+        if st.button("🔄 New Session", use_container_width=True):
+            st.session_state.messages = []
+            # Agents persist across sessions - no need to recreate
+            st.rerun()
+        if st.button("🔁 Reload Agents", use_container_width=True, help="Recreate agent objects to pick up latest code changes"):
+            try:
+                del st.session_state["agents"]
+            except Exception:
+                pass
+            st.session_state.messages = []
+            st.rerun()
+        # Removed: HubSpot Sequences quick actions and owner input.
+        # Natural language requests to view sequences are handled by the Sequence Enroller agent.
+        st.markdown("---")
 
-    # Current agent info
-    st.subheader("Current Agent")
-    current_icon = agents.get(st.session_state.current_agent, "🤖")
-    st.write(f"**Active:** {current_icon} {st.session_state.current_agent}")
+        # Current agent info
+        st.subheader("Current Agent")
+        current_icon = agents.get(st.session_state.current_agent, "🤖")
+        st.write(f"**Active:** {current_icon} {st.session_state.current_agent}")
 
     # Display agent configuration
     with st.expander("🔧 System Status", expanded=False):
-        current_model = (
-            "GPT-5-mini"
-            if st.session_state.current_agent
-            in ["Company Researcher", "Lead List Generator"]
-            else "GPT-5"
-        )
-        st.write(f"**Model:** {current_model}")
+        st.write("**Model family:** GPT-5")
         # HubSpot owners fallback hint
         owners_fallback = bool(os.getenv("HUBSPOT_OWNER_USER_IDS"))
         st.write(
@@ -217,10 +242,12 @@ with st.sidebar:
         supabase_ok = bool(os.getenv("NEXT_PUBLIC_SUPABASE_URL") and (os.getenv("SUPABASE_SERVICE_KEY") or os.getenv("NEXT_PUBLIC_SUPABASE_ANON_KEY")))
         openai_ok = bool(os.getenv("OPENAI_API_KEY"))
         hubspot_ok = bool(os.getenv("HUBSPOT_PRIVATE_APP_TOKEN") or os.getenv("HUBSPOT_TOKEN"))
+        mcp_ok = bool(os.getenv("N8N_MCP_SERVER_URL"))
         st.write(f"**OpenAI:** {'configured' if openai_ok else 'not configured'}")
         st.write(f"**HubSpot:** {'configured' if hubspot_ok else 'not configured'}")
         st.write(f"**NEO Research Database:** {'configured' if supabase_ok else 'not configured'}")
         st.write(f"**Serper (Precision):** {'configured' if serper_ok else 'not configured'}")
+        st.write(f"**MCP (n8n):** {'configured' if mcp_ok else 'not configured'}")
         # Removed: Default Owner Email display (not relevant to this app)
         # HubSpot Note round-trip test (create -> delete)
         if st.button("🧪 Test HubSpot Note (create + delete)"):
@@ -242,27 +269,73 @@ with st.sidebar:
                     stat.update(label="❌ HubSpot note test failed", state="error")
                     st.error(str(e))
 
-        # Supabase insert smoke test for enrichment requests
-        if st.button("🧪 Test Supabase Logging (enrichment_requests)"):
-            from supabase_client import insert_enrichment_request as _sb_insert
-            with st.status("Testing Supabase insert...", state="running", expanded=True) as stat:
+        # Supabase insert smoke test for pm_pipeline.runs
+        if st.button("🧪 Test pm_pipeline runs insert"):
+            with st.status("Testing pm_pipeline.runs insert...", state="running", expanded=True) as stat:
                 try:
-                    payload = {
-                        "batch_id": f"test-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}",
+                    test_criteria = {
                         "natural_request": "TEST: please ignore",
-                        "notify_email": "test@example.com",
-                        "parameters": {"quantity": 1, "notes": "smoke test"},
                         "source": "ui_smoke_test",
                     }
-                    row = _sb_insert(request=payload, status="test")
+                    row = _sb.create_pm_run(
+                        criteria=test_criteria,
+                        target_quantity=1,
+                        notes="smoke test from Streamlit UI",
+                    )
                     rid = row.get("id") if isinstance(row, dict) else None
-                    stat.update(label="✅ Supabase insert ok", state="complete")
-                    st.success(f"Inserted row id={rid}")
+                    stat.update(label="✅ pm_pipeline.runs insert ok", state="complete")
+                    st.success(f"Inserted run id={rid}")
                 except Exception as e:
-                    stat.update(label="❌ Supabase insert failed", state="error")
+                    stat.update(label="❌ pm_pipeline.runs insert failed", state="error")
                     st.error(str(e))
 
     # (Removed sidebar pin buttons; actions live under the chat)
+
+# Dashboard view
+if st.session_state.get("view_mode") == "Dashboard":
+    st.title("📊 Dashboard")
+    try:
+        metrics = _sb.get_focus_account_metrics()
+        if not metrics:
+            st.info("No focus account metrics found.")
+        else:
+            # Ensure only the desired columns are shown and visible
+            cols = ["owner_email", "role", "target", "current", "gap", "status"]
+            # Normalize rows to only these keys
+            cleaned = [{k: row.get(k) for k in cols} for row in metrics]
+
+            # Lightweight summary strip across the top
+            owners = {row.get("owner_email") for row in cleaned if row.get("owner_email")}
+
+            def _safe_int(v: object) -> int:
+                try:
+                    return int(v) if v is not None else 0
+                except (ValueError, TypeError):
+                    return 0
+
+            total_target = sum(_safe_int(row.get("target")) for row in cleaned)
+            total_current = sum(_safe_int(row.get("current")) for row in cleaned)
+            total_gap = sum(_safe_int(row.get("gap")) for row in cleaned)
+
+            st.subheader("Focus Account Metrics")
+            st.markdown("Overall pipeline targets by owner and role.")
+
+            c1, c2, c3, c4 = st.columns(4)
+            with c1:
+                st.metric("Owners", len(owners))
+            with c2:
+                st.metric("Total Target", total_target)
+            with c3:
+                st.metric("Total Current", total_current)
+            with c4:
+                st.metric("Total Gap", total_gap)
+
+            # Main table (kept simple and non-scrollable)
+            st.table(cleaned)
+    except Exception as e:
+        st.error(f"Error loading dashboard metrics: {e}")
+    # Skip the rest of the chat UI
+    st.stop()
 
 # Main chat interface
 current_icon = agents.get(st.session_state.current_agent, "🤖")
@@ -286,6 +359,252 @@ for message in st.session_state.messages:
             st.markdown(message["content"])
         else:
             st.markdown(message["content"])
+
+# Lead list run status helper (for pm_pipeline runs)
+if st.session_state.current_agent == "Lead List Generator":
+    st.markdown("---")
+    st.subheader("Lead List Run Status")
+    col_run, col_btn = st.columns([3, 1])
+    with col_run:
+        run_id_input = st.text_input(
+            "Run ID",
+            value="",
+            placeholder="Paste a pm_pipeline run id (UUID)",
+            key="lead_list_run_id",
+        )
+    with col_btn:
+        check_clicked = st.button("Check Status", use_container_width=True)
+    if check_clicked and run_id_input.strip():
+        with st.status("Fetching run status from pm_pipeline…", state="running") as stat:
+            try:
+                rid = run_id_input.strip()
+                run = _sb.get_pm_run(rid)
+                company_gap = _sb.get_pm_company_gap(rid)
+                contact_gap = _sb.get_contact_gap_summary(rid)
+                if not run:
+                    stat.update(label="Run not found", state="error")
+                    st.error("No run found with that id.")
+                else:
+                    stat.update(label="Run loaded", state="complete")
+
+                    # Use orchestrator.get_run_progress for enhanced progress display
+                    progress = orchestrator.get_run_progress(rid)
+
+                    st.markdown("#### Run")
+                    st.markdown(
+                        f"- **Status:** `{progress.get('status')}`\n"
+                        f"- **Stage:** `{progress.get('stage')}`\n"
+                        f"- **Target Quantity:** `{progress.get('target_quantity')}`\n"
+                    )
+
+                    st.markdown("#### Progress")
+
+                    # Company progress bar
+                    companies_info = progress.get("companies", {})
+                    companies_ready = companies_info.get("ready", 0)
+                    companies_gap = companies_info.get("gap", 0)
+                    company_progress_pct = companies_info.get("progress_pct", 0)
+
+                    st.markdown(f"**Companies: {companies_ready} / {progress.get('target_quantity')} ({company_progress_pct}%)**")
+                    st.progress(company_progress_pct / 100.0)
+                    st.caption(f"Gap: {companies_gap} companies remaining")
+
+                    # Contact progress bar
+                    contacts_info = progress.get("contacts", {})
+                    contacts_ready = contacts_info.get("ready", 0)
+                    contacts_gap = contacts_info.get("gap", 0)
+                    contact_progress_pct = contacts_info.get("progress_pct", 0)
+
+                    st.markdown(f"**Contacts: {contacts_ready} total ({contact_progress_pct}% of minimum)**")
+                    st.progress(contact_progress_pct / 100.0)
+                    st.caption(f"Gap: {contacts_gap} contacts remaining to meet minimum")
+
+                    # Export CSV button when run is completed
+                    if str(progress.get("status")) == "completed":
+                        st.markdown("#### Export")
+                        if st.button("📥 Download CSVs", use_container_width=True, key="btn_export_csv"):
+                            try:
+                                from rv_agentic.services import export
+                                import tempfile
+
+                                with st.status("Generating CSV files...", state="running") as export_stat:
+                                    with tempfile.TemporaryDirectory() as tmpdir:
+                                        companies_path, contacts_path = export.export_run_to_files(rid, tmpdir)
+
+                                        # Read files for download
+                                        with open(companies_path, "r") as f:
+                                            companies_csv = f.read()
+                                        with open(contacts_path, "r") as f:
+                                            contacts_csv = f.read()
+
+                                        export_stat.update(label="✅ CSVs generated", state="complete")
+
+                                        # Provide download buttons
+                                        col_csv1, col_csv2 = st.columns(2)
+                                        with col_csv1:
+                                            st.download_button(
+                                                label="📊 Download Companies CSV",
+                                                data=companies_csv,
+                                                file_name=f"companies_{rid[:8]}.csv",
+                                                mime="text/csv",
+                                                use_container_width=True,
+                                            )
+                                        with col_csv2:
+                                            st.download_button(
+                                                label="👥 Download Contacts CSV",
+                                                data=contacts_csv,
+                                                file_name=f"contacts_{rid[:8]}.csv",
+                                                mime="text/csv",
+                                                use_container_width=True,
+                                            )
+                            except Exception as e:
+                                st.error(f"CSV export failed: {e}")
+
+                    # When a run needs user decision (e.g. contact gap could not be closed),
+                    # surface guidance and options.
+                    if str(run.get("status")) == "needs_user_decision":
+                        st.markdown("#### Action Required")
+                        notes = (run.get("notes") or "").strip()
+                        if notes:
+                            st.info(notes)
+                        st.markdown(
+                            "The system could not fully satisfy the requirements for this run. "
+                            "Choose how you would like to proceed:"
+                        )
+                        col1, col2, col3 = st.columns(3)
+                        with col1:
+                            expand_loc = st.button("Expand Location", key="btn_expand_location")
+                        with col2:
+                            loosen_pms = st.button("Loosen PMS", key="btn_loosen_pms")
+                        with col3:
+                            accept_partial = st.button("Accept Partial Results", key="btn_accept_partial")
+
+                        chosen = None
+                        if expand_loc:
+                            chosen = "expand_location"
+                        elif loosen_pms:
+                            chosen = "loosen_pms"
+                        elif accept_partial:
+                            chosen = "accept_partial"
+
+                        if chosen:
+                            # For now we record the choice in notes and, for the
+                            # accept-partial path, mark the run as fully completed.
+                            base_notes = notes or ""
+                            choice_note = (
+                                f"[User decision] {chosen.replace('_', ' ')} at UI time."
+                            )
+                            new_notes = (base_notes + "\n\n" + choice_note).strip()
+                            if chosen == "accept_partial":
+                                _sb.set_run_stage(run_id=rid, stage="done", status="completed")
+                                _sb.update_pm_run_status(run_id=rid, status="completed", error=new_notes)
+                                st.success("Marked run as completed with partial results.")
+                            else:
+                                # Keep status as needs_user_decision but capture the choice;
+                                # a follow-up process or operator can adjust criteria and resume.
+                                _sb.update_pm_run_status(
+                                    run_id=rid,
+                                    status="needs_user_decision",
+                                    error=new_notes,
+                                )
+                                st.success("Recorded your preference; please adjust criteria and resume the run.")
+            except Exception as e:
+                stat.update(label="Error loading run", state="error")
+                st.error(str(e))
+
+    # Worker Health Monitoring
+    st.markdown("---")
+    st.subheader("Worker Health")
+
+    if st.button("🔄 Refresh Worker Status", use_container_width=False):
+        st.rerun()
+
+    try:
+        from rv_agentic.services import heartbeat
+        health = heartbeat.get_worker_health_summary()
+
+        # Overall health metrics
+        col_active, col_dead, col_status = st.columns(3)
+        with col_active:
+            st.metric("Active Workers", health.get("total_active_workers", 0))
+        with col_dead:
+            st.metric(
+                "Dead Workers",
+                health.get("total_dead_workers", 0),
+                delta=None,
+                delta_color="inverse"
+            )
+        with col_status:
+            health_status = health.get("health_status", "unknown")
+            status_emoji = "✅" if health_status == "healthy" else "⚠️"
+            st.metric("System Health", f"{status_emoji} {health_status.title()}")
+
+        # Worker stats by type
+        stats_by_type = health.get("stats_by_type", [])
+        if stats_by_type:
+            st.markdown("#### Workers by Type")
+
+            # Create a nice table
+            import pandas as pd
+            df = pd.DataFrame(stats_by_type)
+            if not df.empty:
+                # Rename columns for display
+                df_display = df.rename(columns={
+                    "worker_type": "Type",
+                    "total_workers": "Total",
+                    "active_workers": "Active",
+                    "idle_workers": "Idle",
+                    "processing_workers": "Processing",
+                    "dead_workers": "Dead"
+                })
+                # Select only relevant columns
+                cols_to_show = ["Type", "Total", "Active", "Idle", "Processing", "Dead"]
+                df_display = df_display[[col for col in cols_to_show if col in df_display.columns]]
+                st.dataframe(df_display, use_container_width=True, hide_index=True)
+
+        # Show dead workers if any
+        dead_workers = health.get("dead_workers", [])
+        if dead_workers:
+            st.warning(f"⚠️ {len(dead_workers)} worker(s) appear to be dead")
+            with st.expander("View Dead Workers"):
+                for worker in dead_workers:
+                    worker_id = worker.get("worker_id", "unknown")
+                    worker_type = worker.get("worker_type", "unknown")
+                    minutes_ago = worker.get("seconds_since_heartbeat", 0) / 60.0
+                    current_task = worker.get("current_task", "none")
+
+                    st.markdown(
+                        f"**{worker_id}** ({worker_type})  \n"
+                        f"Last seen: {minutes_ago:.1f} minutes ago  \n"
+                        f"Task: {current_task}"
+                    )
+                    st.markdown("---")
+
+        # Show active workers
+        active_workers = health.get("active_workers", [])
+        if active_workers:
+            with st.expander(f"View Active Workers ({len(active_workers)})"):
+                for worker in active_workers:
+                    worker_id = worker.get("worker_id", "unknown")
+                    worker_type = worker.get("worker_type", "unknown")
+                    status = worker.get("status", "unknown")
+                    seconds_ago = worker.get("seconds_since_heartbeat", 0)
+                    current_task = worker.get("current_task", "idle")
+                    current_run_id = worker.get("current_run_id")
+
+                    status_emoji = {"active": "🟢", "idle": "🟡", "processing": "🔵"}.get(status, "⚪")
+
+                    st.markdown(
+                        f"{status_emoji} **{worker_id}** ({worker_type})  \n"
+                        f"Status: {status} | Heartbeat: {seconds_ago:.0f}s ago  \n"
+                        f"Task: {current_task or 'idle'}"
+                    )
+                    if current_run_id:
+                        st.caption(f"Run ID: {current_run_id}")
+                    st.markdown("---")
+
+    except Exception as e:
+        st.error(f"Failed to load worker health: {e}")
 
 # Contextual HubSpot pin/create actions under the most recent assistant summary
 last_assistant_msg = next(
@@ -616,18 +935,60 @@ def _process_prompt(prompt: str):
                         f"🧭 Processing request with {st.session_state.current_agent}…"
                     )
 
-                    current_agent = st.session_state.agents[
-                        st.session_state.current_agent
-                    ]
-                    if isinstance(current_agent, LeadListGenerator):
-                        history_snapshot = list(st.session_state.messages)
-                        response = current_agent.research(
-                            prompt,
-                            stream_callback,
-                            conversation_history=history_snapshot,
+                    current_agent_name = st.session_state.current_agent
+                    current_agent = st.session_state.agents[current_agent_name]
+
+                    # Lead List Generator: use Agents SDK + pm_pipeline.runs
+                    if current_agent_name == "Lead List Generator":
+                        # Create a pm_pipeline run immediately so downstream workers can process it.
+                        try:
+                            inferred_qty = 40
+                            qty_match = re.search(r"(?:^|\\D)(\\d{1,4})(?:\\s+leads|\\s+accounts|\\b)", prompt)
+                            if qty_match:
+                                inferred_qty = int(qty_match.group(1))
+                        except Exception:
+                            inferred_qty = 40
+
+                        criteria = {
+                            "natural_request": prompt,
+                            "source": "lead_list_generator_ui",
+                            "created_via": "streamlit",
+                        }
+                        pm_run = _sb.create_pm_run(
+                            criteria=criteria,
+                            target_quantity=inferred_qty,
                         )
+                        run_id = pm_run.get("id")
+
+                        # Let the Lead List Agent generate a human-friendly confirmation / summary.
+                        try:
+                            agent_prompt = (
+                                f"User lead list request: {prompt}\n\n"
+                                f"A backend worker will fulfill run id '{run_id}'. "
+                                "Summarize the request parameters clearly for the user and confirm "
+                                "that the list will be generated asynchronously."
+                            )
+                            result = run_agent_sync(current_agent, agent_prompt)
+                            response = getattr(result, "final_output", "") or ""
+                        except Exception:
+                            response = (
+                                "### ✅ Lead List Request Queued\n\n"
+                                f"- **Run ID:** `{run_id}`\n"
+                                f"- **Requested Quantity (approx.):** {inferred_qty}\n\n"
+                                "Your lead list will be generated asynchronously based on this request."
+                            )
+
+                        # Add backend run metadata to the status stream
+                        if run_id:
+                            stream_callback(f"✅ Queued pm_pipeline run `{run_id}` for processing.")
                     else:
-                        response = current_agent.research(prompt, stream_callback)
+                        # Legacy agents with .research()
+                        if hasattr(current_agent, "research"):
+                            response = current_agent.research(prompt, stream_callback)
+                        else:
+                            # Fallback for future Agents SDK-based agents
+                            result = run_agent_sync(current_agent, prompt)
+                            response = getattr(result, "final_output", "") or ""
 
                     # Final render with minimal newline-after-headings pass outside code fences.
                     # If nothing was streamed as content, fall back to the agent's return value
