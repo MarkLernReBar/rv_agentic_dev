@@ -147,6 +147,9 @@ PMS_SUBDOMAINS_TABLE = os.getenv("SUPABASE_PMS_SUBDOMAINS_TABLE", "public.pms_su
 PM_BLOCKED_DOMAINS_VIEW = os.getenv(
     "SUPABASE_PM_BLOCKED_DOMAINS_VIEW", "pm_pipeline.v_blocked_domains"
 )
+PM_HUBSPOT_SUPPRESSION_TABLE = os.getenv(
+    "SUPABASE_PM_HUBSPOT_SUPPRESSION_TABLE", "pm_pipeline.hubspot_recent_contact_suppression"
+)
 
 
 def _get(path: str, params: Optional[Dict[str, Any]] = None) -> List[Dict[str, Any]]:
@@ -871,12 +874,33 @@ def insert_company_candidate(
     Returns the stored row, or None on duplicate/conflict.
     """
 
+    # Normalize state to 2-letter code
+    state_normalized = state.upper().strip()
+    if len(state_normalized) > 2:
+        # Map common full names to abbreviations
+        state_map = {
+            "TEXAS": "TX", "CALIFORNIA": "CA", "FLORIDA": "FL", "NEW YORK": "NY",
+            "PENNSYLVANIA": "PA", "ILLINOIS": "IL", "OHIO": "OH", "GEORGIA": "GA",
+            "NORTH CAROLINA": "NC", "MICHIGAN": "MI", "NEW JERSEY": "NJ",
+            "VIRGINIA": "VA", "WASHINGTON": "WA", "ARIZONA": "AZ", "MASSACHUSETTS": "MA",
+            "TENNESSEE": "TN", "INDIANA": "IN", "MISSOURI": "MO", "MARYLAND": "MD",
+            "WISCONSIN": "WI", "COLORADO": "CO", "MINNESOTA": "MN", "SOUTH CAROLINA": "SC",
+            "ALABAMA": "AL", "LOUISIANA": "LA", "KENTUCKY": "KY", "OREGON": "OR",
+            "OKLAHOMA": "OK", "CONNECTICUT": "CT", "UTAH": "UT", "IOWA": "IA",
+            "NEVADA": "NV", "ARKANSAS": "AR", "MISSISSIPPI": "MS", "KANSAS": "KS",
+            "NEW MEXICO": "NM", "NEBRASKA": "NE", "WEST VIRGINIA": "WV", "IDAHO": "ID",
+            "HAWAII": "HI", "NEW HAMPSHIRE": "NH", "MAINE": "ME", "MONTANA": "MT",
+            "RHODE ISLAND": "RI", "DELAWARE": "DE", "SOUTH DAKOTA": "SD",
+            "NORTH DAKOTA": "ND", "ALASKA": "AK", "VERMONT": "VT", "WYOMING": "WY"
+        }
+        state_normalized = state_map.get(state_normalized, state_normalized[:2])
+
     row: Dict[str, Any] = {
         "run_id": run_id,
         "name": name,
         "website": website,
         "domain": domain.lower().strip(),
-        "state": state.upper().strip(),
+        "state": state_normalized,
         "idem_key": extra.get("idem_key") or domain.lower().strip(),
     }
     # Optional fields
@@ -1318,6 +1342,59 @@ def get_blocked_domains() -> List[str]:
     return domains
 
 
+def insert_hubspot_suppression(
+    *,
+    domain: str,
+    company_name: Optional[str] = None,
+    hubspot_company_id: Optional[str] = None,
+    suppression_reason: str,
+    lifecycle_stage: Optional[str] = None,
+    last_contact_date: Optional[str] = None,
+    last_contact_type: Optional[str] = None,
+    engagement_count: Optional[int] = None,
+) -> None:
+    """Insert a HubSpot suppression record.
+
+    Args:
+        domain: Company domain (required)
+        company_name: Company name from HubSpot
+        hubspot_company_id: HubSpot company ID
+        suppression_reason: Reason for suppression ('customer' or 'recently_contacted')
+        lifecycle_stage: HubSpot lifecycle stage (e.g., 'customer')
+        last_contact_date: ISO date of last contact
+        last_contact_type: Type of last contact (EMAIL, CALL, MEETING)
+        engagement_count: Number of engagements in the lookback period
+    """
+    row = {
+        "domain": domain.strip().lower(),
+        "company_name": company_name,
+        "hubspot_company_id": hubspot_company_id,
+        "suppression_reason": suppression_reason,
+        "lifecycle_stage": lifecycle_stage,
+        "last_contact_date": last_contact_date,
+        "last_contact_type": last_contact_type,
+        "engagement_count": engagement_count,
+    }
+
+    try:
+        _post_pm(PM_HUBSPOT_SUPPRESSION_TABLE, [row])
+    except SupabaseError:
+        # Idempotent - ignore duplicates
+        pass
+
+
+def is_domain_in_hubspot_suppression(domain: str) -> bool:
+    """Check if a domain is in the HubSpot suppression table."""
+    try:
+        rows = _get_pm(
+            PM_HUBSPOT_SUPPRESSION_TABLE,
+            {"domain": f"eq.{domain.strip().lower()}", "select": "domain"}
+        )
+        return bool(rows)
+    except SupabaseError:
+        return False
+
+
 # ---------------------------
 # Staging companies (PMS fan-out) helpers
 # ---------------------------
@@ -1507,6 +1584,8 @@ def get_active_workers() -> List[Dict[str, Any]]:
     Returns:
         List of worker dicts with heartbeat info
     """
+    from decimal import Decimal
+
     with _pg_conn() as conn:
         with conn.cursor() as cur:
             cur.execute(
@@ -1526,7 +1605,17 @@ def get_active_workers() -> List[Dict[str, Any]]:
                 """
             )
             columns = [desc[0] for desc in cur.description]
-            return [dict(zip(columns, row)) for row in cur.fetchall()]
+            rows = []
+            for row in cur.fetchall():
+                # Convert Decimal to float for numeric values
+                row_dict = {}
+                for col, val in zip(columns, row):
+                    if isinstance(val, Decimal):
+                        row_dict[col] = float(val)
+                    else:
+                        row_dict[col] = val
+                rows.append(row_dict)
+            return rows
 
 
 def get_dead_workers() -> List[Dict[str, Any]]:
@@ -1535,6 +1624,8 @@ def get_dead_workers() -> List[Dict[str, Any]]:
     Returns:
         List of worker dicts that appear to have crashed
     """
+    from decimal import Decimal
+
     with _pg_conn() as conn:
         with conn.cursor() as cur:
             cur.execute(
@@ -1554,7 +1645,17 @@ def get_dead_workers() -> List[Dict[str, Any]]:
                 """
             )
             columns = [desc[0] for desc in cur.description]
-            return [dict(zip(columns, row)) for row in cur.fetchall()]
+            rows = []
+            for row in cur.fetchall():
+                # Convert Decimal to float for numeric values
+                row_dict = {}
+                for col, val in zip(columns, row):
+                    if isinstance(val, Decimal):
+                        row_dict[col] = float(val)
+                    else:
+                        row_dict[col] = val
+                rows.append(row_dict)
+            return rows
 
 
 def get_worker_stats() -> List[Dict[str, Any]]:
@@ -1569,11 +1670,23 @@ def get_worker_stats() -> List[Dict[str, Any]]:
         - processing_workers
         - dead_workers
     """
+    from decimal import Decimal
+
     with _pg_conn() as conn:
         with conn.cursor() as cur:
             cur.execute("SELECT * FROM pm_pipeline.get_worker_stats()")
             columns = [desc[0] for desc in cur.description]
-            return [dict(zip(columns, row)) for row in cur.fetchall()]
+            rows = []
+            for row in cur.fetchall():
+                # Convert Decimal to float for numeric values
+                row_dict = {}
+                for col, val in zip(columns, row):
+                    if isinstance(val, Decimal):
+                        row_dict[col] = float(val)
+                    else:
+                        row_dict[col] = val
+                rows.append(row_dict)
+            return rows
 
 
 def cleanup_stale_workers(stale_threshold_minutes: int = 60) -> List[Dict[str, Any]]:
@@ -1644,3 +1757,32 @@ def release_dead_worker_leases() -> int:
                 released += cur.rowcount
 
     return released
+
+
+def get_active_and_recent_runs(limit: int = 10) -> List[Dict[str, Any]]:
+    """Get active and recently completed runs for UI display.
+
+    Returns runs that are:
+    - Currently active (stage != 'done')
+    - Completed in the last 48 hours
+
+    Args:
+        limit: Maximum number of runs to return (default: 10)
+
+    Returns:
+        List of run dicts sorted by created_at desc (newest first)
+    """
+    with _pg_conn() as conn:
+        with conn.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute(
+                """
+                SELECT *
+                FROM pm_pipeline.runs
+                WHERE stage != 'done'
+                   OR (stage = 'done' AND updated_at > NOW() - INTERVAL '48 hours')
+                ORDER BY created_at DESC
+                LIMIT %s
+                """,
+                (limit,),
+            )
+            return cur.fetchall()

@@ -1,0 +1,93 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.11, pytest-9.0.1, pluggy-1.6.0 -- /Users/marklerner/RV_Agentic_FrontEnd_Dev/.venv/bin/python3
+cachedir: .pytest_cache
+rootdir: /Users/marklerner/RV_Agentic_FrontEnd_Dev
+configfile: pyproject.toml
+plugins: anyio-4.11.0
+collecting ... collected 1 item
+
+tests/integration/test_real_25_company_run.py::test_real_25_company_run_with_batching 
+================================================================================
+REAL PRODUCTION TEST: 25-Company Run with Batching
+================================================================================
+Run ID: ea4541bd-1a10-4486-a59b-f2dec2093992
+Target: 25 companies
+Batch Size: 10
+Expected Batches: 3 (10 + 10 + 5)
+Expected Time: 12-15 minutes
+================================================================================
+
+[21:54:33] Creating test run in database...
+❌ Failed to create test run: create_pm_run() got an unexpected keyword argument 'run_id'
+SKIPPED
+
+=============================== warnings summary ===============================
+tests/integration/test_real_25_company_run.py:29
+  /Users/marklerner/RV_Agentic_FrontEnd_Dev/tests/integration/test_real_25_company_run.py:29: PytestUnknownMarkWarning: Unknown pytest.mark.integration - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.integration
+
+tests/integration/test_real_25_company_run.py:30
+  /Users/marklerner/RV_Agentic_FrontEnd_Dev/tests/integration/test_real_25_company_run.py:30: PytestUnknownMarkWarning: Unknown pytest.mark.slow - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.slow
+
+tests/integration/test_real_25_company_run.py:243
+  /Users/marklerner/RV_Agentic_FrontEnd_Dev/tests/integration/test_real_25_company_run.py:243: PytestUnknownMarkWarning: Unknown pytest.mark.integration - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.integration
+
+tests/integration/test_real_25_company_run.py:244
+  /Users/marklerner/RV_Agentic_FrontEnd_Dev/tests/integration/test_real_25_company_run.py:244: PytestUnknownMarkWarning: Unknown pytest.mark.slow - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.slow
+
+tests/integration/test_real_25_company_run.py::test_real_25_company_run_with_batching
+  /Users/marklerner/RV_Agentic_FrontEnd_Dev/src/rv_agentic/config/settings.py:23: PydanticDeprecatedSince20: Using extra keyword arguments on `Field` is deprecated and will be removed. Use `json_schema_extra` instead. (Extra keys: 'env'). Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+    openai_api_key: str = Field(..., env="OPENAI_API_KEY")
+
+tests/integration/test_real_25_company_run.py::test_real_25_company_run_with_batching
+  /Users/marklerner/RV_Agentic_FrontEnd_Dev/src/rv_agentic/config/settings.py:27: PydanticDeprecatedSince20: Using extra keyword arguments on `Field` is deprecated and will be removed. Use `json_schema_extra` instead. (Extra keys: 'env'). Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+    n8n_mcp_server_url: Optional[str] = Field(None, env="N8N_MCP_SERVER_URL")
+
+tests/integration/test_real_25_company_run.py::test_real_25_company_run_with_batching
+  /Users/marklerner/RV_Agentic_FrontEnd_Dev/src/rv_agentic/config/settings.py:28: PydanticDeprecatedSince20: Using extra keyword arguments on `Field` is deprecated and will be removed. Use `json_schema_extra` instead. (Extra keys: 'env'). Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+    n8n_mcp_server_label: str = Field("default-server", env="N8N_MCP_SERVER_LABEL")
+
+tests/integration/test_real_25_company_run.py::test_real_25_company_run_with_batching
+  /Users/marklerner/RV_Agentic_FrontEnd_Dev/src/rv_agentic/config/settings.py:29: PydanticDeprecatedSince20: Using extra keyword arguments on `Field` is deprecated and will be removed. Use `json_schema_extra` instead. (Extra keys: 'env'). Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+    n8n_mcp_auth_token: Optional[str] = Field(None, env="N8N_MCP_AUTH_TOKEN")
+
+tests/integration/test_real_25_company_run.py::test_real_25_company_run_with_batching
+  /Users/marklerner/RV_Agentic_FrontEnd_Dev/src/rv_agentic/config/settings.py:32: PydanticDeprecatedSince20: Using extra keyword arguments on `Field` is deprecated and will be removed. Use `json_schema_extra` instead. (Extra keys: 'env'). Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+    n8n_mcp_base_url: Optional[str] = Field(None, env="N8N_MCP_BASE_URL")
+
+tests/integration/test_real_25_company_run.py::test_real_25_company_run_with_batching
+  /Users/marklerner/RV_Agentic_FrontEnd_Dev/src/rv_agentic/config/settings.py:35: PydanticDeprecatedSince20: Using extra keyword arguments on `Field` is deprecated and will be removed. Use `json_schema_extra` instead. (Extra keys: 'env'). Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+    supabase_url: Optional[str] = Field(None, env="SUPABASE_URL")
+
+tests/integration/test_real_25_company_run.py::test_real_25_company_run_with_batching
+  /Users/marklerner/RV_Agentic_FrontEnd_Dev/src/rv_agentic/config/settings.py:36: PydanticDeprecatedSince20: Using extra keyword arguments on `Field` is deprecated and will be removed. Use `json_schema_extra` instead. (Extra keys: 'env'). Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+    supabase_anon_key: Optional[str] = Field(None, env="SUPABASE_ANON_KEY")
+
+tests/integration/test_real_25_company_run.py::test_real_25_company_run_with_batching
+  /Users/marklerner/RV_Agentic_FrontEnd_Dev/src/rv_agentic/config/settings.py:16: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+    class Settings(BaseSettings):
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+======================= 1 skipped, 12 warnings in 0.47s ========================
+Loading .env.local...
+✅ Environment loaded
+
+================================================================================
+FULL 25-COMPANY PRODUCTION TEST
+================================================================================
+
+⚠️  This will:
+   - Run real agents with OpenAI API
+   - Take 12-15 minutes
+   - Consume ~$0.50-$1.00 in API credits
+   - Create and clean up test data
+
+Starting test...
+
+
+================================================================================
+✅ TEST PASSED - System is production-ready! 🚀
+================================================================================

@@ -789,3 +789,143 @@ def resolve_user_id_by_email(sender_email: str) -> Optional[str]:
             if uid:
                 return str(uid)
     return None
+
+
+# --- Lead List Suppression Helpers ---
+
+
+def get_company_by_domain_with_lifecycle(domain: str) -> Optional[Dict[str, Any]]:
+    """Get company by domain including lifecycle stage and other suppression-relevant fields."""
+    props = [
+        "name",
+        "domain",
+        "lifecyclestage",
+        "hs_lastmodifieddate",
+        "lastactivitydate",
+        "hs_last_sales_activity_timestamp",
+        "hs_object_id",
+    ]
+    payload = {
+        "limit": 1,
+        "properties": props,
+        "filterGroups": [
+            {"filters": [{"propertyName": "domain", "operator": "EQ", "value": domain}]}
+        ],
+    }
+    data = _post("crm/v3/objects/companies/search", payload)
+    results = data.get("results", [])
+    return results[0] if results else None
+
+
+def get_recent_engagements_for_company(
+    company_id: str, days: int = 90
+) -> List[Dict[str, Any]]:
+    """Get recent engagements (emails, calls, meetings) for a company in the last N days.
+
+    Args:
+        company_id: HubSpot company ID
+        days: Look-back window in days (default 90)
+
+    Returns:
+        List of engagement dicts with type, timestamp, and metadata
+    """
+    cutoff_date = datetime.utcnow() - timedelta(days=days)
+    cutoff_ms = int(cutoff_date.timestamp() * 1000)
+
+    try:
+        # Get engagements associated with this company
+        response = _get(
+            f"engagements/v1/engagements/associated/COMPANY/{company_id}/paged",
+            params={"limit": 100, "offset": 0}
+        )
+
+        engagements = response.get('results', [])
+
+        # Filter by date and relevant types
+        recent = []
+        for e in engagements:
+            engagement = e.get('engagement', {})
+            timestamp = engagement.get('timestamp', 0)
+            eng_type = engagement.get('type', '')
+
+            # Only include EMAIL, CALL, MEETING within date range
+            if timestamp >= cutoff_ms and eng_type in ['EMAIL', 'CALL', 'MEETING']:
+                recent.append({
+                    'type': eng_type,
+                    'timestamp': timestamp,
+                    'date': datetime.fromtimestamp(timestamp / 1000).isoformat(),
+                    'engagement_id': engagement.get('id'),
+                })
+
+        return recent
+
+    except Exception as e:
+        # Log but don't fail - suppression check is best-effort
+        return []
+
+
+def check_company_suppression(
+    domain: str, days: int = 90
+) -> Dict[str, Any]:
+    """Check if a company should be suppressed for lead list generation.
+
+    Args:
+        domain: Company domain
+        days: Look-back window for recent contact (default 90)
+
+    Returns:
+        {
+            'should_suppress': bool,
+            'reason': str or None,  # 'customer' or 'recently_contacted'
+            'details': dict with additional context
+        }
+    """
+    result = {
+        'should_suppress': False,
+        'reason': None,
+        'details': {}
+    }
+
+    try:
+        # Get company with lifecycle stage
+        company = get_company_by_domain_with_lifecycle(domain)
+
+        if not company:
+            return result  # Not in HubSpot, no suppression
+
+        properties = company.get('properties', {})
+        company_id = company.get('id')
+        lifecycle_stage = properties.get('lifecyclestage')
+
+        # Check 1: Is customer?
+        if lifecycle_stage and lifecycle_stage.lower() == 'customer':
+            result['should_suppress'] = True
+            result['reason'] = 'customer'
+            result['details'] = {
+                'company_id': company_id,
+                'lifecycle_stage': lifecycle_stage,
+                'company_name': properties.get('name'),
+            }
+            return result
+
+        # Check 2: Recently contacted?
+        if company_id:
+            engagements = get_recent_engagements_for_company(company_id, days)
+
+            if engagements:
+                result['should_suppress'] = True
+                result['reason'] = 'recently_contacted'
+                result['details'] = {
+                    'company_id': company_id,
+                    'engagement_count': len(engagements),
+                    'last_contact_date': engagements[0]['date'] if engagements else None,
+                    'last_contact_type': engagements[0]['type'] if engagements else None,
+                }
+                return result
+
+        return result
+
+    except Exception as e:
+        # Best-effort - don't fail if HubSpot check fails
+        result['details']['error'] = str(e)
+        return result

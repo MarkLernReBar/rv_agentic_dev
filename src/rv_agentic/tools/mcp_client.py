@@ -18,6 +18,13 @@ from rv_agentic.config.settings import get_settings
 
 logger = logging.getLogger(__name__)
 
+# CRITICAL FIX for Streamlit: Ensure all threads can create event loops
+# Streamlit's ScriptRunner threads don't have event loop policies by default
+try:
+    asyncio.get_event_loop_policy()
+except RuntimeError:
+    asyncio.set_event_loop_policy(asyncio.DefaultEventLoopPolicy())
+
 
 def _get_mcp_url() -> str:
     settings = get_settings()
@@ -67,7 +74,7 @@ async def call_tool_async(tool_name: str, arguments: Dict[str, Any]) -> List[Dic
 
 
 def call_tool(tool_name: str, arguments: Dict[str, Any]) -> List[Dict[str, Any]]:
-    """Synchronously call an MCP tool; use only outside Agents SDK.
+    """Synchronously call an MCP tool; works both inside and outside Agents SDK.
 
     Each item is a dict with:
     - type: "text" | "structured" | "unknown"
@@ -75,11 +82,31 @@ def call_tool(tool_name: str, arguments: Dict[str, Any]) -> List[Dict[str, Any]]
     - data: present when type == "structured"
     """
 
+    # Ensure the thread has an event loop policy (critical for Streamlit threads)
     try:
-        return asyncio.run(call_tool_async(tool_name, arguments))
-    except RuntimeError as exc:
-        # If there's already a running loop, this function should not be used.
+        asyncio.get_event_loop_policy()
+    except RuntimeError:
+        asyncio.set_event_loop_policy(asyncio.DefaultEventLoopPolicy())
+
+    # Explicitly create and set an event loop for this thread if one doesn't exist
+    try:
+        loop = asyncio.get_event_loop()
+        if loop.is_closed():
+            loop = None
+    except RuntimeError:
+        loop = None
+
+    if loop is None:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+
+    # Now run the async function
+    try:
+        return loop.run_until_complete(call_tool_async(tool_name, arguments))
+    except Exception as exc:
+        import traceback
+        tb = traceback.format_exc()
+        logger.error(f"call_tool({tool_name}) failed with traceback:\n{tb}")
         raise RuntimeError(
-            f"call_tool({tool_name}) cannot run inside an existing event loop; "
-            "use call_tool_async from within Agents SDK tools."
+            f"call_tool({tool_name}) failed to execute: {exc}"
         ) from exc

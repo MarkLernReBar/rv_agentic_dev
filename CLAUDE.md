@@ -1,4 +1,24 @@
 # CLAUDE.md
+# Most Important RULES
+1. YOU are the coding agent. YOU are proactive, resilient, and dont stop until the task is complete. You must be self-directed in all things, ensuring you adhere to the core requirements of the project. 
+1a. DO NOT ask clarifying questions for things that are trivial; make reasonable assumptions and ACT. 
+1b. DO NOT ask the user to run, install, or otherwise do a task that YOU the CODING agent should do. Its not the users job; it's YOURS.
+2. DO NOT fake, mock, or otherwise make a test seem to show a passing grade when it in in fact does not. 
+3. ALWAYS be OBJECTIVE and fearless in your self-critiques. 
+4. DO NOT just tell the user what you think they want to hear. Always be objective and honest. 
+5. This project ONLY uses gpt-5 family (gpt-5-mini or gpt-5-nano preferrably). Reference `/Users/marklerner/RV_Agentic_FrontEnd_Dev/IMPORTANT_DOCS/GPT-5_best_practices.md` for best practices when it comes to utilizing this family of model and prompting. 
+6. This project uses the Open AI agents SDK. Reference `/Users/marklerner/RV_Agentic_FrontEnd_Dev/IMPORTANT_DOCS/Openai_AI_SDK.md` to answer all questions with regards to agentic functionality. 
+7. ALWAYS use the `sequential_thinking` MCP to work through problems, bugs, or otherwise reason and observe. 
+
+# Project-specific rules
+
+1. The Agent(s) MUST persist until the required quantity is met. Each round of discovery should utilize UNIQUE and NON-OVERLAPPING discovery strategies until the quantity requirement is met. 
+2. If any of the steps filters out companies such that the toital quantity dips below the total required quantity, discovery must be re-done with additional UNIQUE and NON OVERLAPPING strategies until the threshold is met again.
+3. We need to ensure that no fully researched company or contact goes to waste. If a net new (not in the database or hubspot) record is generated for a test or a task, but not used in the final output (for tests this would mean any net new record that's not in the db or hubspot), it should be added to research_database or contacts table for future use. An example might be if we find a company, add it to the candidates, only to find that later in the task it doesnt meet the unit requirements. If we've done the work to research it, and it doesnt already exist in the db or hubspot, it should be added to research_database with the researched insights in their correct fields. 
+4. Company Researcher MUST generate a robust, useful, and insightful response. If the given company being researched is fond to be an existing customer in Hubspot, the agent MUST include this at the top of its response and then approach the summary/icp overview from the perspective of a potential upsell or cross-sell. 
+5. If a company being researched is found in hubspot, always check the hubspot contact records associated with the company FIRST when it comes to the decision maker section. Then check supabase and web search tools to fill in whatever is missing.
+6. We need detailed logs that will enable us to QUICKLY triangulate where in the pipeline things are breaking and make targeted fixes. We need perfect visibility. 
+---
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
@@ -137,10 +157,12 @@ See `IMPORTANT_DOCS/pm_pipeline_tables.md` for full SQL schema.
 
 1. **Run Creation** - Insert into `pm_pipeline.runs` with criteria (PMS, geo, units, quantity)
 2. **Company Discovery** (`stage='company_discovery'`)
-   - Seed from NEO research DB and `pms_subdomains` table
-   - Lead List Agent discovers additional companies via MCP tools
-   - Insert into `company_candidates`
-   - Advance when `v_company_gap.companies_gap == 0`
+   - **Oversample Strategy**: Discover 2x target quantity to account for enrichment attrition
+   - Seed from NEO research DB and `pms_subdomains` table (fast, PMS-validated)
+   - Lead List Agent discovers ALL matching companies via MCP tools
+   - Worker selects best N companies (sorted by quality) up to discovery_target
+   - Insert into `company_candidates` with `discovery_source` tracking
+   - Advance when discovery_target met (see `OVERSAMPLE_STRATEGY.md`)
 3. **Company Research** (`stage='company_research'`)
    - Company Researcher Agent enriches each company
    - Write ICP analysis to `company_research`
@@ -188,7 +210,13 @@ SERPER_API_KEY=...
 
 # HTTP timeout (default: 20s)
 HTTP_TIMEOUT=20
+
+# Lead list discovery oversample factor (default: 2.0)
+# Discover N×target companies to account for enrichment attrition
+LEAD_LIST_OVERSAMPLE_FACTOR=2.0
 ```
+
+**See `OVERSAMPLE_STRATEGY.md` for details on multi-stage enrichment pipeline architecture.**
 
 ## Key Patterns and Conventions
 

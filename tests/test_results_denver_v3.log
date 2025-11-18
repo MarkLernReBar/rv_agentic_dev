@@ -1,0 +1,1185 @@
+================================================================================
+OVERSAMPLE STRATEGY END-TO-END TEST
+================================================================================
+
+Test started: 2025-11-18 07:09:12
+
+1. Checking Prerequisites:
+--------------------------------------------------------------------------------
+  ✅ OPENAI_API_KEY: sk-proj-...
+  ✅ POSTGRES_URL: postgres...
+  ✅ N8N_MCP_SERVER_URL: http://1...
+
+  ℹ️  LEAD_LIST_OVERSAMPLE_FACTOR: 2.0x
+  ℹ️  For target=25, will discover 50 companies
+
+2. Creating Test Run:
+--------------------------------------------------------------------------------
+  ℹ️  Run ID: 71e9b1d9-0268-4091-bfc6-dd02abcc2b23
+  ✅ Created run: 71e9b1d9-0268-4091-bfc6-dd02abcc2b23
+     Location: Denver, Colorado
+     Units: 99+ units
+     PMS: No requirement
+     Target: 20 companies
+     Discovery target: 40 companies
+
+3. Clearing Seeding (Force Agent MCP Discovery):
+--------------------------------------------------------------------------------
+  ✅ No seeding present
+
+4. Running lead_list_runner Worker:
+--------------------------------------------------------------------------------
+  ℹ️  Setting RUN_FILTER_ID=71e9b1d9-0268-4091-bfc6-dd02abcc2b23
+  ℹ️  Setting WORKER_MAX_LOOPS=1
+
+Worker output:
+
+Worker errors:
+2025-11-18 07:09:13,569 [INFO] __main__: Lead list worker starting up worker_id=lead-list-1da45b9b-4379-4890-b8bc-ca9e8417771f
+2025-11-18 07:09:13,707 [INFO] rv_agentic.services.heartbeat: Started heartbeat thread for worker lead-list-1da45b9b-4379-4890-b8bc-ca9e8417771f (interval: 30s)
+2025-11-18 07:09:13,903 [INFO] __main__: Found 1 active run(s) to process
+2025-11-18 07:09:14,348 [INFO] __main__: Progress check: target=20, discovery_target=40 (oversample=2.0x), existing=0, remaining=40
+2025-11-18 07:09:14,348 [INFO] __main__: Processing pm_pipeline run id=71e9b1d9-0268-4091-bfc6-dd02abcc2b23
+2025-11-18 07:09:18,531 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:09:23,761 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2025-11-18 07:09:24,047 [INFO] rv_agentic.agents.lead_list_agent: [LeadListAgent] get_blocked_domains_tool -> 3515 domains
+2025-11-18 07:09:29,251 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:09:31,366 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2025-11-18 07:09:31,374 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=search_web url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'query': 'largest apartment management companies Denver Colorado Greystar Lincoln Property Company Denver property management companies list'}
+2025-11-18 07:09:31,384 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=search_web url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'query': "Denver apartment property management companies managing 100+ units list 'property management' 'Denver CO' 'apartments'"}
+2025-11-18 07:09:31,391 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=search_web url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'query': "multifamily property management companies Denver Colorado 'management company' 'apartments' 'portfolio'"}
+2025-11-18 07:09:31,397 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=search_web url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'query': "NARPM Denver property managers Colorado list 'NARPM' 'Denver' 'property management'"}
+2025-11-18 07:09:31,403 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=search_web url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'query': "apartments.com management companies Denver CO 'management company' 'Denver' 'apartment'"}
+2025-11-18 07:09:31,477 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:09:31,478 [INFO] mcp.client.streamable_http: Received session ID: f0420144-db77-44b9-9a3a-408b2f59df9b
+2025-11-18 07:09:31,479 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:09:31,492 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:09:31,492 [INFO] mcp.client.streamable_http: Received session ID: 48d2d90f-ddcc-4aaa-a077-b2afc4dda85a
+2025-11-18 07:09:31,509 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:09:31,510 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:09:31,510 [INFO] mcp.client.streamable_http: Received session ID: 1b8c2610-0461-4bc0-a5c5-4fbbee4a6785
+2025-11-18 07:09:31,510 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:09:31,511 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:09:31,511 [INFO] mcp.client.streamable_http: Received session ID: c6795b62-0953-4830-816e-19b56a563695
+2025-11-18 07:09:31,527 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:09:31,527 [INFO] mcp.client.streamable_http: Received session ID: e5667e6c-7962-46a8-a246-330f4c58efb4
+2025-11-18 07:09:31,527 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:09:31,527 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:09:31,545 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:09:31,545 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:09:31,561 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:09:31,594 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:09:31,594 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:09:31,595 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:09:31,613 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:09:31,613 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:09:31,613 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:09:31,629 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:09:31,629 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:09:31,646 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:09:31,646 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:09:31,647 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:09:31,647 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:09:34,652 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:09:35,840 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:09:35,932 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:09:36,003 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:09:36,005 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=search_web items=1
+2025-11-18 07:09:36,370 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:09:36,461 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:09:36,558 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:09:36,561 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=search_web items=1
+2025-11-18 07:09:36,770 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:09:36,847 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:09:36,891 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:09:36,925 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:09:36,926 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=search_web items=1
+2025-11-18 07:09:36,968 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:09:36,970 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:09:37,025 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:09:37,054 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:09:37,054 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=search_web items=1
+2025-11-18 07:09:37,121 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:09:37,122 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=search_web items=1
+2025-11-18 07:09:40,176 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:10:00,372 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2025-11-18 07:10:00,375 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=extract_company_profile_url_ url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'company_name': 'Greystar', 'domain': 'greystar.com', 'other_details': 'national multifamily manager with Denver presence'}
+2025-11-18 07:10:00,384 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=extract_company_profile_url_ url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'company_name': 'Lincoln Property Company', 'domain': 'lpc.com', 'other_details': 'Lincoln multifamily management Denver office'}
+2025-11-18 07:10:00,391 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=extract_company_profile_url_ url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'company_name': 'Pinnacle (Pinnacle Living)', 'domain': 'pinnacleliving.com', 'other_details': 'National third-party manager'}
+2025-11-18 07:10:00,399 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=extract_company_profile_url_ url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'company_name': 'Alliance Residential', 'domain': 'allianceresidential.com', 'other_details': 'large multifamily operator with Colorado properties'}
+2025-11-18 07:10:00,405 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=extract_company_profile_url_ url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'company_name': 'Cushman & Wakefield (Cushwakeliving)', 'domain': 'cushwakeliving.com', 'other_details': 'multifamily management services in Denver'}
+2025-11-18 07:10:00,410 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=extract_company_profile_url_ url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'company_name': 'Cortland', 'domain': 'cortland.com', 'other_details': 'national multifamily manager'}
+2025-11-18 07:10:00,415 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=extract_company_profile_url_ url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'company_name': 'AvalonBay Communities', 'domain': 'avaloncommunities.com', 'other_details': 'apartment owner/operator with Denver properties'}
+2025-11-18 07:10:00,420 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=extract_company_profile_url_ url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'company_name': 'FPI Management', 'domain': 'fpimgt.com', 'other_details': 'multifamily management firm (verify domain)'}
+2025-11-18 07:10:00,425 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=extract_company_profile_url_ url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'company_name': 'Cornerstone Apartment Services', 'domain': 'cornerstoneapartmentservices.com', 'other_details': 'Denver-based property management firm; verify portfolio size'}
+2025-11-18 07:10:00,429 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=extract_company_profile_url_ url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'company_name': 'Real Property Management Colorado', 'domain': 'rpmcolorado.com', 'other_details': 'RPM franchise in Colorado; verify units under management'}
+2025-11-18 07:10:00,434 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=extract_company_profile_url_ url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'company_name': 'Mission Rock Residential', 'domain': 'missionrockresidential.com', 'other_details': 'regional Denver-area manager'}
+2025-11-18 07:10:00,438 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=extract_company_profile_url_ url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'company_name': 'Cushman & Wakefield Denver Property Management', 'domain': 'cushmanwakefield.com', 'other_details': 'global real estate services with Denver multifamily management'}
+2025-11-18 07:10:00,533 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:10:00,534 [INFO] mcp.client.streamable_http: Received session ID: e606c4c9-6ae7-4189-88c1-41a27ae2b07d
+2025-11-18 07:10:00,534 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:10:00,565 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:10:00,565 [INFO] mcp.client.streamable_http: Received session ID: b763ede6-6e98-4c87-b000-8ca9bec9c49b
+2025-11-18 07:10:00,565 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:10:00,566 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:10:00,566 [INFO] mcp.client.streamable_http: Received session ID: 786b12fb-6361-4477-86e7-544764a4268c
+2025-11-18 07:10:00,581 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:10:00,581 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:10:00,582 [INFO] mcp.client.streamable_http: Received session ID: 04deb0fc-015b-4e8f-a608-6d3deef32f93
+2025-11-18 07:10:00,595 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:10:00,595 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:10:00,595 [INFO] mcp.client.streamable_http: Received session ID: cddf862a-5e92-4f5c-9bf8-c1ca734f62cd
+2025-11-18 07:10:00,602 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:10:00,621 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:10:00,621 [INFO] mcp.client.streamable_http: Received session ID: 4872bea2-f1b7-4f16-8847-c8959d713a0b
+2025-11-18 07:10:00,621 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:10:00,625 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:10:00,625 [INFO] mcp.client.streamable_http: Received session ID: f97d3d2e-a794-447b-a460-6b11e9af77eb
+2025-11-18 07:10:00,625 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:10:00,625 [INFO] mcp.client.streamable_http: Received session ID: 81ce357f-14c8-4345-9c31-59e7049bb8cb
+2025-11-18 07:10:00,626 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:10:00,640 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:10:00,640 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:10:00,640 [INFO] mcp.client.streamable_http: Received session ID: a9010bb8-c4cd-4602-869e-b491595aaf6a
+2025-11-18 07:10:00,651 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:10:00,651 [INFO] mcp.client.streamable_http: Received session ID: 6759d3e3-665c-409b-b661-e54316c15d16
+2025-11-18 07:10:00,660 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:10:00,660 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:10:00,676 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:10:00,676 [INFO] mcp.client.streamable_http: Received session ID: ba378b80-b2a8-42a0-8fd5-05d78f0bd31e
+2025-11-18 07:10:00,677 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:10:00,677 [INFO] mcp.client.streamable_http: Received session ID: 2a483267-0829-4274-9f4e-a3d8117a707e
+2025-11-18 07:10:00,678 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:10:00,678 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:10:00,696 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:10:00,712 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:10:00,713 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:10:00,729 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:10:00,729 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:10:00,746 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:10:00,761 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:10:00,762 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:10:00,762 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:10:00,779 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:10:00,810 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:10:00,811 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:10:00,811 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:10:00,829 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:10:00,829 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:10:00,829 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:10:00,845 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:10:00,845 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:10:00,845 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:10:00,857 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:10:00,857 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:10:00,872 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:10:00,873 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:10:00,873 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:10:00,878 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:10:00,904 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:10:00,905 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:10:00,921 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:10:00,921 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:10:00,922 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:10:00,922 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:10:00,937 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:10:00,952 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:10:00,952 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:10:00,953 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:10:00,967 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:10:00,967 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:10:57,467 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:10:57,556 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:10:57,633 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:10:57,634 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=extract_company_profile_url_ items=1
+2025-11-18 07:11:02,250 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:11:03,391 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:11:03,478 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:11:03,531 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:11:03,532 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=extract_company_profile_url_ items=1
+2025-11-18 07:11:07,647 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:11:10,736 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:11:10,834 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:11:10,922 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:11:10,924 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=extract_company_profile_url_ items=1
+2025-11-18 07:11:13,050 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:11:35,195 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:11:35,412 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:11:35,506 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:11:35,508 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=extract_company_profile_url_ items=1
+2025-11-18 07:11:38,829 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:11:39,704 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:11:39,954 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:11:40,122 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:11:40,123 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=extract_company_profile_url_ items=1
+2025-11-18 07:11:44,166 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:11:54,839 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:11:54,992 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:11:55,106 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:11:55,107 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=extract_company_profile_url_ items=1
+2025-11-18 07:11:59,739 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:12:13,104 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:12:13,196 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:12:13,269 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:12:13,272 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=extract_company_profile_url_ items=1
+2025-11-18 07:12:15,291 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:12:26,772 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:12:26,873 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:12:26,952 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:12:26,954 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=extract_company_profile_url_ items=1
+2025-11-18 07:12:30,785 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:12:35,348 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:12:35,432 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:12:35,485 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:12:35,487 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=extract_company_profile_url_ items=1
+2025-11-18 07:12:36,168 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:13:39,469 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:13:39,558 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:13:39,624 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:13:39,628 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=extract_company_profile_url_ items=1
+2025-11-18 07:13:42,645 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:13:59,668 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:13:59,741 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:13:59,815 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:13:59,816 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=extract_company_profile_url_ items=1
+2025-11-18 07:14:03,307 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:20:00,735 [ERROR] openai.agents: Error cleaning up server: unhandled errors in a TaskGroup (1 sub-exception)
+2025-11-18 07:20:04,700 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:20:14,351 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2025-11-18 07:20:14,380 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=get_contacts url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'company_name': 'Greystar', 'company_domain': 'greystar.com', 'company_city': 'Denver', 'company_state': 'CO'}
+2025-11-18 07:20:14,456 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:20:14,457 [INFO] mcp.client.streamable_http: Received session ID: 101fe14d-66ba-42e9-bf5a-dba2d307cbd8
+2025-11-18 07:20:14,457 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:20:14,536 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:20:14,537 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:20:14,538 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:20:15,304 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:20:45,131 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:20:45,213 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:20:45,273 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:20:45,275 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=get_contacts items=1
+2025-11-18 07:20:46,701 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:20:48,142 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2025-11-18 07:20:48,150 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=get_contacts url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'company_name': 'FPI Management', 'company_domain': 'fpimgt.com', 'company_city': 'Denver', 'company_state': 'CO'}
+2025-11-18 07:20:48,212 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:20:48,212 [INFO] mcp.client.streamable_http: Received session ID: 625002b8-9754-4db3-84e0-9a8e597d6466
+2025-11-18 07:20:48,213 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:20:48,277 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:20:48,277 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:20:48,292 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:20:52,263 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:21:37,772 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:21:37,859 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:21:37,932 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:21:37,934 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=get_contacts items=1
+2025-11-18 07:21:39,343 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:21:41,156 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2025-11-18 07:21:41,189 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=get_contacts url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'company_name': 'Cortland', 'company_domain': 'cortland.com', 'company_city': 'Denver', 'company_state': 'CO'}
+2025-11-18 07:21:41,254 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:21:41,254 [INFO] mcp.client.streamable_http: Received session ID: 40c52ef3-5631-4061-b9a1-e0e418ce877e
+2025-11-18 07:21:41,255 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:21:41,342 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:21:41,343 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:21:41,344 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:21:44,843 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:22:23,791 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:22:24,059 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:22:24,191 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:22:24,193 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=get_contacts items=1
+2025-11-18 07:22:26,467 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:22:27,210 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2025-11-18 07:22:27,237 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=get_contacts url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'company_name': 'Lincoln Property Company', 'company_domain': 'lpc.com', 'company_city': 'Denver', 'company_state': 'CO'}
+2025-11-18 07:22:27,344 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:22:27,345 [INFO] mcp.client.streamable_http: Received session ID: 14ffd804-b009-423a-9c22-8f0915777afa
+2025-11-18 07:22:27,361 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:22:27,455 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:22:27,456 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:22:27,483 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:22:31,947 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:23:00,170 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:23:00,287 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:23:00,352 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:23:00,354 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=get_contacts items=1
+2025-11-18 07:23:02,789 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2025-11-18 07:23:02,793 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=get_contacts url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'company_name': 'Alliance Residential', 'company_domain': 'allianceresidential.com', 'company_city': 'Denver', 'company_state': 'CO'}
+2025-11-18 07:23:02,865 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:23:02,865 [INFO] mcp.client.streamable_http: Received session ID: a4339f06-641f-41c3-8547-cd3d868b8bc7
+2025-11-18 07:23:02,866 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:23:02,939 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:23:02,958 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:23:02,959 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:23:03,297 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:23:36,769 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:23:36,858 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:23:36,946 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:23:36,948 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=get_contacts items=1
+2025-11-18 07:23:39,141 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2025-11-18 07:23:39,181 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=get_contacts url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'company_name': 'Alliance Residential', 'company_domain': 'allianceresidential.com', 'company_city': 'Denver', 'company_state': 'CO'}
+2025-11-18 07:23:39,248 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:23:39,248 [INFO] mcp.client.streamable_http: Received session ID: c02c5d74-daa8-4b59-a357-3994ca9c1c04
+2025-11-18 07:23:39,249 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:23:39,318 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:23:39,333 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:23:39,333 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:23:40,151 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:24:09,638 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:24:09,724 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:24:09,797 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:24:09,798 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=get_contacts items=1
+2025-11-18 07:24:11,492 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:24:21,290 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2025-11-18 07:24:21,293 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=get_verified_emails url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'person_name': 'Bob Faith', 'company_name': 'Greystar'}
+2025-11-18 07:24:21,300 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=get_linkedin_profile_url url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'name': 'Bob Faith', 'company': 'Greystar', 'jobtitle': 'Founder, Chairman, and CEO'}
+2025-11-18 07:24:21,305 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=get_verified_emails url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'person_name': 'Andrew Livingstone', 'company_name': 'Greystar'}
+2025-11-18 07:24:21,311 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=get_linkedin_profile_url url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'name': 'Andrew Livingstone', 'company': 'Greystar', 'jobtitle': 'Chief Operating Officer'}
+2025-11-18 07:24:21,316 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=get_verified_emails url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'person_name': 'Vanessa Siebern', 'company_name': 'FPI Management'}
+2025-11-18 07:24:21,321 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=get_linkedin_profile_url url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'name': 'Vanessa Siebern', 'company': 'FPI Management', 'jobtitle': 'Chief Operating Officer'}
+2025-11-18 07:24:21,325 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=get_verified_emails url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'person_name': 'Steven DeFrancis', 'company_name': 'Cortland'}
+2025-11-18 07:24:21,330 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=get_linkedin_profile_url url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'name': 'Steven DeFrancis', 'company': 'Cortland', 'jobtitle': 'Chief Executive Officer'}
+2025-11-18 07:24:21,334 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=get_verified_emails url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'person_name': 'Clay Duvall', 'company_name': 'Lincoln Property Company'}
+2025-11-18 07:24:21,338 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=get_linkedin_profile_url url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'name': 'Clay Duvall', 'company': 'Lincoln Property Company', 'jobtitle': 'Co-Chief Executive Officer'}
+2025-11-18 07:24:21,426 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:24:21,426 [INFO] mcp.client.streamable_http: Received session ID: 123611f3-72ff-4a55-ab36-4d7b10878094
+2025-11-18 07:24:21,440 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:24:21,440 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:24:21,440 [INFO] mcp.client.streamable_http: Received session ID: ba160957-2d0a-4740-8b64-9ac7b8942650
+2025-11-18 07:24:21,440 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:24:21,455 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:24:21,455 [INFO] mcp.client.streamable_http: Received session ID: 68d0a175-5d18-4e53-bb3c-8ae61c367377
+2025-11-18 07:24:21,472 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:24:21,472 [INFO] mcp.client.streamable_http: Received session ID: 49d810e6-3960-4819-adfd-930dec026ad3
+2025-11-18 07:24:21,472 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:24:21,472 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:24:21,489 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:24:21,489 [INFO] mcp.client.streamable_http: Received session ID: da0636c9-25f2-43e7-b89d-2324aaa9331b
+2025-11-18 07:24:21,489 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:24:21,489 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:24:21,489 [INFO] mcp.client.streamable_http: Received session ID: f9dd6a0a-7a8c-45f0-af8c-79ab4da4afcf
+2025-11-18 07:24:21,498 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:24:21,498 [INFO] mcp.client.streamable_http: Received session ID: 74ef8cd6-ffdf-41d6-b5cb-d9f18208ee94
+2025-11-18 07:24:21,498 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:24:21,506 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:24:21,520 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:24:21,521 [INFO] mcp.client.streamable_http: Received session ID: f0f78e5d-e989-41d5-9286-1b899f7d3a4a
+2025-11-18 07:24:21,522 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:24:21,522 [INFO] mcp.client.streamable_http: Received session ID: 81ef8ab1-2f64-414a-a7e1-3482ba290223
+2025-11-18 07:24:21,536 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:24:21,536 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:24:21,538 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:24:21,538 [INFO] mcp.client.streamable_http: Received session ID: 2ac0951f-427e-48a0-8b63-f58405758ab9
+2025-11-18 07:24:21,539 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:24:21,568 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:24:21,582 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:24:21,598 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:24:21,599 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:24:21,599 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:24:21,599 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:24:21,614 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:24:21,629 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:24:21,629 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:24:21,644 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:24:21,671 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:24:21,671 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:24:21,687 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:24:21,687 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:24:21,688 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:24:21,689 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:24:21,700 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:24:21,716 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:24:21,732 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:24:21,733 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:24:21,733 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:24:21,748 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:24:21,767 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:24:21,791 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:24:21,791 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:24:21,805 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:24:21,806 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:24:21,806 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:24:21,807 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:24:21,820 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:24:21,920 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:24:21,962 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:24:21,998 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:24:22,020 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:24:22,051 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:24:22,117 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:24:22,140 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:24:22,142 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=get_verified_emails items=1
+2025-11-18 07:24:22,180 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:24:22,182 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=get_verified_emails items=1
+2025-11-18 07:24:22,196 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:24:22,198 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=get_verified_emails items=1
+2025-11-18 07:24:22,232 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:24:22,234 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=get_verified_emails items=1
+2025-11-18 07:24:22,237 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:24:22,238 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=get_verified_emails items=1
+2025-11-18 07:24:27,729 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:24:49,928 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:24:50,018 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:24:50,095 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:24:50,096 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=get_linkedin_profile_url items=1
+2025-11-18 07:24:54,314 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:24:56,264 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:24:56,351 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:24:56,416 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:24:56,417 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=get_linkedin_profile_url items=1
+2025-11-18 07:24:59,760 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:25:07,632 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:25:07,709 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:25:07,788 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:25:07,789 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=get_linkedin_profile_url items=1
+2025-11-18 07:25:10,403 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:25:11,169 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:25:11,172 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:25:11,269 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:25:11,273 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:25:11,364 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:25:11,366 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=get_linkedin_profile_url items=1
+2025-11-18 07:25:11,381 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:25:11,383 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=get_linkedin_profile_url items=1
+2025-11-18 07:25:11,385 [WARNING] rv_agentic.services.retry: Agent call attempt 1/3 failed: Max turns (10) exceeded. Retrying in 1.0s...
+2025-11-18 07:25:15,844 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:25:22,578 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2025-11-18 07:25:22,865 [INFO] rv_agentic.agents.lead_list_agent: [LeadListAgent] get_blocked_domains_tool -> 3515 domains
+2025-11-18 07:25:26,626 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:25:29,673 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2025-11-18 07:25:29,691 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=search_web url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'query': 'Denver property management companies with 100 units'}
+2025-11-18 07:25:29,705 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=search_web url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'query': 'Top property management companies Denver CO 100+ units'}
+2025-11-18 07:25:29,712 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=search_web url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'query': 'NARPM Denver members property management'}
+2025-11-18 07:25:29,728 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=search_web url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'query': 'Apartment management companies Denver portfolios 100 units'}
+2025-11-18 07:25:29,733 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=search_web url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'query': 'Denver multifamily property management companies 100 units'}
+2025-11-18 07:25:29,823 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:25:29,823 [INFO] mcp.client.streamable_http: Received session ID: d5962443-f426-48e3-a47b-b4df477a00ae
+2025-11-18 07:25:29,823 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:25:29,845 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:25:29,845 [INFO] mcp.client.streamable_http: Received session ID: 02bc31e3-aacb-4741-a0d3-8a5ff09c9eeb
+2025-11-18 07:25:29,845 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:25:29,846 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:25:29,846 [INFO] mcp.client.streamable_http: Received session ID: 350b9706-6226-44ab-bf5f-44a3261ad1d5
+2025-11-18 07:25:29,846 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:25:29,863 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:25:29,863 [INFO] mcp.client.streamable_http: Received session ID: f20c070c-ea1b-421c-aadd-0e749e51dc9f
+2025-11-18 07:25:29,863 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:25:29,863 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:25:29,863 [INFO] mcp.client.streamable_http: Received session ID: a9d9aa05-dc1f-4092-9f61-f0df3e82a500
+2025-11-18 07:25:29,868 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:25:29,913 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:25:29,914 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:25:29,914 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:25:29,944 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:25:29,944 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:25:29,958 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:25:29,958 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:25:29,975 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:25:29,975 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:25:30,014 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:25:30,015 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:25:30,029 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:25:30,031 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:25:30,047 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:25:30,047 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:25:32,124 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:25:34,361 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:25:34,394 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:25:34,448 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:25:34,490 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:25:34,536 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:25:34,579 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:25:34,600 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:25:34,654 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:25:34,656 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:25:34,657 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=search_web items=1
+2025-11-18 07:25:34,658 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=search_web items=1
+2025-11-18 07:25:34,723 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:25:34,750 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:25:34,752 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=search_web items=1
+2025-11-18 07:25:34,871 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:25:34,873 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=search_web items=1
+2025-11-18 07:25:35,167 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:25:35,382 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:25:35,634 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:25:35,637 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=search_web items=1
+2025-11-18 07:25:37,887 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:26:01,094 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2025-11-18 07:26:01,101 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=extract_company_profile_url_ url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'company_name': 'Greystar', 'domain': 'greystar.com', 'other_details': ''}
+2025-11-18 07:26:01,112 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=extract_company_profile_url_ url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'company_name': 'Cushman & Wakefield', 'domain': 'cushmanwakefield.com', 'other_details': ''}
+2025-11-18 07:26:01,119 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=extract_company_profile_url_ url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'company_name': 'Lincoln Property Company', 'domain': 'lincolnproperty.com', 'other_details': ''}
+2025-11-18 07:26:01,126 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=extract_company_profile_url_ url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'company_name': 'Equity Residential', 'domain': 'equityapartments.com', 'other_details': ''}
+2025-11-18 07:26:01,131 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=extract_company_profile_url_ url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'company_name': 'AvalonBay Communities', 'domain': 'avaloncommunities.com', 'other_details': ''}
+2025-11-18 07:26:01,137 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=extract_company_profile_url_ url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'company_name': 'Pinnacle', 'domain': 'pinnacleliving.com', 'other_details': ''}
+2025-11-18 07:26:01,141 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=extract_company_profile_url_ url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'company_name': 'MAA', 'domain': 'maa.com', 'other_details': ''}
+2025-11-18 07:26:01,146 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=extract_company_profile_url_ url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'company_name': 'Bozzuto', 'domain': 'bozzuto.com', 'other_details': ''}
+2025-11-18 07:26:01,151 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=extract_company_profile_url_ url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'company_name': 'Aimco', 'domain': 'aimco.com', 'other_details': ''}
+2025-11-18 07:26:01,155 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=extract_company_profile_url_ url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'company_name': 'DenCO Property Management', 'domain': 'denverpropertymanagement.co', 'other_details': ''}
+2025-11-18 07:26:01,160 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=extract_company_profile_url_ url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'company_name': 'Bergan & Company', 'domain': 'berganco.com', 'other_details': ''}
+2025-11-18 07:26:01,164 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=extract_company_profile_url_ url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'company_name': 'Sheepdog Property Management', 'domain': 'sheepdogpm.com', 'other_details': ''}
+2025-11-18 07:26:01,168 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=extract_company_profile_url_ url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'company_name': 'Denver Property Manager (aggregate)', 'domain': 'denverspropertymanager.com', 'other_details': ''}
+2025-11-18 07:26:01,274 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:26:01,274 [INFO] mcp.client.streamable_http: Received session ID: a0e0f13c-90b9-42fe-8820-7c728821ec4b
+2025-11-18 07:26:01,274 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:26:01,274 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:26:01,274 [INFO] mcp.client.streamable_http: Received session ID: 9c046c02-03f8-456b-a764-dbf90363c7bd
+2025-11-18 07:26:01,274 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:26:01,282 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:26:01,282 [INFO] mcp.client.streamable_http: Received session ID: e3ddc195-f3d0-4364-880f-ed3383cd82c3
+2025-11-18 07:26:01,282 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:26:01,297 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:26:01,297 [INFO] mcp.client.streamable_http: Received session ID: 39c1f34e-1aa7-43ed-bbfe-7c4b6a3aee6e
+2025-11-18 07:26:01,297 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:26:01,307 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:26:01,307 [INFO] mcp.client.streamable_http: Received session ID: 09d23f71-92ba-45bd-b05e-361ac6abe053
+2025-11-18 07:26:01,307 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:26:01,307 [INFO] mcp.client.streamable_http: Received session ID: c9b06246-25ec-41ac-ba20-c0cb8f29f1ce
+2025-11-18 07:26:01,314 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:26:01,315 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:26:01,343 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:26:01,343 [INFO] mcp.client.streamable_http: Received session ID: 7192dfb0-2baf-4c14-b8c1-9ad3817815cd
+2025-11-18 07:26:01,344 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:26:01,344 [INFO] mcp.client.streamable_http: Received session ID: 223a2707-c2cf-49d0-8f60-459f0dc30be9
+2025-11-18 07:26:01,348 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:26:01,348 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:26:01,362 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:26:01,362 [INFO] mcp.client.streamable_http: Received session ID: 33c6f29e-1cf5-48bd-a147-ee93faa6caec
+2025-11-18 07:26:01,362 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:26:01,362 [INFO] mcp.client.streamable_http: Received session ID: 3005f6a9-daf8-4dce-a871-dc8e258ee418
+2025-11-18 07:26:01,365 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:26:01,365 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:26:01,365 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:26:01,365 [INFO] mcp.client.streamable_http: Received session ID: a6a74524-5326-4eba-9934-b62a7b1907e0
+2025-11-18 07:26:01,381 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:26:01,381 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:26:01,381 [INFO] mcp.client.streamable_http: Received session ID: e3ec96f5-08ed-46ab-beb9-52609689ff30
+2025-11-18 07:26:01,389 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:26:01,389 [INFO] mcp.client.streamable_http: Received session ID: b0687850-9d66-489a-8c4f-36c6497a7f07
+2025-11-18 07:26:01,389 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:26:01,389 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:26:01,436 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:26:01,436 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:26:01,454 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:26:01,454 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:26:01,484 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:26:01,484 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:26:01,485 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:26:01,485 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:26:01,504 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:26:01,504 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:26:01,504 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:26:01,526 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:26:01,526 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:26:01,527 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:26:01,544 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:26:01,545 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:26:01,566 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:26:01,567 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:26:01,604 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:26:01,605 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:26:01,620 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:26:01,621 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:26:01,621 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:26:01,622 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:26:01,622 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:26:01,659 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:26:01,660 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:26:01,661 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:26:01,663 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:26:01,663 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:26:01,664 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:26:01,664 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:26:01,664 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:26:01,687 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:26:01,688 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:26:01,688 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:26:01,731 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:26:01,731 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:26:01,732 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:26:04,037 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:27:07,741 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:27:08,408 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:27:09,239 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:27:09,241 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=extract_company_profile_url_ items=1
+2025-11-18 07:27:11,682 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:27:46,226 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:27:46,406 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:27:46,658 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:27:46,660 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=extract_company_profile_url_ items=1
+2025-11-18 07:27:46,841 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:27:46,985 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:27:47,092 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:27:47,094 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=extract_company_profile_url_ items=1
+2025-11-18 07:27:47,566 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:27:47,679 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:27:47,775 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:27:47,777 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=extract_company_profile_url_ items=1
+2025-11-18 07:27:48,337 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:28:06,103 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:28:06,616 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:28:06,994 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:28:06,995 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=extract_company_profile_url_ items=1
+2025-11-18 07:28:09,102 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:28:09,192 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:28:09,636 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:28:09,638 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:28:09,639 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=extract_company_profile_url_ items=1
+2025-11-18 07:28:14,407 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:28:14,481 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:28:14,559 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:28:14,560 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=extract_company_profile_url_ items=1
+2025-11-18 07:28:15,186 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:28:15,423 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:28:15,523 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:28:15,598 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:28:15,600 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=extract_company_profile_url_ items=1
+2025-11-18 07:28:20,711 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:28:21,014 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:28:21,087 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:28:21,147 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:28:21,149 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=extract_company_profile_url_ items=1
+2025-11-18 07:28:21,462 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:28:21,554 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:28:21,625 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:28:21,626 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=extract_company_profile_url_ items=1
+2025-11-18 07:28:26,307 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:28:26,591 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:28:26,685 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:28:26,777 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:28:26,779 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=extract_company_profile_url_ items=1
+2025-11-18 07:28:31,756 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:28:36,502 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:28:36,596 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:28:36,670 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:28:36,672 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=extract_company_profile_url_ items=1
+2025-11-18 07:28:37,431 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:28:43,345 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:28:43,438 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:28:43,508 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:28:43,511 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=extract_company_profile_url_ items=1
+2025-11-18 07:28:49,358 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:28:54,476 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2025-11-18 07:28:54,505 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=get_contacts url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'company_name': 'DenCO Property Management', 'company_domain': 'denverpropertymanagement.co', 'company_city': 'Denver', 'company_state': 'CO'}
+2025-11-18 07:28:54,566 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:28:54,566 [INFO] mcp.client.streamable_http: Received session ID: a91fc0c7-e43b-4196-b654-d9ce0a4c5996
+2025-11-18 07:28:54,567 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:28:54,644 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:28:54,663 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:28:54,664 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:28:54,773 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:30:50,292 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:30:50,384 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:30:50,472 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:30:50,473 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=get_contacts items=1
+2025-11-18 07:30:52,788 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2025-11-18 07:30:52,794 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=get_contacts url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'company_name': 'Bergan & Company', 'company_domain': 'berganco.com', 'company_city': 'Denver', 'company_state': 'CO'}
+2025-11-18 07:30:52,859 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:30:52,859 [INFO] mcp.client.streamable_http: Received session ID: 2fd0162e-9b95-4304-8b58-9f1e2a5ada30
+2025-11-18 07:30:52,860 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:30:52,942 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:30:52,958 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:30:52,958 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:30:53,987 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:32:43,726 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:32:43,807 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:32:43,865 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:32:43,868 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=get_contacts items=1
+2025-11-18 07:32:47,956 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:32:49,234 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2025-11-18 07:32:49,239 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=get_contacts url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'company_name': 'Sheepdog Property Management', 'company_domain': 'sheepdogpm.com', 'company_city': 'Denver', 'company_state': 'CO'}
+2025-11-18 07:32:49,320 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:32:49,321 [INFO] mcp.client.streamable_http: Received session ID: b0c73842-5422-4def-b3cc-32dd4da7b892
+2025-11-18 07:32:49,321 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:32:49,402 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:32:49,404 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:32:49,404 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:32:53,399 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:33:32,784 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:33:32,881 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:33:32,951 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:33:32,953 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=get_contacts items=1
+2025-11-18 07:33:35,114 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:33:35,405 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2025-11-18 07:33:35,410 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=get_contacts url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'company_name': 'Evernest Denver (denverspropertymanager.com)', 'company_domain': 'denverspropertymanager.com', 'company_city': 'Denver', 'company_state': 'CO'}
+2025-11-18 07:33:35,508 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:33:35,509 [INFO] mcp.client.streamable_http: Received session ID: 8109415a-ad40-4f96-9742-8bc67a4894a9
+2025-11-18 07:33:35,510 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:33:35,587 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:33:35,587 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:33:35,605 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:33:40,686 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:34:30,831 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:34:30,949 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:34:31,025 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:34:31,026 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=get_contacts items=1
+2025-11-18 07:34:32,618 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:34:43,214 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2025-11-18 07:34:43,226 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=get_verified_emails url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'person_name': 'David Schmidt', 'company_name': 'DenCO Property Management'}
+2025-11-18 07:34:43,237 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=get_verified_emails url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'person_name': 'Jennifer Atkinson', 'company_name': 'DenCO Property Management'}
+2025-11-18 07:34:43,244 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=get_verified_emails url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'person_name': 'Cody Bergan', 'company_name': 'Bergan & Company'}
+2025-11-18 07:34:43,251 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=get_verified_emails url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'person_name': 'Amy Bergan', 'company_name': 'Bergan & Company'}
+2025-11-18 07:34:43,257 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=get_verified_emails url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'person_name': 'Blake McDonald', 'company_name': 'Bergan & Company'}
+2025-11-18 07:34:43,263 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=get_verified_emails url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'person_name': 'Drew Carpenter', 'company_name': 'Sheepdog Property Management'}
+2025-11-18 07:34:43,268 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=get_verified_emails url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'person_name': 'Michael Vasoghi', 'company_name': 'Sheepdog Property Management'}
+2025-11-18 07:34:43,272 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=get_verified_emails url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'person_name': 'Reese Hamilton', 'company_name': 'Evernest Denver (denverspropertymanager.com)'}
+2025-11-18 07:34:43,277 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=get_verified_emails url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'person_name': 'Christine Belin', 'company_name': 'Evernest Denver (denverspropertymanager.com)'}
+2025-11-18 07:34:43,390 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:34:43,390 [INFO] mcp.client.streamable_http: Received session ID: 0db7ac10-ee20-4962-837a-9bf5e3722d53
+2025-11-18 07:34:43,407 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:34:43,407 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:34:43,407 [INFO] mcp.client.streamable_http: Received session ID: 8d2e8615-1145-4ae0-b872-24f50e95cac3
+2025-11-18 07:34:43,421 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:34:43,421 [INFO] mcp.client.streamable_http: Received session ID: 39dbca73-12fc-4b63-bba4-b539a24aa061
+2025-11-18 07:34:43,421 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:34:43,421 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:34:43,421 [INFO] mcp.client.streamable_http: Received session ID: 1b733dc6-c21e-4009-af8b-1b42a5f80601
+2025-11-18 07:34:43,422 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:34:43,422 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:34:43,436 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:34:43,437 [INFO] mcp.client.streamable_http: Received session ID: 8403f9a9-0d93-40b8-8974-fb50337243eb
+2025-11-18 07:34:43,442 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:34:43,442 [INFO] mcp.client.streamable_http: Received session ID: 31eee098-1fab-48a4-b522-f2bea3414200
+2025-11-18 07:34:43,444 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:34:43,458 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:34:43,465 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:34:43,465 [INFO] mcp.client.streamable_http: Received session ID: fb30af90-33c8-4c6d-8c04-731741c09387
+2025-11-18 07:34:43,474 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:34:43,474 [INFO] mcp.client.streamable_http: Received session ID: c4a86699-f9db-45e7-b64e-f32a598555d1
+2025-11-18 07:34:43,474 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:34:43,487 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:34:43,487 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:34:43,487 [INFO] mcp.client.streamable_http: Received session ID: da29bafe-2c62-4cc4-b250-2f283507d11c
+2025-11-18 07:34:43,488 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:34:43,545 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:34:43,560 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:34:43,560 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:34:43,561 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:34:43,561 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:34:43,575 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:34:43,575 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:34:43,591 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:34:43,592 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:34:43,593 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:34:43,618 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:34:43,633 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:34:43,648 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:34:43,664 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:34:43,665 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:34:43,706 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:34:43,723 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:34:43,723 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:34:43,736 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:34:43,736 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:34:43,737 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:34:43,767 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:34:43,768 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:34:43,783 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:34:43,797 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:34:43,826 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:34:43,826 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:34:43,857 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:34:43,886 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:34:43,900 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:34:43,928 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:34:43,975 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:34:44,006 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:34:44,007 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:34:44,042 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:34:44,043 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:34:44,060 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:34:44,062 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=get_verified_emails items=1
+2025-11-18 07:34:44,076 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:34:44,077 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:34:44,079 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=get_verified_emails items=1
+2025-11-18 07:34:44,079 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=get_verified_emails items=1
+2025-11-18 07:34:44,091 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:34:44,093 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=get_verified_emails items=1
+2025-11-18 07:34:44,104 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:34:44,107 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=get_verified_emails items=1
+2025-11-18 07:34:44,120 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:34:44,121 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=get_verified_emails items=1
+2025-11-18 07:34:44,136 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:34:44,138 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=get_verified_emails items=1
+2025-11-18 07:34:44,167 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:34:44,169 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:34:44,171 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=get_verified_emails items=1
+2025-11-18 07:34:44,171 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=get_verified_emails items=1
+2025-11-18 07:34:48,424 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2025-11-18 07:34:48,434 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=get_verified_emails url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'person_name': 'David Schmidt', 'company_name': 'DenCO Property Management'}
+2025-11-18 07:34:48,506 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:34:48,507 [INFO] mcp.client.streamable_http: Received session ID: 0be97edb-b756-4725-a05a-912f91d3ae16
+2025-11-18 07:34:48,508 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:34:48,522 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:34:48,600 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:34:48,601 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:34:48,602 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:34:48,670 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:34:48,718 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:34:48,736 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:34:48,738 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=get_verified_emails items=1
+2025-11-18 07:34:54,510 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:34:55,616 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2025-11-18 07:34:55,657 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=get_linkedin_profile_url url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'name': 'Blake McDonald', 'company': 'Bergan & Company', 'jobtitle': 'General Manager'}
+2025-11-18 07:34:55,668 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=get_linkedin_profile_url url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'name': 'Reese Hamilton', 'company': 'Evernest Denver (denverspropertymanager.com)', 'jobtitle': 'Director of Operations - Colorado'}
+2025-11-18 07:34:55,676 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=get_linkedin_profile_url url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'name': 'Christine Belin', 'company': 'Evernest Denver (denverspropertymanager.com)', 'jobtitle': 'Investor-Friendly Agent in Denver'}
+2025-11-18 07:34:55,747 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:34:55,747 [INFO] mcp.client.streamable_http: Received session ID: 6c85b84b-3960-4d5e-9638-b8429f6c782f
+2025-11-18 07:34:55,747 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:34:55,768 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:34:55,768 [INFO] mcp.client.streamable_http: Received session ID: 303a6436-357a-4648-b4ce-75e4cb4458a4
+2025-11-18 07:34:55,786 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:34:55,786 [INFO] mcp.client.streamable_http: Received session ID: c4db9895-2c32-49cb-86cf-e1b7491cf3a2
+2025-11-18 07:34:55,786 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:34:55,787 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:34:55,842 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:34:55,843 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:34:55,843 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:34:55,890 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:34:55,904 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:34:55,918 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:34:55,918 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:34:55,919 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:34:55,920 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:34:59,975 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:35:38,048 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:35:38,164 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:35:38,318 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:35:38,320 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=get_linkedin_profile_url items=1
+2025-11-18 07:35:41,584 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:35:46,731 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:35:46,810 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:35:46,879 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:35:46,881 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=get_linkedin_profile_url items=1
+2025-11-18 07:35:52,027 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:35:52,111 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:35:52,187 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:35:52,190 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=get_linkedin_profile_url items=1
+2025-11-18 07:35:52,194 [WARNING] rv_agentic.services.retry: Agent call attempt 2/3 failed: Max turns (10) exceeded. Retrying in 2.0s...
+2025-11-18 07:35:52,253 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:35:52,465 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:35:57,200 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2025-11-18 07:35:57,500 [INFO] rv_agentic.agents.lead_list_agent: [LeadListAgent] get_blocked_domains_tool -> 3515 domains
+2025-11-18 07:35:58,127 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:36:05,868 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2025-11-18 07:36:05,882 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=search_web url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'query': 'largest property management companies Denver CO apartments portfolio 100 units'}
+2025-11-18 07:36:05,893 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=search_web url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'query': "Denver property management companies multifamily management Denver Colorado 'portfolio' 'units' 'apartments'"}
+2025-11-18 07:36:05,901 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=search_web url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'query': "top property management firms Denver Colorado 'management' 'apartments' 'portfolio' 'units'"}
+2025-11-18 07:36:05,908 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=search_web url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'query': "companies that manage apartments in Denver Colorado 100 units+ 'property management'"}
+2025-11-18 07:36:05,914 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=search_web url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'query': "multifamily property management Denver CO 'property manager' 'Denver' 'apartments' 'portfolio'"}
+2025-11-18 07:36:05,975 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:36:05,975 [INFO] mcp.client.streamable_http: Received session ID: fe4a2810-87ee-4eca-8690-c3a697cfdf76
+2025-11-18 07:36:05,975 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:36:06,004 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:36:06,004 [INFO] mcp.client.streamable_http: Received session ID: 4824d177-faa3-4358-bbbe-1c8655ee9b9f
+2025-11-18 07:36:06,004 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:36:06,023 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:36:06,023 [INFO] mcp.client.streamable_http: Received session ID: cbc2c1e1-8ba3-49fa-b9a1-ad4bc0e15032
+2025-11-18 07:36:06,023 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:36:06,023 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:36:06,023 [INFO] mcp.client.streamable_http: Received session ID: 156e7da2-6ae6-4b02-ac08-5348bd2e7919
+2025-11-18 07:36:06,023 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:36:06,035 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:36:06,035 [INFO] mcp.client.streamable_http: Received session ID: 612d128f-fb06-4b3e-be54-e59efdea819b
+2025-11-18 07:36:06,051 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:36:06,052 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:36:06,052 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:36:06,067 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:36:06,081 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:36:06,082 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:36:06,083 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:36:06,111 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:36:06,112 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:36:06,113 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:36:06,113 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:36:06,126 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:36:06,141 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:36:06,156 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:36:06,157 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:36:06,157 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:36:08,780 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:36:10,224 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:36:10,298 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:36:10,398 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:36:10,400 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=search_web items=1
+2025-11-18 07:36:10,964 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:36:11,081 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:36:11,165 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:36:11,166 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=search_web items=1
+2025-11-18 07:36:11,183 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:36:11,233 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:36:11,271 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:36:11,309 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:36:11,344 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:36:11,346 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=search_web items=1
+2025-11-18 07:36:11,398 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:36:11,400 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=search_web items=1
+2025-11-18 07:36:11,461 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:36:11,547 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:36:11,605 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:36:11,608 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=search_web items=1
+2025-11-18 07:36:14,429 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:36:50,971 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2025-11-18 07:36:50,980 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=get_contacts url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'company_name': 'Greystar', 'company_domain': 'greystar.com', 'company_city': 'Denver', 'company_state': 'CO'}
+2025-11-18 07:36:50,990 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=get_contacts url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'company_name': 'Lincoln Property Company', 'company_domain': 'lpc.com', 'company_city': 'Denver', 'company_state': 'CO'}
+2025-11-18 07:36:50,997 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=get_contacts url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'company_name': 'Cortland', 'company_domain': 'cortland.com', 'company_city': 'Denver', 'company_state': 'CO'}
+2025-11-18 07:36:51,003 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=get_contacts url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'company_name': 'AvalonBay Communities', 'company_domain': 'avalonbay.com', 'company_city': 'Denver', 'company_state': 'CO'}
+2025-11-18 07:36:51,009 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=get_contacts url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'company_name': 'Aimco', 'company_domain': 'aimco.com', 'company_city': 'Denver', 'company_state': 'CO'}
+2025-11-18 07:36:51,014 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=get_contacts url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'company_name': 'Camden Property Trust', 'company_domain': 'camdenliving.com', 'company_city': 'Denver', 'company_state': 'CO'}
+2025-11-18 07:36:51,019 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=get_contacts url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'company_name': 'Pinnacle', 'company_domain': 'pinnacleliving.com', 'company_city': 'Denver', 'company_state': 'CO'}
+2025-11-18 07:36:51,024 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=get_contacts url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'company_name': 'Cushman & Wakefield', 'company_domain': 'cushmanwakefield.com', 'company_city': 'Denver', 'company_state': 'CO'}
+2025-11-18 07:36:51,029 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=get_contacts url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'company_name': 'Mill Creek Residential', 'company_domain': 'millcreekres.com', 'company_city': 'Denver', 'company_state': 'CO'}
+2025-11-18 07:36:51,033 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=get_contacts url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'company_name': 'Waterton', 'company_domain': 'waterton.com', 'company_city': 'Denver', 'company_state': 'CO'}
+2025-11-18 07:36:51,037 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=get_contacts url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'company_name': 'Fairfield Residential', 'company_domain': 'fairfieldresidential.com', 'company_city': 'Denver', 'company_state': 'CO'}
+2025-11-18 07:36:51,041 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=get_contacts url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'company_name': 'Holland Residential', 'company_domain': 'hollandresidential.com', 'company_city': 'Denver', 'company_state': 'CO'}
+2025-11-18 07:36:51,154 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:36:51,154 [INFO] mcp.client.streamable_http: Received session ID: 9648f3ae-06b3-44ee-ad3b-5cdc0021d98f
+2025-11-18 07:36:51,169 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:36:51,187 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:36:51,187 [INFO] mcp.client.streamable_http: Received session ID: 582724f3-fe59-4a1f-8be3-de3902fa411d
+2025-11-18 07:36:51,187 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:36:51,201 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:36:51,201 [INFO] mcp.client.streamable_http: Received session ID: 2f20527d-1560-4d4e-887b-65a3988837c5
+2025-11-18 07:36:51,202 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:36:51,202 [INFO] mcp.client.streamable_http: Received session ID: 04c7d3ed-85c8-4295-9753-dfa101775737
+2025-11-18 07:36:51,202 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:36:51,204 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:36:51,224 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:36:51,225 [INFO] mcp.client.streamable_http: Received session ID: 473bb427-1d58-4bef-a8f1-7ea936ef9bea
+2025-11-18 07:36:51,225 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:36:51,225 [INFO] mcp.client.streamable_http: Received session ID: 56ce78cf-7a1d-4f93-af29-a98cdc86444e
+2025-11-18 07:36:51,241 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:36:51,242 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:36:51,242 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:36:51,242 [INFO] mcp.client.streamable_http: Received session ID: 00d0dcbd-c01f-4fe9-bf6b-b10cb669381f
+2025-11-18 07:36:51,257 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:36:51,269 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:36:51,269 [INFO] mcp.client.streamable_http: Received session ID: c55f80d8-d93b-456f-a205-ddc7ffacc9f2
+2025-11-18 07:36:51,270 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:36:51,270 [INFO] mcp.client.streamable_http: Received session ID: 34928d41-5197-4c7f-b627-1771fa431c7f
+2025-11-18 07:36:51,271 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:36:51,271 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:36:51,286 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:36:51,286 [INFO] mcp.client.streamable_http: Received session ID: c715741f-b39b-4560-8d38-ac3ee4d59d39
+2025-11-18 07:36:51,298 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:36:51,304 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:36:51,304 [INFO] mcp.client.streamable_http: Received session ID: c3c7d3cf-8e56-4e01-9d6e-e8bab2c2da4b
+2025-11-18 07:36:51,304 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:36:51,320 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:36:51,320 [INFO] mcp.client.streamable_http: Received session ID: 15b6cf95-c4b3-493b-9e50-9746eaa4e270
+2025-11-18 07:36:51,337 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:36:51,352 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:36:51,383 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:36:51,383 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:36:51,384 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:36:51,384 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:36:51,413 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:36:51,428 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:36:51,444 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:36:51,460 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:36:51,461 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:36:51,463 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:36:51,463 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:36:51,476 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:36:51,494 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:36:51,495 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:36:51,496 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:36:51,510 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:36:51,510 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:36:51,511 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:36:51,511 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:36:51,526 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:36:51,540 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:36:51,555 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:36:51,555 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:36:51,556 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:36:51,573 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:36:51,573 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:36:51,589 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:36:51,604 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:36:51,604 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:36:51,619 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:36:51,633 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:36:51,633 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:36:51,651 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:36:51,666 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:36:51,666 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:36:56,113 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:37:16,928 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:37:17,013 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:37:17,108 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:37:17,110 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=get_contacts items=1
+2025-11-18 07:37:19,789 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:37:19,954 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:37:20,129 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:37:20,131 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=get_contacts items=1
+2025-11-18 07:37:21,137 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:37:21,248 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:37:21,302 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:37:21,304 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=get_contacts items=1
+2025-11-18 07:37:22,286 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:37:22,921 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:37:23,018 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:37:23,090 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:37:23,092 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=get_contacts items=1
+2025-11-18 07:37:27,837 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:37:30,565 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:37:30,651 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:37:30,719 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:37:30,720 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=get_contacts items=1
+2025-11-18 07:37:33,312 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:37:46,376 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:37:46,459 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:37:46,541 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:37:46,543 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=get_contacts items=1
+2025-11-18 07:37:48,106 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:37:48,195 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:37:48,269 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:37:48,272 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=get_contacts items=1
+2025-11-18 07:37:49,041 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:37:50,859 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:37:50,929 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:37:50,992 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:37:50,994 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=get_contacts items=1
+2025-11-18 07:37:51,897 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:37:51,980 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:37:52,058 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:37:52,059 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=get_contacts items=1
+2025-11-18 07:37:54,503 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:37:55,652 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:37:55,734 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:37:55,805 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:37:55,807 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=get_contacts items=1
+2025-11-18 07:38:00,011 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:38:04,377 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:38:04,460 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:38:04,521 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:38:04,523 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=get_contacts items=1
+2025-11-18 07:38:05,492 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:38:19,340 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:38:19,420 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:38:19,491 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:38:19,493 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=get_contacts items=1
+2025-11-18 07:38:21,496 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:38:26,809 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2025-11-18 07:38:26,844 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=get_verified_emails url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'person_name': 'Bob Faith', 'company_name': 'Greystar'}
+2025-11-18 07:38:26,928 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:38:26,928 [INFO] mcp.client.streamable_http: Received session ID: e709c8c2-106b-412a-81dc-a00e76a1f995
+2025-11-18 07:38:26,929 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:38:27,012 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:38:27,027 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:38:27,028 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:38:27,099 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:38:27,172 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:38:27,174 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=get_verified_emails items=1
+2025-11-18 07:38:29,003 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2025-11-18 07:38:29,032 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=get_verified_emails url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'person_name': 'Bob Faith', 'company_name': 'Greystar'}
+2025-11-18 07:38:29,109 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:38:29,109 [INFO] mcp.client.streamable_http: Received session ID: 7a26dac2-d8cc-48d8-a6d1-a5f718476c67
+2025-11-18 07:38:29,110 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:38:29,195 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:38:29,214 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:38:29,214 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:38:29,266 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:38:29,317 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:38:29,319 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=get_verified_emails items=1
+2025-11-18 07:38:32,097 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:38:41,084 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2025-11-18 07:38:41,092 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=get_contacts url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'company_name': 'Sheepdog Property Management', 'company_domain': 'sheepdogpm.com', 'company_city': 'Denver', 'company_state': 'CO'}
+2025-11-18 07:38:41,154 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:38:41,154 [INFO] mcp.client.streamable_http: Received session ID: 61d37aae-e15a-407d-885c-de5cba0358d5
+2025-11-18 07:38:41,155 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:38:41,225 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:38:41,226 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:38:41,239 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:38:42,781 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:39:03,410 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:39:03,495 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:39:03,579 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:39:03,582 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=get_contacts items=1
+2025-11-18 07:39:06,525 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2025-11-18 07:39:06,572 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=get_contacts url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'company_name': 'Evernest', 'company_domain': 'evernest.com', 'company_city': 'Denver', 'company_state': 'CO'}
+2025-11-18 07:39:06,656 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:39:06,656 [INFO] mcp.client.streamable_http: Received session ID: 8764839b-027c-4c2d-895c-5242444e162d
+2025-11-18 07:39:06,656 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:39:06,738 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:39:06,739 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:39:06,740 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:39:08,935 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:39:50,063 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:39:50,134 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:39:50,202 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:39:50,204 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=get_contacts items=1
+2025-11-18 07:39:50,593 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:39:52,377 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2025-11-18 07:39:52,404 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=get_contacts url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'company_name': 'Colorado Realty & Property Management', 'company_domain': 'coloradorpm.com', 'company_city': 'Denver', 'company_state': 'CO'}
+2025-11-18 07:39:52,469 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:39:52,469 [INFO] mcp.client.streamable_http: Received session ID: f642c43f-8d95-4976-9fdb-db9d3a59a97a
+2025-11-18 07:39:52,470 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:39:52,579 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:39:52,579 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:39:52,580 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:39:56,076 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:41:02,480 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:41:02,548 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:41:02,617 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:41:02,619 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=get_contacts items=1
+2025-11-18 07:41:03,669 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:41:09,579 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2025-11-18 07:41:09,585 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=get_contacts url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'company_name': 'Blue Sail Property Management', 'company_domain': 'denversproperty.management', 'company_city': 'Denver', 'company_state': 'CO'}
+2025-11-18 07:41:09,696 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:41:09,697 [INFO] mcp.client.streamable_http: Received session ID: 9db90186-dcf5-4863-b58c-e379f1a67970
+2025-11-18 07:41:09,697 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:41:09,770 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:41:09,785 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:41:09,786 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:41:14,499 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:41:35,152 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:41:35,249 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:41:35,328 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:41:35,331 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=get_contacts items=1
+2025-11-18 07:41:37,348 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2025-11-18 07:41:37,354 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=get_contacts url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'company_name': 'Alliance Residential', 'company_domain': 'allianceres.com', 'company_city': 'Denver', 'company_state': 'CO'}
+2025-11-18 07:41:37,428 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:41:37,429 [INFO] mcp.client.streamable_http: Received session ID: 772119a9-7fa9-4a8f-8eee-213c5638dec3
+2025-11-18 07:41:37,429 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-18 07:41:37,491 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-18 07:41:37,507 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:41:37,507 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-18 07:41:40,597 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-18 07:42:07,703 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:42:07,784 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:42:07,853 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-18 07:42:07,856 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=get_contacts items=1
+2025-11-18 07:42:07,857 [ERROR] rv_agentic.services.retry: Agent call failed after 3 attempts: Max turns (10) exceeded
+2025-11-18 07:42:07,857 [ERROR] __main__: Error processing run id=71e9b1d9-0268-4091-bfc6-dd02abcc2b23
+Traceback (most recent call last):
+  File "/Users/marklerner/RV_Agentic_FrontEnd_Dev/src/rv_agentic/workers/lead_list_runner.py", line 667, in run_forever
+    process_run(run, heartbeat)
+  File "/Users/marklerner/RV_Agentic_FrontEnd_Dev/src/rv_agentic/workers/lead_list_runner.py", line 290, in process_run
+    result = retry.retry_agent_call(
+             ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/marklerner/RV_Agentic_FrontEnd_Dev/src/rv_agentic/services/retry.py", line 135, in retry_agent_call
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/marklerner/RV_Agentic_FrontEnd_Dev/.venv/lib/python3.12/site-packages/agents/run.py", line 418, in run_sync
+    return runner.run_sync(
+           ^^^^^^^^^^^^^^^^
+  File "/Users/marklerner/RV_Agentic_FrontEnd_Dev/.venv/lib/python3.12/site-packages/agents/run.py", line 774, in run_sync
+    return default_loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.11/Frameworks/Python.framework/Versions/3.12/lib/python3.12/asyncio/base_events.py", line 691, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/Users/marklerner/RV_Agentic_FrontEnd_Dev/.venv/lib/python3.12/site-packages/agents/run.py", line 597, in run
+    raise MaxTurnsExceeded(f"Max turns ({max_turns}) exceeded")
+agents.exceptions.MaxTurnsExceeded: Max turns (10) exceeded
+2025-11-18 07:42:07,993 [INFO] __main__: WORKER_MAX_LOOPS=1 reached in lead_list_runner; exiting after 1 loop(s)
+2025-11-18 07:42:07,993 [INFO] rv_agentic.services.heartbeat: Stopping heartbeat thread for worker lead-list-1da45b9b-4379-4890-b8bc-ca9e8417771f
+2025-11-18 07:42:08,221 [INFO] rv_agentic.services.heartbeat: Worker lead-list-1da45b9b-4379-4890-b8bc-ca9e8417771f marked as stopped
+2025-11-18 07:42:08,681 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+
+
+  ✅ Worker completed successfully
+
+5. Validating Results:
+--------------------------------------------------------------------------------
+
+Discovery source breakdown:
+  ❌ No companies discovered!

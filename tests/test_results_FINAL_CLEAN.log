@@ -1,0 +1,145 @@
+============================= test session starts ==============================
+platform darwin -- Python 3.12.11, pytest-9.0.1, pluggy-1.6.0 -- /Users/marklerner/RV_Agentic_FrontEnd_Dev/.venv/bin/python3
+cachedir: .pytest_cache
+rootdir: /Users/marklerner/RV_Agentic_FrontEnd_Dev
+configfile: pyproject.toml
+plugins: anyio-4.11.0
+collecting ... collected 1 item
+
+tests/integration/test_real_25_company_run.py::test_real_25_company_run_with_batching 
+[22:18:44] Creating test run in database...
+✅ Test run created successfully (ID: 90caf8c3-8f5e-4315-9312-d0516a5870d8)
+
+================================================================================
+REAL PRODUCTION TEST: 25-Company Run with Batching
+================================================================================
+Run ID: 90caf8c3-8f5e-4315-9312-d0516a5870d8
+Target: 25 companies
+Batch Size: 10
+Expected Batches: 3 (10 + 10 + 5)
+Expected Time: 12-15 minutes
+================================================================================
+
+
+[22:18:44] Initializing agent and worker...
+✅ Worker started with heartbeat
+
+================================================================================
+BATCH PROCESSING START
+================================================================================
+
+[22:18:44] Batch 1:
+  Progress: 0/25 companies
+  Remaining: 25
+  🔄 Processing batch...
+  ✅ Batch complete: Found 91 companies in 16.8s
+  Progress: 91/25 companies
+
+  ✅ Target met!
+
+================================================================================
+BATCH PROCESSING COMPLETE
+================================================================================
+Total Batches: 1
+Companies Found: 91/25
+Success Rate: 364.0%
+Total Time: 16.8s (0.3 min)
+Avg Time/Batch: 16.8s
+================================================================================
+
+
+[22:19:01] Cleaning up test run...
+✅ Test data cleaned up
+FAILED
+
+=================================== FAILURES ===================================
+____________________ test_real_25_company_run_with_batching ____________________
+tests/integration/test_real_25_company_run.py:192: in test_real_25_company_run_with_batching
+    assert batches_completed == expected_batches, \
+E   AssertionError: Expected 3 batches for 25 companies with batch_size=10, got 1
+E   assert 1 == 3
+------------------------------ Captured log call -------------------------------
+WARNING  rv_agentic.services.heartbeat:heartbeat.py:206 Failed to send heartbeat for worker test-worker-b4c2951d-b5cc-4c29-8d30-ee67f9b28eed: function pm_pipeline.upsert_worker_heartbeat(unknown, unknown, unknown, unknown, unknown, unknown, json) does not exist
+LINE 2:                 SELECT pm_pipeline.upsert_worker_heartbeat(
+                               ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+WARNING  rv_agentic.services.heartbeat:heartbeat.py:206 Failed to send heartbeat for worker test-worker-b4c2951d-b5cc-4c29-8d30-ee67f9b28eed: function pm_pipeline.upsert_worker_heartbeat(unknown, unknown, unknown, unknown, unknown, unknown, json) does not exist
+LINE 2:                 SELECT pm_pipeline.upsert_worker_heartbeat(
+                               ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+WARNING  rv_agentic.services.heartbeat:heartbeat.py:206 Failed to send heartbeat for worker test-worker-b4c2951d-b5cc-4c29-8d30-ee67f9b28eed: function pm_pipeline.upsert_worker_heartbeat(unknown, unknown, unknown, unknown, unknown, unknown, json) does not exist
+LINE 2:                 SELECT pm_pipeline.upsert_worker_heartbeat(
+                               ^
+HINT:  No function matches the given name and argument types. You might need to add explicit type casts.
+=============================== warnings summary ===============================
+tests/integration/test_real_25_company_run.py:29
+  /Users/marklerner/RV_Agentic_FrontEnd_Dev/tests/integration/test_real_25_company_run.py:29: PytestUnknownMarkWarning: Unknown pytest.mark.integration - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.integration
+
+tests/integration/test_real_25_company_run.py:30
+  /Users/marklerner/RV_Agentic_FrontEnd_Dev/tests/integration/test_real_25_company_run.py:30: PytestUnknownMarkWarning: Unknown pytest.mark.slow - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.slow
+
+tests/integration/test_real_25_company_run.py:233
+  /Users/marklerner/RV_Agentic_FrontEnd_Dev/tests/integration/test_real_25_company_run.py:233: PytestUnknownMarkWarning: Unknown pytest.mark.integration - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.integration
+
+tests/integration/test_real_25_company_run.py:234
+  /Users/marklerner/RV_Agentic_FrontEnd_Dev/tests/integration/test_real_25_company_run.py:234: PytestUnknownMarkWarning: Unknown pytest.mark.slow - is this a typo?  You can register custom marks to avoid this warning - for details, see https://docs.pytest.org/en/stable/how-to/mark.html
+    @pytest.mark.slow
+
+tests/integration/test_real_25_company_run.py::test_real_25_company_run_with_batching
+  /Users/marklerner/RV_Agentic_FrontEnd_Dev/src/rv_agentic/config/settings.py:23: PydanticDeprecatedSince20: Using extra keyword arguments on `Field` is deprecated and will be removed. Use `json_schema_extra` instead. (Extra keys: 'env'). Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+    openai_api_key: str = Field(..., env="OPENAI_API_KEY")
+
+tests/integration/test_real_25_company_run.py::test_real_25_company_run_with_batching
+  /Users/marklerner/RV_Agentic_FrontEnd_Dev/src/rv_agentic/config/settings.py:27: PydanticDeprecatedSince20: Using extra keyword arguments on `Field` is deprecated and will be removed. Use `json_schema_extra` instead. (Extra keys: 'env'). Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+    n8n_mcp_server_url: Optional[str] = Field(None, env="N8N_MCP_SERVER_URL")
+
+tests/integration/test_real_25_company_run.py::test_real_25_company_run_with_batching
+  /Users/marklerner/RV_Agentic_FrontEnd_Dev/src/rv_agentic/config/settings.py:28: PydanticDeprecatedSince20: Using extra keyword arguments on `Field` is deprecated and will be removed. Use `json_schema_extra` instead. (Extra keys: 'env'). Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+    n8n_mcp_server_label: str = Field("default-server", env="N8N_MCP_SERVER_LABEL")
+
+tests/integration/test_real_25_company_run.py::test_real_25_company_run_with_batching
+  /Users/marklerner/RV_Agentic_FrontEnd_Dev/src/rv_agentic/config/settings.py:29: PydanticDeprecatedSince20: Using extra keyword arguments on `Field` is deprecated and will be removed. Use `json_schema_extra` instead. (Extra keys: 'env'). Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+    n8n_mcp_auth_token: Optional[str] = Field(None, env="N8N_MCP_AUTH_TOKEN")
+
+tests/integration/test_real_25_company_run.py::test_real_25_company_run_with_batching
+  /Users/marklerner/RV_Agentic_FrontEnd_Dev/src/rv_agentic/config/settings.py:32: PydanticDeprecatedSince20: Using extra keyword arguments on `Field` is deprecated and will be removed. Use `json_schema_extra` instead. (Extra keys: 'env'). Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+    n8n_mcp_base_url: Optional[str] = Field(None, env="N8N_MCP_BASE_URL")
+
+tests/integration/test_real_25_company_run.py::test_real_25_company_run_with_batching
+  /Users/marklerner/RV_Agentic_FrontEnd_Dev/src/rv_agentic/config/settings.py:35: PydanticDeprecatedSince20: Using extra keyword arguments on `Field` is deprecated and will be removed. Use `json_schema_extra` instead. (Extra keys: 'env'). Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+    supabase_url: Optional[str] = Field(None, env="SUPABASE_URL")
+
+tests/integration/test_real_25_company_run.py::test_real_25_company_run_with_batching
+  /Users/marklerner/RV_Agentic_FrontEnd_Dev/src/rv_agentic/config/settings.py:36: PydanticDeprecatedSince20: Using extra keyword arguments on `Field` is deprecated and will be removed. Use `json_schema_extra` instead. (Extra keys: 'env'). Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+    supabase_anon_key: Optional[str] = Field(None, env="SUPABASE_ANON_KEY")
+
+tests/integration/test_real_25_company_run.py::test_real_25_company_run_with_batching
+  /Users/marklerner/RV_Agentic_FrontEnd_Dev/src/rv_agentic/config/settings.py:16: PydanticDeprecatedSince20: Support for class-based `config` is deprecated, use ConfigDict instead. Deprecated in Pydantic V2.0 to be removed in V3.0. See Pydantic V2 Migration Guide at https://errors.pydantic.dev/2.12/migration/
+    class Settings(BaseSettings):
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/integration/test_real_25_company_run.py::test_real_25_company_run_with_batching
+======================= 1 failed, 12 warnings in 18.24s ========================
+Loading .env.local...
+✅ Environment loaded
+
+================================================================================
+FULL 25-COMPANY PRODUCTION TEST
+================================================================================
+
+⚠️  This will:
+   - Run real agents with OpenAI API
+   - Take 12-15 minutes
+   - Consume ~$0.50-$1.00 in API credits
+   - Create and clean up test data
+
+Starting test...
+
+
+================================================================================
+❌ TEST FAILED
+================================================================================

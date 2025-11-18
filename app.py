@@ -11,7 +11,7 @@ from rv_agentic.agents.lead_list_agent import create_lead_list_agent
 from rv_agentic.agents.sequence_enroller_agent import create_sequence_enroller_agent
 from rv_agentic.config.settings import get_settings
 from rv_agentic.services import supabase_client as _sb
-from rv_agentic.services.openai_provider import run_agent_sync
+from rv_agentic.services.openai_provider import run_agent_sync, run_agent_with_streaming
 from rv_agentic import orchestrator
 from rv_agentic.services.hubspot_client import (
     HubSpotError as HS_E,
@@ -144,21 +144,11 @@ with st.sidebar:
 
     st.markdown("---")
 
-    # Navigation
-    st.subheader("Navigation")
+    # Initialize view_mode if not present
     if "view_mode" not in st.session_state:
         st.session_state.view_mode = "Agents"
-    view_mode = st.radio(
-        "View",
-        ["Agents", "Dashboard"],
-        index=0 if st.session_state.view_mode == "Agents" else 1,
-        label_visibility="collapsed",
-    )
-    st.session_state.view_mode = view_mode
 
-    st.markdown("---")
-
-    # Agent selection only in Agents view
+    # Agent and Dashboard buttons
     agents = {
         "Company Researcher": "🔍",
         "Contact Researcher": "👤",
@@ -166,47 +156,71 @@ with st.sidebar:
         "Sequence Enroller": "📧",
     }
 
-    if st.session_state.view_mode == "Agents":
-        st.subheader("Select Agent")
+    # Agent selection buttons
+    for agent_name, icon in agents.items():
+        # Check if this is the active agent
+        is_active = st.session_state.current_agent == agent_name and st.session_state.view_mode == "Agents"
 
-        for agent_name, icon in agents.items():
-            # Check if this is the active agent
-            is_active = st.session_state.current_agent == agent_name
+        # Create button with conditional styling
+        if is_active:
+            # Active agent with green background and checkmark
+            st.markdown(
+                f"""
+                <div style="
+                    background-color: #d4edda;
+                    border: 2px solid #28a745;
+                    border-radius: 8px;
+                    padding: 8px;
+                    margin-bottom: 8px;
+                    text-align: center;
+                    font-weight: bold;
+                    color: #155724;
+                ">
+                    {icon} {agent_name} ✓ (Active)
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
+        else:
+            # Regular button for inactive agents
+            if st.button(
+                f"{icon} {agent_name}",
+                use_container_width=True,
+                key=f"btn_{agent_name}",
+            ):
+                st.session_state.current_agent = agent_name
+                st.session_state.view_mode = "Agents"
+                st.session_state.messages = []  # Clear messages when switching agents
+                st.rerun()
 
-            # Create button with conditional styling
-            if is_active:
-                # Active agent with green background and checkmark
-                st.markdown(
-                    f"""
-                    <div style="
-                        background-color: #d4edda; 
-                        border: 2px solid #28a745; 
-                        border-radius: 8px; 
-                        padding: 8px; 
-                        margin-bottom: 8px;
-                        text-align: center;
-                        font-weight: bold;
-                        color: #155724;
-                    ">
-                        {icon} {agent_name} ✓ (Active)
-                    </div>
-                    """,
-                    unsafe_allow_html=True,
-                )
-            else:
-                # Regular button for inactive agents
-                if st.button(
-                    f"{icon} {agent_name}",
-                    use_container_width=True,
-                    key=f"btn_{agent_name}",
-                ):
-                    st.session_state.current_agent = agent_name
-                    st.session_state.messages = []  # Clear messages when switching agents
-                    st.rerun()
+    # Dashboard button
+    is_dashboard_active = st.session_state.view_mode == "Dashboard"
+    if is_dashboard_active:
+        st.markdown(
+            """
+            <div style="
+                background-color: #d4edda;
+                border: 2px solid #28a745;
+                border-radius: 8px;
+                padding: 8px;
+                margin-bottom: 8px;
+                text-align: center;
+                font-weight: bold;
+                color: #155724;
+            ">
+                📊 Dashboard ✓ (Active)
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    else:
+        if st.button("📊 Dashboard", use_container_width=True, key="btn_dashboard"):
+            st.session_state.view_mode = "Dashboard"
+            st.rerun()
 
     st.markdown("---")
 
-    # Quick Actions
+    # Quick Actions (only show in Agents view)
     if st.session_state.view_mode == "Agents":
         st.subheader("Quick Actions")
         if st.button("🔄 New Session", use_container_width=True):
@@ -289,11 +303,98 @@ with st.sidebar:
                     stat.update(label="❌ pm_pipeline.runs insert failed", state="error")
                     st.error(str(e))
 
+        # Worker Health Monitoring (for ops/admin)
+        st.markdown("---")
+        st.markdown("#### Worker Health")
+
+        if st.button("🔄 Refresh Worker Status", key="sidebar_refresh_workers"):
+            st.rerun()
+
+        try:
+            from rv_agentic.services import heartbeat
+            health = heartbeat.get_worker_health_summary()
+
+            # Overall health metrics
+            col_active, col_dead, col_status = st.columns(3)
+            with col_active:
+                st.metric("Active", health.get("total_active_workers", 0))
+            with col_dead:
+                st.metric("Dead", health.get("total_dead_workers", 0))
+            with col_status:
+                health_status = health.get("health_status", "unknown")
+                status_display = {
+                    "healthy": "✅",
+                    "no_workers": "🔵",
+                    "unknown": "⚪"
+                }
+                st.metric("Status", status_display.get(health_status, "⚪"))
+
+            # Worker stats by type
+            stats_by_type = health.get("stats_by_type", [])
+            if stats_by_type:
+                import pandas as pd
+                df = pd.DataFrame(stats_by_type)
+                if not df.empty:
+                    df_display = df.rename(columns={
+                        "worker_type": "Type",
+                        "active_workers": "Active",
+                        "dead_workers": "Dead"
+                    })
+                    cols_to_show = ["Type", "Active", "Dead"]
+                    df_display = df_display[[col for col in cols_to_show if col in df_display.columns]]
+                    st.dataframe(df_display, use_container_width=True, hide_index=True)
+
+        except Exception as e:
+            st.error(f"Failed to load worker health: {e}")
+
     # (Removed sidebar pin buttons; actions live under the chat)
 
 # Dashboard view
 if st.session_state.get("view_mode") == "Dashboard":
     st.title("📊 Dashboard")
+
+    # Check for runs needing user attention
+    try:
+        runs_needing_attention = [
+            r for r in _sb.get_active_and_recent_runs(limit=20)
+            if str(r.get("status")) == "needs_user_decision"
+        ]
+
+        if runs_needing_attention:
+            st.markdown("### ⚠️ Attention Required")
+            st.markdown(f"**{len(runs_needing_attention)} lead list run(s) need your decision**")
+
+            for run in runs_needing_attention[:5]:  # Show max 5 on dashboard
+                rid = str(run.get("id"))
+                created_at = run.get("created_at", "")
+                criteria = run.get("criteria", {})
+                target_qty = run.get("target_quantity", "?")
+
+                # Extract criteria for display
+                cities = criteria.get("cities", [])
+                state = criteria.get("state", "")
+                pms = criteria.get("pms", [])
+
+                location_str = ", ".join(cities) if cities else state if state else "Various"
+                pms_str = ", ".join(pms) if pms else "Any"
+
+                with st.container():
+                    col1, col2 = st.columns([3, 1])
+                    with col1:
+                        st.markdown(f"**Run:** `{rid[:13]}...`")
+                        st.markdown(f"*{target_qty} companies • {location_str} • PMS: {pms_str}*")
+                        st.caption(f"Created: {created_at}")
+                    with col2:
+                        if st.button("View & Decide", key=f"dashboard_goto_{rid}", use_container_width=True):
+                            # Navigate to Lead List Generator
+                            st.session_state.current_agent = "Lead List Generator"
+                            st.session_state.view_mode = "Agents"
+                            st.rerun()
+                    st.markdown("---")
+    except Exception as e:
+        st.warning(f"Could not load run alerts: {e}")
+
+    # Focus Account Metrics section
     try:
         metrics = _sb.get_focus_account_metrics()
         if not metrics:
@@ -363,248 +464,176 @@ for message in st.session_state.messages:
 # Lead list run status helper (for pm_pipeline runs)
 if st.session_state.current_agent == "Lead List Generator":
     st.markdown("---")
-    st.subheader("Lead List Run Status")
-    col_run, col_btn = st.columns([3, 1])
-    with col_run:
-        run_id_input = st.text_input(
-            "Run ID",
-            value="",
-            placeholder="Paste a pm_pipeline run id (UUID)",
-            key="lead_list_run_id",
-        )
-    with col_btn:
-        check_clicked = st.button("Check Status", use_container_width=True)
-    if check_clicked and run_id_input.strip():
-        with st.status("Fetching run status from pm_pipeline…", state="running") as stat:
-            try:
-                rid = run_id_input.strip()
-                run = _sb.get_pm_run(rid)
-                company_gap = _sb.get_pm_company_gap(rid)
-                contact_gap = _sb.get_contact_gap_summary(rid)
-                if not run:
-                    stat.update(label="Run not found", state="error")
-                    st.error("No run found with that id.")
-                else:
-                    stat.update(label="Run loaded", state="complete")
+    st.subheader("Active & Recent Runs")
 
-                    # Use orchestrator.get_run_progress for enhanced progress display
-                    progress = orchestrator.get_run_progress(rid)
-
-                    st.markdown("#### Run")
-                    st.markdown(
-                        f"- **Status:** `{progress.get('status')}`\n"
-                        f"- **Stage:** `{progress.get('stage')}`\n"
-                        f"- **Target Quantity:** `{progress.get('target_quantity')}`\n"
-                    )
-
-                    st.markdown("#### Progress")
-
-                    # Company progress bar
-                    companies_info = progress.get("companies", {})
-                    companies_ready = companies_info.get("ready", 0)
-                    companies_gap = companies_info.get("gap", 0)
-                    company_progress_pct = companies_info.get("progress_pct", 0)
-
-                    st.markdown(f"**Companies: {companies_ready} / {progress.get('target_quantity')} ({company_progress_pct}%)**")
-                    st.progress(company_progress_pct / 100.0)
-                    st.caption(f"Gap: {companies_gap} companies remaining")
-
-                    # Contact progress bar
-                    contacts_info = progress.get("contacts", {})
-                    contacts_ready = contacts_info.get("ready", 0)
-                    contacts_gap = contacts_info.get("gap", 0)
-                    contact_progress_pct = contacts_info.get("progress_pct", 0)
-
-                    st.markdown(f"**Contacts: {contacts_ready} total ({contact_progress_pct}% of minimum)**")
-                    st.progress(contact_progress_pct / 100.0)
-                    st.caption(f"Gap: {contacts_gap} contacts remaining to meet minimum")
-
-                    # Export CSV button when run is completed
-                    if str(progress.get("status")) == "completed":
-                        st.markdown("#### Export")
-                        if st.button("📥 Download CSVs", use_container_width=True, key="btn_export_csv"):
-                            try:
-                                from rv_agentic.services import export
-                                import tempfile
-
-                                with st.status("Generating CSV files...", state="running") as export_stat:
-                                    with tempfile.TemporaryDirectory() as tmpdir:
-                                        companies_path, contacts_path = export.export_run_to_files(rid, tmpdir)
-
-                                        # Read files for download
-                                        with open(companies_path, "r") as f:
-                                            companies_csv = f.read()
-                                        with open(contacts_path, "r") as f:
-                                            contacts_csv = f.read()
-
-                                        export_stat.update(label="✅ CSVs generated", state="complete")
-
-                                        # Provide download buttons
-                                        col_csv1, col_csv2 = st.columns(2)
-                                        with col_csv1:
-                                            st.download_button(
-                                                label="📊 Download Companies CSV",
-                                                data=companies_csv,
-                                                file_name=f"companies_{rid[:8]}.csv",
-                                                mime="text/csv",
-                                                use_container_width=True,
-                                            )
-                                        with col_csv2:
-                                            st.download_button(
-                                                label="👥 Download Contacts CSV",
-                                                data=contacts_csv,
-                                                file_name=f"contacts_{rid[:8]}.csv",
-                                                mime="text/csv",
-                                                use_container_width=True,
-                                            )
-                            except Exception as e:
-                                st.error(f"CSV export failed: {e}")
-
-                    # When a run needs user decision (e.g. contact gap could not be closed),
-                    # surface guidance and options.
-                    if str(run.get("status")) == "needs_user_decision":
-                        st.markdown("#### Action Required")
-                        notes = (run.get("notes") or "").strip()
-                        if notes:
-                            st.info(notes)
-                        st.markdown(
-                            "The system could not fully satisfy the requirements for this run. "
-                            "Choose how you would like to proceed:"
-                        )
-                        col1, col2, col3 = st.columns(3)
-                        with col1:
-                            expand_loc = st.button("Expand Location", key="btn_expand_location")
-                        with col2:
-                            loosen_pms = st.button("Loosen PMS", key="btn_loosen_pms")
-                        with col3:
-                            accept_partial = st.button("Accept Partial Results", key="btn_accept_partial")
-
-                        chosen = None
-                        if expand_loc:
-                            chosen = "expand_location"
-                        elif loosen_pms:
-                            chosen = "loosen_pms"
-                        elif accept_partial:
-                            chosen = "accept_partial"
-
-                        if chosen:
-                            # For now we record the choice in notes and, for the
-                            # accept-partial path, mark the run as fully completed.
-                            base_notes = notes or ""
-                            choice_note = (
-                                f"[User decision] {chosen.replace('_', ' ')} at UI time."
-                            )
-                            new_notes = (base_notes + "\n\n" + choice_note).strip()
-                            if chosen == "accept_partial":
-                                _sb.set_run_stage(run_id=rid, stage="done", status="completed")
-                                _sb.update_pm_run_status(run_id=rid, status="completed", error=new_notes)
-                                st.success("Marked run as completed with partial results.")
-                            else:
-                                # Keep status as needs_user_decision but capture the choice;
-                                # a follow-up process or operator can adjust criteria and resume.
-                                _sb.update_pm_run_status(
-                                    run_id=rid,
-                                    status="needs_user_decision",
-                                    error=new_notes,
-                                )
-                                st.success("Recorded your preference; please adjust criteria and resume the run.")
-            except Exception as e:
-                stat.update(label="Error loading run", state="error")
-                st.error(str(e))
-
-    # Worker Health Monitoring
-    st.markdown("---")
-    st.subheader("Worker Health")
-
-    if st.button("🔄 Refresh Worker Status", use_container_width=False):
-        st.rerun()
-
+    # Auto-fetch active and recent runs
     try:
-        from rv_agentic.services import heartbeat
-        health = heartbeat.get_worker_health_summary()
+        runs = _sb.get_active_and_recent_runs(limit=10)
 
-        # Overall health metrics
-        col_active, col_dead, col_status = st.columns(3)
-        with col_active:
-            st.metric("Active Workers", health.get("total_active_workers", 0))
-        with col_dead:
-            st.metric(
-                "Dead Workers",
-                health.get("total_dead_workers", 0),
-                delta=None,
-                delta_color="inverse"
-            )
-        with col_status:
-            health_status = health.get("health_status", "unknown")
-            status_emoji = "✅" if health_status == "healthy" else "⚠️"
-            st.metric("System Health", f"{status_emoji} {health_status.title()}")
+        if not runs:
+            st.info("No active or recent runs found. Submit a new lead list request to get started!")
+        else:
+            # Show runs needing attention first
+            runs_needing_attention = [r for r in runs if str(r.get("status")) == "needs_user_decision"]
+            active_runs = [r for r in runs if r.get("stage") != "done" and str(r.get("status")) != "needs_user_decision"]
+            completed_runs = [r for r in runs if r.get("stage") == "done" and str(r.get("status")) == "completed"]
 
-        # Worker stats by type
-        stats_by_type = health.get("stats_by_type", [])
-        if stats_by_type:
-            st.markdown("#### Workers by Type")
+            # Alert for runs needing attention
+            if runs_needing_attention:
+                st.warning(f"⚠️ {len(runs_needing_attention)} run(s) need your attention")
 
-            # Create a nice table
-            import pandas as pd
-            df = pd.DataFrame(stats_by_type)
-            if not df.empty:
-                # Rename columns for display
-                df_display = df.rename(columns={
-                    "worker_type": "Type",
-                    "total_workers": "Total",
-                    "active_workers": "Active",
-                    "idle_workers": "Idle",
-                    "processing_workers": "Processing",
-                    "dead_workers": "Dead"
-                })
-                # Select only relevant columns
-                cols_to_show = ["Type", "Total", "Active", "Idle", "Processing", "Dead"]
-                df_display = df_display[[col for col in cols_to_show if col in df_display.columns]]
-                st.dataframe(df_display, use_container_width=True, hide_index=True)
+            # Display each run
+            for run in runs:
+                rid = str(run.get("id"))
+                run_status = str(run.get("status", "unknown"))
+                run_stage = str(run.get("stage", "unknown"))
+                created_at = run.get("created_at", "")
 
-        # Show dead workers if any
-        dead_workers = health.get("dead_workers", [])
-        if dead_workers:
-            st.warning(f"⚠️ {len(dead_workers)} worker(s) appear to be dead")
-            with st.expander("View Dead Workers"):
-                for worker in dead_workers:
-                    worker_id = worker.get("worker_id", "unknown")
-                    worker_type = worker.get("worker_type", "unknown")
-                    minutes_ago = worker.get("seconds_since_heartbeat", 0) / 60.0
-                    current_task = worker.get("current_task", "none")
+                # Determine emoji and title based on status
+                if run_status == "needs_user_decision":
+                    emoji = "⚠️"
+                    title_suffix = "(Action Required)"
+                elif run_stage == "done" and run_status == "completed":
+                    emoji = "✅"
+                    title_suffix = "(Completed)"
+                elif run_status == "error":
+                    emoji = "❌"
+                    title_suffix = "(Error)"
+                else:
+                    emoji = "🔄"
+                    title_suffix = "(In Progress)"
 
-                    st.markdown(
-                        f"**{worker_id}** ({worker_type})  \n"
-                        f"Last seen: {minutes_ago:.1f} minutes ago  \n"
-                        f"Task: {current_task}"
-                    )
-                    st.markdown("---")
+                # Create expandable section for each run
+                with st.expander(f"{emoji} Run {rid[:8]}... {title_suffix}", expanded=(run_status == "needs_user_decision")):
+                    try:
+                        # Use orchestrator.get_run_progress for enhanced progress display
+                        progress = orchestrator.get_run_progress(rid)
 
-        # Show active workers
-        active_workers = health.get("active_workers", [])
-        if active_workers:
-            with st.expander(f"View Active Workers ({len(active_workers)})"):
-                for worker in active_workers:
-                    worker_id = worker.get("worker_id", "unknown")
-                    worker_type = worker.get("worker_type", "unknown")
-                    status = worker.get("status", "unknown")
-                    seconds_ago = worker.get("seconds_since_heartbeat", 0)
-                    current_task = worker.get("current_task", "idle")
-                    current_run_id = worker.get("current_run_id")
+                        st.markdown("#### Run Info")
+                        st.markdown(
+                            f"- **Status:** `{progress.get('status')}`\n"
+                            f"- **Stage:** `{progress.get('stage')}`\n"
+                            f"- **Target Quantity:** `{progress.get('target_quantity')}`\n"
+                        )
 
-                    status_emoji = {"active": "🟢", "idle": "🟡", "processing": "🔵"}.get(status, "⚪")
+                        st.markdown("#### Progress")
 
-                    st.markdown(
-                        f"{status_emoji} **{worker_id}** ({worker_type})  \n"
-                        f"Status: {status} | Heartbeat: {seconds_ago:.0f}s ago  \n"
-                        f"Task: {current_task or 'idle'}"
-                    )
-                    if current_run_id:
-                        st.caption(f"Run ID: {current_run_id}")
-                    st.markdown("---")
+                        # Company progress bar
+                        companies_info = progress.get("companies", {})
+                        companies_ready = companies_info.get("ready", 0)
+                        companies_gap = companies_info.get("gap", 0)
+                        company_progress_pct = companies_info.get("progress_pct", 0)
+
+                        st.markdown(f"**Companies: {companies_ready} / {progress.get('target_quantity')} ({company_progress_pct}%)**")
+                        st.progress(company_progress_pct / 100.0)
+                        st.caption(f"Gap: {companies_gap} companies remaining")
+
+                        # Contact progress bar
+                        contacts_info = progress.get("contacts", {})
+                        contacts_ready = contacts_info.get("ready", 0)
+                        contacts_gap = contacts_info.get("gap", 0)
+                        contact_progress_pct = contacts_info.get("progress_pct", 0)
+
+                        st.markdown(f"**Contacts: {contacts_ready} total ({contact_progress_pct}% of minimum)**")
+                        st.progress(contact_progress_pct / 100.0)
+                        st.caption(f"Gap: {contacts_gap} contacts remaining to meet minimum")
+
+                        # Export CSV button when run is completed
+                        if str(progress.get("status")) == "completed":
+                            st.markdown("#### Export")
+                            if st.button("📥 Download CSVs", use_container_width=True, key=f"btn_export_csv_{rid}"):
+                                try:
+                                    from rv_agentic.services import export
+                                    import tempfile
+
+                                    with st.status("Generating CSV files...", state="running") as export_stat:
+                                        with tempfile.TemporaryDirectory() as tmpdir:
+                                            companies_path, contacts_path = export.export_run_to_files(rid, tmpdir)
+
+                                            # Read files for download
+                                            with open(companies_path, "r") as f:
+                                                companies_csv = f.read()
+                                            with open(contacts_path, "r") as f:
+                                                contacts_csv = f.read()
+
+                                            export_stat.update(label="✅ CSVs generated", state="complete")
+
+                                            # Provide download buttons
+                                            col_csv1, col_csv2 = st.columns(2)
+                                            with col_csv1:
+                                                st.download_button(
+                                                    label="📊 Download Companies CSV",
+                                                    data=companies_csv,
+                                                    file_name=f"companies_{rid[:8]}.csv",
+                                                    mime="text/csv",
+                                                    use_container_width=True,
+                                                )
+                                            with col_csv2:
+                                                st.download_button(
+                                                    label="👥 Download Contacts CSV",
+                                                    data=contacts_csv,
+                                                    file_name=f"contacts_{rid[:8]}.csv",
+                                                    mime="text/csv",
+                                                    use_container_width=True,
+                                                )
+                                except Exception as e:
+                                    st.error(f"CSV export failed: {e}")
+
+                        # When a run needs user decision (e.g. contact gap could not be closed),
+                        # surface guidance and options.
+                        if str(run.get("status")) == "needs_user_decision":
+                            st.markdown("#### Action Required")
+                            notes = (run.get("notes") or "").strip()
+                            if notes:
+                                st.info(notes)
+                            st.markdown(
+                                "The system could not fully satisfy the requirements for this run. "
+                                "Choose how you would like to proceed:"
+                            )
+                            col1, col2, col3 = st.columns(3)
+                            with col1:
+                                expand_loc = st.button("Expand Location", key=f"btn_expand_location_{rid}")
+                            with col2:
+                                loosen_pms = st.button("Loosen PMS", key=f"btn_loosen_pms_{rid}")
+                            with col3:
+                                accept_partial = st.button("Accept Partial Results", key=f"btn_accept_partial_{rid}")
+
+                            chosen = None
+                            if expand_loc:
+                                chosen = "expand_location"
+                            elif loosen_pms:
+                                chosen = "loosen_pms"
+                            elif accept_partial:
+                                chosen = "accept_partial"
+
+                            if chosen:
+                                # For now we record the choice in notes and, for the
+                                # accept-partial path, mark the run as fully completed.
+                                base_notes = notes or ""
+                                choice_note = (
+                                    f"[User decision] {chosen.replace('_', ' ')} at UI time."
+                                )
+                                new_notes = (base_notes + "\n\n" + choice_note).strip()
+                                if chosen == "accept_partial":
+                                    _sb.set_run_stage(run_id=rid, stage="done", status="completed")
+                                    _sb.update_pm_run_status(run_id=rid, status="completed", error=new_notes)
+                                    st.success("Marked run as completed with partial results.")
+                                    st.rerun()  # Refresh to show updated status
+                                else:
+                                    # Keep status as needs_user_decision but capture the choice;
+                                    # a follow-up process or operator can adjust criteria and resume.
+                                    _sb.update_pm_run_status(
+                                        run_id=rid,
+                                        status="needs_user_decision",
+                                        error=new_notes,
+                                    )
+                                    st.success("Recorded your preference; please adjust criteria and resume the run.")
+
+                    except Exception as e:
+                        st.error(f"Failed to display run details: {e}")
 
     except Exception as e:
-        st.error(f"Failed to load worker health: {e}")
+        st.error(f"Failed to load runs: {e}")
 
 # Contextual HubSpot pin/create actions under the most recent assistant summary
 last_assistant_msg = next(
@@ -903,7 +932,7 @@ def _process_prompt(prompt: str):
 
                     def stream_callback(content: str):
                         # Route emoji-prefixed status lines to st.status; send everything else to the main content buffer.
-                        status_prefixes = ("🔍", "🌐", "📋", "🧭", "🧩", "✍️", "🔎", "📤", "⚠️", "✅", "👤", "🚚", "🗄️", "•")
+                        status_prefixes = ("🔍", "🌐", "📋", "🧭", "🧩", "✍️", "🔎", "📤", "⚠️", "✅", "👤", "🚚", "🗄️", "•", "📊", "🔧")
                         nonlocal content_buffer, last_content_time, last_status_time
                         text = str(content)
                         # Process chunk line-by-line so multi-line status chunks are routed correctly
@@ -941,30 +970,68 @@ def _process_prompt(prompt: str):
                     # Lead List Generator: use Agents SDK + pm_pipeline.runs
                     if current_agent_name == "Lead List Generator":
                         # Create a pm_pipeline run immediately so downstream workers can process it.
+                        # Extract quantity
+                        requested_qty = 10  # default
                         try:
-                            inferred_qty = 40
-                            qty_match = re.search(r"(?:^|\\D)(\\d{1,4})(?:\\s+leads|\\s+accounts|\\b)", prompt)
+                            qty_match = re.search(r"(\d+)\s*(?:companies|accounts|leads|properties)", prompt, re.I)
                             if qty_match:
-                                inferred_qty = int(qty_match.group(1))
+                                requested_qty = int(qty_match.group(1))
                         except Exception:
-                            inferred_qty = 40
+                            requested_qty = 10
+
+                        # Extract location (city and/or state)
+                        location_parts = []
+                        city_match = re.search(r"in\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*),?\s+([A-Z]{2})", prompt)
+                        if city_match:
+                            location_parts.append(f"{city_match.group(1)}, {city_match.group(2)}")
+                        else:
+                            state_match = re.search(r"in\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)", prompt)
+                            if state_match:
+                                location_parts.append(state_match.group(1))
+
+                        # Extract units requirement
+                        units_req = None
+                        units_match = re.search(r"(\d+)\+?\s*units", prompt, re.I)
+                        if units_match:
+                            units_req = f"{units_match.group(1)}+ units"
+
+                        # Extract PMS requirement
+                        pms_req = None
+                        pms_keywords = ["Buildium", "AppFolio", "Yardi", "RealPage", "Entrata", "ResMan"]
+                        for pms in pms_keywords:
+                            if pms.lower() in prompt.lower():
+                                pms_req = pms
+                                break
 
                         criteria = {
                             "natural_request": prompt,
                             "source": "lead_list_generator_ui",
                             "created_via": "streamlit",
                         }
+
                         pm_run = _sb.create_pm_run(
                             criteria=criteria,
-                            target_quantity=inferred_qty,
+                            target_quantity=requested_qty,
                         )
                         run_id = pm_run.get("id")
+
+                        # Build criteria summary for display
+                        criteria_items = []
+                        if location_parts:
+                            criteria_items.append(f"**Location:** {', '.join(location_parts)}")
+                        if units_req:
+                            criteria_items.append(f"**Units:** {units_req}")
+                        if pms_req:
+                            criteria_items.append(f"**PMS:** {pms_req}")
+
+                        criteria_summary = "\n- ".join(criteria_items) if criteria_items else "No specific criteria detected"
 
                         # Let the Lead List Agent generate a human-friendly confirmation / summary.
                         try:
                             agent_prompt = (
                                 f"User lead list request: {prompt}\n\n"
                                 f"A backend worker will fulfill run id '{run_id}'. "
+                                f"Criteria: {criteria_summary}\n"
                                 "Summarize the request parameters clearly for the user and confirm "
                                 "that the list will be generated asynchronously."
                             )
@@ -974,8 +1041,10 @@ def _process_prompt(prompt: str):
                             response = (
                                 "### ✅ Lead List Request Queued\n\n"
                                 f"- **Run ID:** `{run_id}`\n"
-                                f"- **Requested Quantity (approx.):** {inferred_qty}\n\n"
-                                "Your lead list will be generated asynchronously based on this request."
+                                f"- **Requested Quantity:** {requested_qty} companies\n\n"
+                                "**Criteria:**\n"
+                                f"- {criteria_summary}\n\n"
+                                "Your lead list will be generated asynchronously. Use the **Run ID** above to check status."
                             )
 
                         # Add backend run metadata to the status stream
@@ -986,9 +1055,16 @@ def _process_prompt(prompt: str):
                         if hasattr(current_agent, "research"):
                             response = current_agent.research(prompt, stream_callback)
                         else:
-                            # Fallback for future Agents SDK-based agents
-                            result = run_agent_sync(current_agent, prompt)
-                            response = getattr(result, "final_output", "") or ""
+                            # Agents SDK-based agents with streaming support
+                            agent_name = st.session_state.current_agent
+                            if agent_name in ["Company Researcher", "Contact Researcher"]:
+                                # Use streaming to capture tool preambles for real-time progress updates
+                                result = run_agent_with_streaming(current_agent, prompt, stream_callback)
+                                response = getattr(result, "final_output", "") or ""
+                            else:
+                                # Other agents (Lead List, Sequence Enroller) without streaming
+                                result = run_agent_sync(current_agent, prompt)
+                                response = getattr(result, "final_output", "") or ""
 
                     # Final render with minimal newline-after-headings pass outside code fences.
                     # If nothing was streamed as content, fall back to the agent's return value
@@ -1027,6 +1103,42 @@ def _process_prompt(prompt: str):
                         else:
                             new_parts.append(part)
                     final_render = "```".join(new_parts)
+
+                    # Strip any leading status-style lines (emoji-prefixed) that the
+                    # model may have echoed into the main content. These belong in
+                    # the status widget only.
+                    def _strip_leading_status_lines(text: str) -> str:
+                        status_prefixes = (
+                            "🔍",
+                            "🌐",
+                            "📋",
+                            "🧭",
+                            "🧩",
+                            "✍️",
+                            "🔎",
+                            "📤",
+                            "⚠️",
+                            "✅",
+                            "👤",
+                            "🚚",
+                            "🗄️",
+                            "•",
+                            "📊",
+                            "🔧",
+                            "👥",
+                        )
+                        lines = text.splitlines()
+                        idx = 0
+                        while idx < len(lines):
+                            stripped = lines[idx].lstrip()
+                            if stripped and any(stripped.startswith(p) for p in status_prefixes):
+                                idx += 1
+                            else:
+                                break
+                        return "\n".join(lines[idx:]) if idx else text
+
+                    final_render = _strip_leading_status_lines(final_render)
+
                     content_placeholder.markdown(final_render)
                     status.update(label="✅ Complete", state="complete")
 

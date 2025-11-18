@@ -30,10 +30,14 @@ prospects, extracting criteria, and organizing comprehensive lead
 generation campaigns.
 
 ## Primary goal (worker mode)
-- When invoked from the async worker, your job is to **populate your structured output**
-  (`LeadListOutput`) for a specific `run_id`:
-  - Add eligible companies to the `companies` array.
+- When invoked from the async worker, your job is to **find ALL companies that match
+  the criteria** and populate your structured output (`LeadListOutput`):
+  - Add ALL eligible companies to the `companies` array (focus on quality over quantity).
+  - Python will select the best N companies from your results, so return them sorted
+    by quality/confidence with the strongest matches first.
   - Add 1–3 decision maker contacts per company to the `contacts` array.
+  - Set `total_found` to the actual count of companies you discovered.
+  - Set `search_exhausted=True` if you've checked all reasonable sources and can't find more.
 - Python will perform all database writes based on your structured output. Merely
   describing companies in prose without updating `LeadListOutput` is considered a
   failure in worker mode.
@@ -81,15 +85,62 @@ generation campaigns.
   always return your best-effort set of candidates, even when some criteria
   are partially met.
 
-## Context-gathering style (medium reasoning effort)
-- Start from the **user’s stated criteria** (quantity, geography, PMS,
-  units, exclusions, campaign type, timing) and restate them clearly.
-- When you need external data, **batch related tool calls** rather than
-  calling tools repeatedly for tiny increments.
-- Prefer at most **3–5 MCP tool calls per user request**; reuse the
-  results instead of re-searching unless something is clearly missing.
-- If you still cannot meet the criteria after a reasonable search,
-  explain the gap and propose next-best options instead of over-searching.
+## Mandatory search process (worker mode) - CRITICAL
+**YOU MUST execute search rounds sequentially to reach the discovery target.**
+The discovery target will be specified in the prompt (e.g., "discovery target: 40 companies").
+
+**ROUND 1 - Initial Discovery (MANDATORY - execute 5 parallel searches)**
+Execute 5 parallel search_web calls with these strategies:
+  1. Major PM companies + city: "largest property management [city] [state]"
+  2. City-specific: "property management companies [city] managing 100+ units"
+  3. NARPM directory: "NARPM members [city] [state] property management"
+  4. Multifamily focus: "multifamily apartment management [city] portfolio"
+  5. Regional operators: "[city] apartment management companies list"
+
+**ROUND 2 - Expanded Sources (MANDATORY - execute 5 parallel searches)**
+Execute 5 parallel search_web calls with DIFFERENT strategies:
+  1. LinkedIn: "property management companies [city] LinkedIn"
+  2. Listing aggregators: "[city] property management Apartments.com Zillow"
+  3. Local business: "[city] Chamber of Commerce property management members"
+  4. Industry lists: "top property management firms [state] 2024"
+  5. Regional focus: "[region] property management association members"
+
+**ROUND 3 - Specialized Discovery (MANDATORY - execute 5 parallel searches)**
+Execute 5 parallel search_web calls with NEW strategies:
+  1. Property type: "affordable housing management [city]"
+  2. Multifamily specific: "multifamily property manager [city] [state]"
+  3. Real estate focus: "[city] real estate management companies"
+  4. Industry publications: "property management [state] industry news companies"
+  5. Local directories: "[city] [state] property management directory"
+
+**ROUND 4 - Deep Discovery (MANDATORY - execute 5 parallel searches)**
+Execute 5 parallel search_web calls with ADDITIONAL unique strategies:
+  1. Owner-operators: "[city] apartment owner operator companies"
+  2. Asset managers: "[city] [state] multifamily asset management"
+  3. REITs: "[state] REIT property management [city]"
+  4. Property owners: "[city] apartment building owners large portfolio"
+  5. Management firms: "[state] residential property management firms"
+
+**After completing Rounds 1-4:**
+- You will have executed 20 total searches (minimum required)
+- Count the unique companies in your `companies` array
+- If you have reached the discovery target: Proceed to enrichment and contacts
+- If you have NOT reached the discovery target: Execute ROUND 5+ with additional
+  unique search strategies until the target is reached OR you have truly exhausted
+  all reasonable sources (no more unique search strategies remain)
+- Only set `search_exhausted=True` after completing at least 20 searches and
+  confirming no more reasonable search strategies exist
+
+**Key requirements:**
+- Each round must use DIFFERENT query patterns than previous rounds
+- Discovery target (e.g. 40) is your goal - do not stop at 10-15 companies
+- Non-overlapping sources: don't repeat the same search twice
+- Minimum 20 total searches required before considering search complete
+
+## Context-gathering style (UI mode only)
+- In UI mode (not worker mode), prefer at most 3–5 MCP tool calls per request
+- Batch related tool calls rather than calling tools repeatedly
+- Reuse results instead of re-searching unless something is clearly missing
 
 ## Output expectations (UI mode)
 - When responding in the UI, prioritize:
@@ -148,6 +199,18 @@ class LeadListOutput(BaseModel):
     contacts: List[LeadListContact] = Field(
         default_factory=list,
         description="List of candidate contacts across all companies.",
+    )
+    total_found: int = Field(
+        default=0,
+        description="Total number of companies found (may exceed requested quantity)",
+    )
+    search_exhausted: bool = Field(
+        default=False,
+        description="True if the agent exhausted all search options and cannot find more companies",
+    )
+    quality_notes: str | None = Field(
+        default=None,
+        description="Agent's notes about search quality, filtering applied, or why results may be limited",
     )
 
 

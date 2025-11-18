@@ -13,12 +13,13 @@ interface is shaped by ``pm_pipeline_tables.md``.
 
 from __future__ import annotations
 
-from typing import Any, Dict, List, Protocol
+from typing import Any, Dict, List, Protocol, Tuple, Optional
 
 import json
 import logging
 import os
 import re
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from agents import Runner
 from rv_agentic.agents.lead_list_agent import (
@@ -26,8 +27,9 @@ from rv_agentic.agents.lead_list_agent import (
     LeadListOutput,
 )
 from rv_agentic.config.settings import get_settings
-from rv_agentic.services import supabase_client, retry
+from rv_agentic.services import supabase_client, retry, hubspot_client
 from rv_agentic.services.heartbeat import WorkerHeartbeat
+from rv_agentic.services.geography_decomposer import decompose_geography, format_region_for_prompt
 from rv_agentic.workers.utils import load_env_files
 
 
@@ -64,6 +66,255 @@ def _maybe_advance_run_stage(run_id: str) -> None:
         supabase_client.set_run_stage(run_id=run_id, stage="company_research")
 
 
+def _deduplicate_companies_by_domain(companies: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Deduplicate companies by domain, keeping the one with highest quality score.
+
+    Args:
+        companies: List of company dicts with 'domain' and optional 'quality_score'
+
+    Returns:
+        Deduplicated list of companies
+    """
+    seen_domains = {}
+    for company in companies:
+        domain = company.get("domain", "").lower().strip()
+        if not domain:
+            continue
+
+        # Get quality score (default to 0 if not present)
+        quality = company.get("quality_score", 0)
+
+        # Keep company with higher quality score
+        if domain not in seen_domains or quality > seen_domains[domain].get("quality_score", 0):
+            seen_domains[domain] = company
+
+    return list(seen_domains.values())
+
+
+def _run_region_agent(
+    region: Dict[str, str],
+    region_index: int,
+    total_regions: int,
+    run_id: str,
+    criteria: Dict[str, Any],
+    target_qty: int,
+    discovery_target: int,
+    oversample_factor: float
+) -> Tuple[str, Optional[LeadListOutput], Optional[str]]:
+    """
+    Run lead list agent for a single region.
+
+    This function is designed to be called in parallel by ThreadPoolExecutor.
+
+    Args:
+        region: Region specification with name, description, search_focus
+        region_index: 0-indexed region number
+        total_regions: Total number of regions
+        run_id: Pipeline run ID
+        criteria: Run criteria
+        target_qty: Final target quantity
+        discovery_target: Discovery target with oversample
+        oversample_factor: Oversample multiplier
+
+    Returns:
+        Tuple of (region_name, LeadListOutput or None, error message or None)
+    """
+    region_name = region["name"]
+    region_num = region_index + 1
+
+    try:
+        logger.info(
+            "Starting parallel region %d/%d: %s",
+            region_num, total_regions, region_name
+        )
+
+        # Build region-specific prompt
+        region_prompt = format_region_for_prompt(region, criteria)
+
+        agent = create_lead_list_agent()
+        prompt = (
+            "You are running in **worker mode** for an async lead list run.\n"
+            "This is a **parallel multi-region discovery strategy**: you are assigned a specific geographic region.\n\n"
+            f"{region_prompt}\n\n"
+            "In this environment, plain text explanations are not enough – your primary job is to\n"
+            "**populate your structured output (LeadListOutput)** with ALL high-quality companies\n"
+            "in your assigned region that meet the criteria.\n\n"
+            f"Run id (for your reasoning only): {run_id}\n"
+            f"Run criteria JSON (authoritative requirements): {json.dumps(criteria, ensure_ascii=False)}\n\n"
+            f"**Progress context**: This is region {region_num} of {total_regions} running IN PARALLEL.\n"
+            f"Target for this run: {target_qty} final companies.\n"
+            f"Discovery target: {discovery_target} companies ({oversample_factor:.1f}x oversample).\n\n"
+            "**Your goal for this region**: Find 8-12 high-quality companies in your assigned region.\n"
+            "Other regions are being covered SIMULTANEOUSLY by other agents, so focus ONLY on your assigned area.\n\n"
+            "Your success criteria:\n"
+            "- Search exhaustively within YOUR ASSIGNED REGION using MCP search tools\n"
+            "- Add ALL matching companies to `companies` in LeadListOutput\n"
+            "- **SORT** by quality/confidence - strongest matches FIRST\n"
+            "- Skip companies whose domain is in the blocked domains list\n"
+            "- For each company, try to find 1-3 decision makers in `contacts`\n"
+            "- Set `search_exhausted=True` if you've checked all sources in your region\n\n"
+            "Tool sequence:\n"
+            "1) Call get_blocked_domains_tool once\n"
+            "2) Use MCP search tools for your region (multiple searches with different strategies)\n"
+            "3) Use company profile tools to enrich\n"
+            "4) Use contact tools to find decision makers\n"
+            "5) Return structured LeadListOutput with your findings\n\n"
+            "Focus on your region only. Return your best 8-12 companies from this area.\n"
+        )
+
+        # Call agent with retry logic
+        result = retry.retry_agent_call(
+            Runner.run_sync,
+            agent,
+            prompt,
+            max_attempts=3,
+            base_delay=1.0,
+            max_turns=30
+        )
+
+        # Extract structured output
+        try:
+            typed: LeadListOutput = result.final_output_as(LeadListOutput)  # type: ignore[assignment]
+        except Exception as e:
+            logger.warning(f"Region {region_num} ({region_name}) failed to parse structured output: {e}")
+            typed = LeadListOutput()
+
+        # Add discovery_source tracking with region name
+        region_companies = [c.model_dump() for c in (typed.companies or [])]
+        for company in region_companies:
+            company["discovery_source"] = f"agent:multi_region:{region_name.replace(' ', '_')}"
+
+        region_contacts = [c.model_dump() for c in (typed.contacts or [])]
+
+        logger.info(
+            "Completed parallel region %d/%d (%s): found %d companies, %d contacts",
+            region_num, total_regions, region_name, len(region_companies), len(region_contacts)
+        )
+
+        return (region_name, typed, None)
+
+    except Exception as e:
+        error_msg = f"Region {region_num} ({region_name}) failed: {e}"
+        logger.error(error_msg, exc_info=True)
+        return (region_name, None, error_msg)
+
+
+def _discover_companies_multi_region(
+    run_id: str,
+    criteria: Dict[str, Any],
+    target_qty: int,
+    discovery_target: int,
+    companies_already_found: int,
+    oversample_factor: float
+) -> LeadListOutput:
+    """
+    Discover companies using parallel multi-region strategy.
+
+    Decomposes geography into 4 regions and calls agents IN PARALLEL for each region.
+    This solves the "agent stops early" problem while minimizing latency through
+    concurrent execution. Expected time: ~20 minutes (vs 80 minutes sequential).
+
+    Args:
+        run_id: Pipeline run ID
+        criteria: Run criteria with geography, units, PMS, etc.
+        target_qty: Final target quantity of companies
+        discovery_target: Number of companies to discover (with oversample)
+        companies_already_found: Companies already discovered (from seeding, etc.)
+        oversample_factor: Oversample multiplier
+
+    Returns:
+        LeadListOutput with aggregated companies and contacts from all regions
+    """
+
+    # Decompose geography into regions
+    num_regions = 4
+    regions = decompose_geography(criteria, num_regions=num_regions)
+
+    logger.info(
+        "Parallel multi-region discovery: %d regions, discovery_target=%d, already_found=%d",
+        len(regions), discovery_target, companies_already_found
+    )
+
+    all_companies = []
+    all_contacts = []
+    successful_regions = []
+    failed_regions = []
+
+    # Launch all 4 regions in parallel using ThreadPoolExecutor
+    with ThreadPoolExecutor(max_workers=4) as executor:
+        # Submit all region tasks
+        futures = {}
+        for i, region in enumerate(regions):
+            future = executor.submit(
+                _run_region_agent,
+                region,
+                i,
+                len(regions),
+                run_id,
+                criteria,
+                target_qty,
+                discovery_target,
+                oversample_factor
+            )
+            futures[future] = (i, region)
+
+        # Collect results as they complete
+        for future in as_completed(futures):
+            region_index, region = futures[future]
+            region_name, result, error = future.result()
+
+            if error:
+                failed_regions.append(region_name)
+                logger.warning(f"Region {region_name} failed: {error}")
+                continue
+
+            if result:
+                # Extract companies and contacts
+                region_companies = [c.model_dump() for c in (result.companies or [])]
+                region_contacts = [c.model_dump() for c in (result.contacts or [])]
+
+                all_companies.extend(region_companies)
+                all_contacts.extend(region_contacts)
+                successful_regions.append(region_name)
+
+                logger.info(
+                    "Collected results from %s: %d companies, %d contacts",
+                    region_name, len(region_companies), len(region_contacts)
+                )
+
+    # Deduplicate by domain
+    all_companies_deduped = _deduplicate_companies_by_domain(all_companies)
+
+    logger.info(
+        "Parallel multi-region discovery complete: %d successful regions, %d failed regions",
+        len(successful_regions), len(failed_regions)
+    )
+    logger.info(
+        "Results: %d total companies, %d after dedup, %d contacts",
+        len(all_companies), len(all_companies_deduped), len(all_contacts)
+    )
+
+    # Convert back to Pydantic models for LeadListOutput
+    from rv_agentic.agents.lead_list_agent import LeadListCompany, LeadListContact
+
+    company_models = [LeadListCompany(**c) for c in all_companies_deduped]
+    contact_models = [LeadListContact(**c) for c in all_contacts]
+
+    quality_notes = (
+        f"Parallel multi-region discovery: {len(successful_regions)}/{len(regions)} regions succeeded"
+    )
+    if failed_regions:
+        quality_notes += f" (failed: {', '.join(failed_regions)})"
+
+    return LeadListOutput(
+        companies=company_models,
+        contacts=contact_models,
+        total_found=len(all_companies_deduped),
+        search_exhausted=len(successful_regions) >= 3,  # Consider exhausted if at least 3 regions succeeded
+        quality_notes=quality_notes
+    )
+
+
 def process_run(run: Dict[str, Any], heartbeat: WorkerHeartbeat | None = None) -> None:
     """Process a single lead list run.
 
@@ -94,7 +345,7 @@ def process_run(run: Dict[str, Any], heartbeat: WorkerHeartbeat | None = None) -
         state = criteria.get("state") or "any"
 
         # Check current progress for batch status
-        existing_companies = _sb.get_pm_company_gap(run_id)
+        existing_companies = supabase_client.get_pm_company_gap(run_id)
         companies_ready = int(existing_companies.get("companies_ready") or 0) if existing_companies else 0
 
         task_description = f"Lead discovery: {companies_ready}/{quantity} companies (PMS={pms}, State={state})"
@@ -218,17 +469,20 @@ def process_run(run: Dict[str, Any], heartbeat: WorkerHeartbeat | None = None) -
                     run_id,
                 )
 
-    # Batching logic: for large requests, break into smaller batches
-    # to improve agent performance and allow checkpointing
-    batch_size = int(os.getenv("LEAD_LIST_BATCH_SIZE", "10"))
+    # Oversample to account for attrition in enrichment stages
+    # (company ICP filtering, contact discovery failures, etc.)
+    oversample_factor = float(os.getenv("LEAD_LIST_OVERSAMPLE_FACTOR", "2.0"))
+    discovery_target = int(target_qty * oversample_factor) if target_qty > 0 else 0
 
     # Check how many companies we already have
-    existing_companies = _sb.get_pm_company_gap(run_id)
+    existing_companies = supabase_client.get_pm_company_gap(run_id)
     companies_ready = int(existing_companies.get("companies_ready") or 0) if existing_companies else 0
-    companies_remaining = max(0, target_qty - companies_ready)
+    companies_remaining = max(0, discovery_target - companies_ready)
 
-    # Calculate batch target (minimum of batch_size and remaining)
-    batch_target = min(batch_size, companies_remaining) if companies_remaining > 0 else target_qty
+    logger.info(
+        "Progress check: target=%d, discovery_target=%d (oversample=%.1fx), existing=%d, remaining=%d",
+        target_qty, discovery_target, oversample_factor, companies_ready, companies_remaining
+    )
 
     # If we already have enough companies, skip agent call
     if companies_remaining <= 0 and target_qty > 0:
@@ -240,64 +494,20 @@ def process_run(run: Dict[str, Any], heartbeat: WorkerHeartbeat | None = None) -
         )
         return None
 
-    agent = create_lead_list_agent()
-    prompt = (
-        "You are running in **worker mode** for an async lead list run.\n"
-        "In this environment, plain text explanations are not enough – your primary job is to\n"
-        "**populate your structured output (LeadListOutput)** with high-quality companies and\n"
-        "contacts that meet the run criteria. Python will handle all database writes.\n\n"
-        f"Run id (for your reasoning only): {run_id}\n"
-        f"Run criteria JSON (authoritative requirements): {criteria}\n\n"
-        f"**BATCH MODE**: This run needs {target_qty} total companies. We already have {companies_ready}.\n"
-        f"For THIS batch, find {batch_target} more companies (remaining: {companies_remaining}).\n"
-        "Focus on quality over quantity - it's better to return fewer high-quality candidates.\n\n"
-        "Your success criteria in this mode:\n"
-        f"- Populate `companies` in LeadListOutput with up to {batch_target} **eligible, non-blocked** companies.\n"
-        "- For each company, populate 1–3 high-quality decision makers in `contacts` when\n"
-        "  possible, including name, title, email (verified or high-confidence), and LinkedIn URL.\n\n"
-        "You must follow this sequence:\n"
-        "1) Call get_blocked_domains_tool once to understand which domains are suppressed.\n"
-        "2) Use MCP search tools (mcp_search_web or mcp_lang_search) plus company profile tools\n"
-        "   (mcp_extract_company_profile, mcp_run_pms_analyzer) to find property management\n"
-        "   companies that fit RentVine's ICP and the criteria.\n"
-        "3) Skip any company whose domain is in the blocked domains list.\n"
-        "4) For each eligible company, add a LeadListCompany entry to your `companies` array with\n"
-        "   a normalized root domain (no protocol/path), state/city when known, and a short\n"
-        "   reason describing why it meets the criteria.\n"
-        "5) For each company you add, use MCP contact tools (mcp_get_contacts_for_company,\n"
-        "   mcp_get_verified_emails, mcp_get_linkedin_profile_url, mcp_search_web_for_person)\n"
-        "   to find 1–3 strong decision makers. Add them to your `contacts` array as\n"
-        "   LeadListContact entries, linking them to the company via company_domain.\n"
-        "6) Only stop once you have attempted to populate `companies` up to the requested\n"
-        "   quantity, or you can no longer find additional eligible companies.\n"
-        "7) Treat strict PMS/vendor requirements as **preferences**: if you cannot find companies\n"
-        "   that exactly match the PMS but that otherwise strongly fit the ICP and unit criteria,\n"
-        "   still include them in `companies` and explain the mismatch in the `reason` field.\n"
-        "8) Only return an empty `companies` array when there are truly no reasonable candidates\n"
-        "   at all; in normal cases you should always return your best-effort set of candidates.\n\n"
-        "Return your final answer in a way that conforms to the LeadListOutput schema; Python\n"
-        "will parse and persist it.\n"
-    )
-    logger.info("Processing pm_pipeline run id=%s", run.get("id"))
-    # Use retry logic for agent calls (3 attempts with exponential backoff)
-    result = retry.retry_agent_call(
-        Runner.run_sync,
-        agent,
-        prompt,
-        max_attempts=3,
-        base_delay=1.0
+    # Call multi-region discovery function
+    logger.info("Starting multi-region discovery for run id=%s", run_id)
+    typed = _discover_companies_multi_region(
+        run_id=run_id,
+        criteria=criteria,
+        target_qty=target_qty,
+        discovery_target=discovery_target,
+        companies_already_found=companies_ready,
+        oversample_factor=oversample_factor
     )
 
     # Post-run primary path: use structured output for deterministic inserts.
-    from rv_agentic.services import supabase_client
-
     companies: List[Dict[str, Any]] = []
     contacts: List[Dict[str, Any]] = []
-
-    try:
-        typed: LeadListOutput = result.final_output_as(LeadListOutput)  # type: ignore[assignment]
-    except Exception:
-        typed = LeadListOutput()  # empty fallback
 
     blocked = set(d.lower().strip() for d in supabase_client.get_blocked_domains())
 
@@ -310,12 +520,69 @@ def process_run(run: Dict[str, Any], heartbeat: WorkerHeartbeat | None = None) -
     inserted = 0
     state = (criteria.get("state") or "").strip().upper() or ""
 
-    for cc in typed.companies:
-        if target_quantity and inserted >= target_quantity:
+    logger.info(
+        "Processing agent output: agent returned %d companies (total_found=%d, search_exhausted=%s)",
+        len(typed.companies),
+        typed.total_found,
+        typed.search_exhausted
+    )
+
+    if typed.quality_notes:
+        logger.info("Agent quality notes: %s", typed.quality_notes)
+
+    # Agent returns companies sorted by quality (best first).
+    # Insert up to discovery_target (oversampled) to account for enrichment attrition.
+    companies_to_insert = min(len(typed.companies), companies_remaining) if companies_remaining > 0 else len(typed.companies)
+
+    logger.info(
+        "Inserting up to %d companies (final_target=%d, discovery_target=%d, companies_ready=%d, remaining=%d)",
+        companies_to_insert, target_qty, discovery_target, companies_ready, companies_remaining
+    )
+
+    for idx, cc in enumerate(typed.companies):
+        # Stop when we've reached the target quantity
+        if target_qty > 0 and inserted >= companies_remaining:
+            logger.info(
+                "Target quantity reached: inserted=%d companies, stopping (agent had %d more)",
+                inserted,
+                len(typed.companies) - idx
+            )
             break
+
         domain = (cc.domain or "").lower().strip()
         if not domain or domain in blocked:
+            logger.debug("Skipping blocked/empty domain: %s", domain)
             continue
+
+        # Check HubSpot suppression (existing customers and recently contacted)
+        try:
+            suppression_check = hubspot_client.check_company_suppression(domain, days=90)
+            if suppression_check.get('should_suppress'):
+                reason = suppression_check.get('reason')
+                details = suppression_check.get('details', {})
+                logger.info(
+                    "Suppressing company %s (reason: %s) - %s",
+                    domain,
+                    reason,
+                    details.get('company_name', 'Unknown')
+                )
+
+                # Insert into suppression table for tracking
+                supabase_client.insert_hubspot_suppression(
+                    domain=domain,
+                    company_name=details.get('company_name'),
+                    hubspot_company_id=details.get('company_id'),
+                    suppression_reason=reason,
+                    lifecycle_stage=details.get('lifecycle_stage'),
+                    last_contact_date=details.get('last_contact_date'),
+                    last_contact_type=details.get('last_contact_type'),
+                    engagement_count=details.get('engagement_count'),
+                )
+                continue
+        except Exception as e:
+            # Best-effort suppression check - don't fail if HubSpot is unavailable
+            logger.warning("HubSpot suppression check failed for domain=%s: %s", domain, e)
+
         name = cc.name or domain
         website = f"https://{domain}"
         try:
@@ -332,7 +599,9 @@ def process_run(run: Dict[str, Any], heartbeat: WorkerHeartbeat | None = None) -
                 inserted += 1
                 companies.append(row)
                 logger.info(
-                    "Structured insert_company_candidate id=%s domain=%s run_id=%s",
+                    "Inserted company %d/%d: id=%s domain=%s run_id=%s",
+                    inserted,
+                    companies_to_insert,
                     row.get("id"),
                     domain,
                     run_id,
@@ -631,28 +900,34 @@ def run_forever(fetch_active_runs: ActiveRunsFetcher, mark_run_complete: RunMark
             try:
                 process_run(run, heartbeat)
 
-                # Check if we've met the target quantity for this run
+                # Check if we've met the discovery target for this run
                 run_id = run.get("id")
                 target_qty = int(run.get("target_quantity") or 0)
+                oversample_factor = float(os.getenv("LEAD_LIST_OVERSAMPLE_FACTOR", "2.0"))
+                discovery_target = int(target_qty * oversample_factor) if target_qty > 0 else 0
 
-                if target_qty > 0:
+                if discovery_target > 0:
                     # Check how many companies we have now
-                    gap_info = _sb.get_pm_company_gap(run_id)
+                    gap_info = supabase_client.get_pm_company_gap(run_id)
                     companies_ready = int(gap_info.get("companies_ready") or 0) if gap_info else 0
-                    companies_remaining = max(0, target_qty - companies_ready)
+                    discovery_remaining = max(0, discovery_target - companies_ready)
 
-                    if companies_remaining > 0:
-                        # Still need more companies - log progress but keep run active
-                        logger.info(
-                            "Run %s batch complete: %d/%d companies found, %d remaining",
-                            run_id, companies_ready, target_qty, companies_remaining
+                    if discovery_remaining > 0:
+                        # Agent couldn't find enough companies to meet discovery target.
+                        # With the oversample strategy, if we can't meet the discovery target,
+                        # we may not have enough after enrichment attrition.
+                        logger.warning(
+                            "Run %s discovery incomplete: %d/%d discovered (target: %d final), %d gap",
+                            run_id, companies_ready, discovery_target, target_qty, discovery_remaining
                         )
-                        # Don't mark as complete - let it process again in next loop
+                        # Mark as completed with partial results
+                        mark_run_complete(run, status="completed",
+                                        error=f"Discovery found {companies_ready}/{discovery_target} companies (target: {target_qty} final). Agent exhausted search.")
                         continue
                     else:
                         logger.info(
-                            "Run %s target met: %d/%d companies found",
-                            run_id, companies_ready, target_qty
+                            "Run %s discovery target met: %d/%d discovered (target: %d final after enrichment)",
+                            run_id, companies_ready, discovery_target, target_qty
                         )
 
                 # Target met or no target specified - mark as complete

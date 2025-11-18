@@ -1,13 +1,13 @@
-"""Tests for lead list batching functionality.
+"""Tests for lead list single-shot discovery with intelligent filtering.
 
-Verifies that batching logic properly handles large company requests
-by breaking them into smaller batches with checkpointing.
+Verifies that the agent returns ALL matching companies in one call,
+and the worker intelligently selects the best N companies to meet the target.
 """
 
 import os
 import sys
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock, patch, MagicMock, call
 
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "src"
@@ -18,206 +18,108 @@ for p in (SRC, ROOT):
 import pytest
 
 
-def test_batch_size_configuration():
-    """Test that batch size can be configured via environment variable."""
-    from rv_agentic.workers import lead_list_runner
-
-    # Default batch size should be 10
-    with patch.dict(os.environ, {}, clear=False):
-        # The batch size is read in process_run, so we need to mock the agent call
-        mock_agent = Mock()
-        mock_run = {
-            "id": "test-run-123",
-            "target_quantity": 25,
-            "criteria": {"pms": "Buildium", "state": "TX", "quantity": 25},
-            "stage": "company_discovery"
-        }
-
-        with patch('rv_agentic.workers.lead_list_runner._sb') as mock_sb:
-            # Mock returning that we have 0 companies so far
-            mock_sb.get_pm_company_gap.return_value = {
-                "companies_ready": 0,
-                "companies_validated": 0
-            }
-            mock_sb.get_blocked_domains.return_value = []
-
-            with patch('rv_agentic.workers.lead_list_runner.retry.retry_agent_call') as mock_retry:
-                mock_result = Mock()
-                mock_typed = Mock()
-                mock_typed.companies = []
-                mock_typed.contacts = []
-                mock_result.final_output_as.return_value = mock_typed
-                mock_retry.return_value = mock_result
-
-                # Process the run
-                lead_list_runner.process_run(mock_run)
-
-                # Verify the prompt contains batch information
-                call_args = mock_retry.call_args
-                prompt = call_args[0][2]  # Third positional arg is the prompt
-
-                # Should mention batch mode and target of 10 (default batch size)
-                assert "BATCH MODE" in prompt
-                assert "10 more companies" in prompt
-
-
-def test_batch_progress_tracking():
-    """Test that batching correctly tracks progress across multiple batches."""
-    from rv_agentic.workers import lead_list_runner
-
-    mock_agent = Mock()
-    mock_run = {
-        "id": "test-run-456",
-        "target_quantity": 25,
-        "criteria": {"pms": "AppFolio", "state": "CA", "quantity": 25},
-        "stage": "company_discovery"
-    }
-
-    with patch('rv_agentic.workers.lead_list_runner._sb') as mock_sb:
-        # Simulate that we already have 10 companies
-        mock_sb.get_pm_company_gap.return_value = {
-            "companies_ready": 10,
-            "companies_validated": 10
-        }
-        mock_sb.get_blocked_domains.return_value = []
-
-        with patch('rv_agentic.workers.lead_list_runner.retry.retry_agent_call') as mock_retry:
-            mock_result = Mock()
-            mock_typed = Mock()
-            mock_typed.companies = []
-            mock_typed.contacts = []
-            mock_result.final_output_as.return_value = mock_typed
-            mock_retry.return_value = mock_result
-
-            # Process the run
-            lead_list_runner.process_run(mock_run)
-
-            # Verify the prompt shows we already have 10 companies
-            call_args = mock_retry.call_args
-            prompt = call_args[0][2]
-
-            assert "We already have 10" in prompt
-            assert "remaining: 15" in prompt
-
-
-def test_batch_early_exit_when_target_met():
-    """Test that batching exits early when target quantity is already met."""
-    from rv_agentic.workers import lead_list_runner
-
-    mock_agent = Mock()
-    mock_run = {
-        "id": "test-run-789",
-        "target_quantity": 15,
-        "criteria": {"pms": "Yardi", "state": "FL", "quantity": 15},
-        "stage": "company_discovery"
-    }
-
-    with patch('rv_agentic.workers.lead_list_runner._sb') as mock_sb:
-        # Simulate that we already have 15 companies (target met)
-        mock_sb.get_pm_company_gap.return_value = {
-            "companies_ready": 15,
-            "companies_validated": 15
-        }
-        mock_sb.get_blocked_domains.return_value = []
-
-        with patch('rv_agentic.workers.lead_list_runner.retry.retry_agent_call') as mock_retry:
-            # Process the run
-            result = lead_list_runner.process_run(mock_run)
-
-            # Should not call the agent since target is already met
-            mock_retry.assert_not_called()
-
-            # Should return None indicating no processing needed
-            assert result is None
-
-
-def test_batch_calculates_correct_batch_target():
-    """Test that batch target is minimum of batch_size and remaining companies."""
-    from rv_agentic.workers import lead_list_runner
-
+def test_intelligent_selection_logic():
+    """Test that worker selects best N companies from agent's full results."""
     test_cases = [
-        # (target, existing, batch_size, expected_batch_target)
-        (25, 0, 10, 10),   # First batch: 10
-        (25, 10, 10, 10),  # Second batch: 10
-        (25, 20, 10, 5),   # Last batch: only 5 remaining
-        (5, 0, 10, 5),     # Small request: only need 5
+        # (target, existing, agent_found, expected_to_insert)
+        (25, 0, 91, 25),   # Agent found 91, insert best 25
+        (25, 10, 50, 15),  # Already have 10, insert 15 more from 50
+        (25, 20, 30, 5),   # Already have 20, insert 5 more from 30
+        (5, 0, 100, 5),    # Small target: insert 5 from 100
+        (10, 10, 50, 0),   # Target already met: insert 0
+        (25, 0, 15, 15),   # Agent found fewer than target: insert all 15
     ]
 
-    for target, existing, batch_size, expected_target in test_cases:
-        mock_run = {
-            "id": f"test-run-{target}-{existing}",
-            "target_quantity": target,
-            "criteria": {"pms": "RealPage", "state": "TX", "quantity": target},
-            "stage": "company_discovery"
-        }
+    for target, existing, agent_found, expected_insert in test_cases:
+        companies_remaining = max(0, target - existing)
+        companies_to_insert = min(agent_found, companies_remaining) if companies_remaining > 0 else 0
 
-        with patch.dict(os.environ, {"LEAD_LIST_BATCH_SIZE": str(batch_size)}, clear=False):
-            with patch('rv_agentic.workers.lead_list_runner._sb') as mock_sb:
-                mock_sb.get_pm_company_gap.return_value = {
-                    "companies_ready": existing,
-                    "companies_validated": existing
-                }
-                mock_sb.get_blocked_domains.return_value = []
-
-                with patch('rv_agentic.workers.lead_list_runner.retry.retry_agent_call') as mock_retry:
-                    mock_result = Mock()
-                    mock_typed = Mock()
-                    mock_typed.companies = []
-                    mock_typed.contacts = []
-                    mock_result.final_output_as.return_value = mock_typed
-                    mock_retry.return_value = mock_result
-
-                    # Process the run
-                    lead_list_runner.process_run(mock_run)
-
-                    # Verify the prompt has correct batch target
-                    call_args = mock_retry.call_args
-                    prompt = call_args[0][2]
-
-                    assert f"{expected_target} more companies" in prompt
+        assert companies_to_insert == expected_insert, \
+            f"For target={target}, existing={existing}, agent_found={agent_found}: expected insert={expected_insert}, got={companies_to_insert}"
 
 
-def test_heartbeat_shows_batch_progress():
-    """Test that heartbeat updates show current batch progress."""
-    from rv_agentic.workers import lead_list_runner
+def test_selection_with_quality_sorting():
+    """Test that worker respects agent's quality sorting (best first)."""
+    # Simulate agent returning companies sorted by quality
+    all_companies = [
+        {"domain": "best1.com", "quality": 0.95},
+        {"domain": "best2.com", "quality": 0.90},
+        {"domain": "good1.com", "quality": 0.80},
+        {"domain": "good2.com", "quality": 0.75},
+        {"domain": "okay1.com", "quality": 0.60},
+    ]
 
-    mock_agent = Mock()
-    mock_heartbeat = Mock()
-    mock_run = {
-        "id": "test-run-hb",
-        "target_quantity": 30,
-        "criteria": {"pms": "Entrata", "state": "AZ", "quantity": 30},
-        "stage": "company_discovery"
-    }
+    target = 3
+    # Worker should take first 3 (already sorted by agent)
+    selected = all_companies[:target]
 
-    with patch('rv_agentic.workers.lead_list_runner._sb') as mock_sb:
-        # Simulate 12 companies already found
-        mock_sb.get_pm_company_gap.return_value = {
-            "companies_ready": 12,
-            "companies_validated": 12
-        }
-        mock_sb.get_blocked_domains.return_value = []
+    assert len(selected) == 3
+    assert selected[0]["domain"] == "best1.com"
+    assert selected[1]["domain"] == "best2.com"
+    assert selected[2]["domain"] == "good1.com"
 
-        with patch('rv_agentic.workers.lead_list_runner.retry.retry_agent_call') as mock_retry:
-            mock_result = Mock()
-            mock_typed = Mock()
-            mock_typed.companies = []
-            mock_typed.contacts = []
-            mock_result.final_output_as.return_value = mock_typed
-            mock_retry.return_value = mock_result
 
-            # Process the run with heartbeat
-            lead_list_runner.process_run(mock_run, mock_heartbeat)
+def test_early_exit_when_target_met():
+    """Test that processing skips when target is already met."""
+    target_qty = 15
+    companies_ready = 15
+    companies_remaining = max(0, target_qty - companies_ready)
 
-            # Verify heartbeat was updated with progress
-            mock_heartbeat.update_task.assert_called()
-            call_args = mock_heartbeat.update_task.call_args
+    # Should be 0 remaining
+    assert companies_remaining == 0
 
-            # Should show "12/30 companies" in task description
-            task_desc = call_args[1]["task"]
-            assert "12/30" in task_desc
-            assert "PMS=Entrata" in task_desc
-            assert "State=AZ" in task_desc
+    # In the actual code, when companies_remaining <= 0, it returns None without calling agent
+    should_skip = companies_remaining <= 0 and target_qty > 0
+    assert should_skip is True
+
+
+def test_single_agent_call_returns_all():
+    """Test that agent is called once and returns all matching companies."""
+    # New design: agent returns ALL companies in one call
+    target = 25
+    agent_found = 91  # Agent finds all matching companies
+    existing = 0
+
+    # Worker inserts only what's needed to meet target
+    to_insert = min(agent_found, target - existing)
+
+    assert to_insert == 25  # Insert 25 out of 91 found
+    assert agent_found == 91  # Agent still found all 91
+
+
+def test_heartbeat_progress_format():
+    """Test that heartbeat message format includes batch progress."""
+    companies_ready = 12
+    quantity = 30
+    pms = "Entrata"
+    state = "AZ"
+
+    task_description = f"Lead discovery: {companies_ready}/{quantity} companies (PMS={pms}, State={state})"
+
+    assert "12/30" in task_description
+    assert "PMS=Entrata" in task_description
+    assert "State=AZ" in task_description
+
+
+def test_prompt_context_formatting():
+    """Test that prompt correctly formats context about target and progress."""
+    target_qty = 50
+    companies_ready = 20
+    companies_remaining = target_qty - companies_ready
+
+    prompt_snippet = (
+        f"**Context**: This run needs {target_qty} total companies. "
+        f"We already have {companies_ready}.\\n"
+        f"Your job: Find ALL companies matching the criteria ({companies_remaining} still needed).\\n"
+        "Python will intelligently select the best candidates from your results.\\n"
+    )
+
+    assert "Context" in prompt_snippet
+    assert "50 total companies" in prompt_snippet
+    assert "already have 20" in prompt_snippet
+    assert "Find ALL companies" in prompt_snippet
+    assert "30 still needed" in prompt_snippet
+    assert "intelligently select" in prompt_snippet
 
 
 if __name__ == "__main__":

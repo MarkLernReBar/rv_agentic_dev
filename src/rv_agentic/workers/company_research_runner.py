@@ -18,7 +18,7 @@ from agents import Runner
 
 from rv_agentic.agents.company_researcher_agent import create_company_researcher_agent
 from rv_agentic.config.settings import get_settings
-from rv_agentic.services import supabase_client, retry
+from rv_agentic.services import supabase_client, retry, hubspot_client
 from rv_agentic.services.heartbeat import WorkerHeartbeat
 from rv_agentic.workers.utils import load_env_files
 
@@ -90,6 +90,38 @@ def process_company_claim(agent, worker_id: str, lease_seconds: int, heartbeat: 
         )
 
     try:
+        # Check HubSpot suppression as safety net (company status may have changed since discovery)
+        try:
+            suppression_check = hubspot_client.check_company_suppression(domain, days=90)
+            if suppression_check.get('should_suppress'):
+                reason = suppression_check.get('reason')
+                details = suppression_check.get('details', {})
+                logger.info(
+                    "Company %s suppressed during research phase (reason: %s) - %s",
+                    domain,
+                    reason,
+                    details.get('company_name', 'Unknown')
+                )
+
+                # Insert into suppression table for tracking
+                supabase_client.insert_hubspot_suppression(
+                    domain=domain,
+                    company_name=details.get('company_name'),
+                    hubspot_company_id=details.get('company_id'),
+                    suppression_reason=reason,
+                    lifecycle_stage=details.get('lifecycle_stage'),
+                    last_contact_date=details.get('last_contact_date'),
+                    last_contact_type=details.get('last_contact_type'),
+                    engagement_count=details.get('engagement_count'),
+                )
+
+                # TODO: Remove company from company_candidates or mark as suppressed
+                # For now, just skip research and release the lease
+                return True
+        except Exception as e:
+            # Best-effort suppression check - don't fail if HubSpot is unavailable
+            logger.warning("HubSpot suppression check failed during research for domain=%s: %s", domain, e)
+
         run = supabase_client.get_pm_run(run_id)
         if not run:
             logger.warning("No pm_pipeline run found for run_id=%s", run_id)

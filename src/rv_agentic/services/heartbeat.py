@@ -243,13 +243,22 @@ def get_worker_health_summary() -> Dict[str, Any]:
         total_active = sum(s.get("active_workers", 0) for s in stats)
         total_dead = sum(s.get("dead_workers", 0) for s in stats)
 
+        # Determine health status based on active workers
+        # Only show degraded if there are NO active workers (system cannot process)
+        if total_active > 0:
+            health_status = "healthy"
+        elif total_dead > 0:
+            health_status = "no_workers"  # Workers existed but all died
+        else:
+            health_status = "unknown"  # No workers ever registered
+
         return {
             "stats_by_type": stats,
             "total_active_workers": total_active,
             "total_dead_workers": total_dead,
             "active_workers": active_workers,
             "dead_workers": dead_workers,
-            "health_status": "healthy" if total_dead == 0 else "degraded",
+            "health_status": health_status,
         }
     except Exception as e:
         logger.error("Failed to get worker health summary: %s", e)

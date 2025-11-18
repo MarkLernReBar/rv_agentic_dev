@@ -16,7 +16,7 @@ from agents.tool import function_tool
 from pydantic import BaseModel, Field
 from rv_agentic.config.settings import get_settings
 from rv_agentic.services import hubspot_client as hs
-from rv_agentic.services.utils import extract_company_name, extract_person_name
+from rv_agentic.services.utils import extract_company_name, extract_person_name, normalize_domain
 from rv_agentic.services import supabase_client
 from rv_agentic.tools import mcp_client
 
@@ -31,10 +31,12 @@ CONTACT_RESEARCH_SYSTEM_PROMPT = (
     "## Tooling\n"
     "- Use **HubSpot tools** (`hubspot_find_contact`) first for identity + CRM context.\n"
     "- Use **NEO DB tools** (`neo_find_contacts`) to reuse existing enrichment.\n"
-    "- Use **MCP tools via n8n** when you need more:\n"
-    "  - `get_contacts` to discover decision makers for a company.\n"
-    "  - `get_linkedin_profile_url` to lock the most likely LinkedIn profile.\n"
-    "  - `get_verified_emails` to obtain verified email addresses.\n"
+"- Use **MCP tools via n8n** when you need more:\n"
+"  - `get_contacts` to discover decision makers for a company.\n"
+"  - `get_linkedin_profile_url` to lock the most likely LinkedIn profile.\n"
+"  - `get_verified_emails` to obtain verified email addresses (tool requires person name,\n"
+"    company name, and domain, so only call it when the domain is known and you need the email\n"
+"    in the final briefing).\n"
     "  - `search_web`, `LangSearch_API`, `fetch_page` for additional public context.\n\n"
     "## Ground rules\n"
     "- Truthfulness over coverage; mark gaps with confidence.\n"
@@ -44,10 +46,10 @@ CONTACT_RESEARCH_SYSTEM_PROMPT = (
 "## Output contract\n"
 "- Return a concise, external-facing **Markdown** brief only. No JSON, no code fences.\n"
 "- Always include: Agent Summary, Contact Overview, Professional Summary,\n"
-"  Career Highlights, Relevance to RentVine, Personalization Data Points,\n"
-"  Assumptions & Data Gaps, and Sources.\n"
-"\n"
-"## Structured output (worker mode)\n"
+ "  Career Highlights, Relevance to RentVine, Personalization Data Points,\n"
+ "  Assumptions & Data Gaps, and Sources.\n"
+ "\n"
+ "## Structured output (worker mode)\n"
 "- When invoked by automation, you will also be evaluated on the structured\n"
 "  `ContactResearchOutput`. Populate its `contacts` array with the best-fit\n"
 "  decision makers you find (name, title, email, LinkedIn, notes).\n"
@@ -172,12 +174,23 @@ async def mcp_get_contacts_for_company(
 
 
 @function_tool
-async def mcp_get_verified_emails(person_name: str, company_name: str) -> list[Dict[str, Any]]:
+async def mcp_get_verified_emails(
+    person_name: str,
+    company_name: str,
+    domain: Optional[str] = None,
+) -> list[Dict[str, Any]]:
     """Use MCP `get_verified_emails` to obtain verified emails for a person."""
 
     if not person_name or not company_name:
         return []
-    payload = {"person_name": person_name, "company_name": company_name}
+    domain_value = normalize_domain(domain or "")
+    if not domain_value:
+        return []
+    payload = {
+        "person_name": person_name,
+        "company_name": company_name,
+        "domain": domain_value,
+    }
     return await mcp_client.call_tool_async("get_verified_emails", payload)
 
 
@@ -209,8 +222,8 @@ def create_contact_researcher_agent(name: str = "Contact Researcher") -> Agent:
         tools=_contact_research_tools(),
         model="gpt-5-mini",
         model_settings=ModelSettings(
-            tool_choice="required",
-            reasoning=Reasoning(effort="medium"),
+            tool_choice="auto",  # Let model decide when to use tools
+            reasoning=Reasoning(effort="medium"),  # Include status updates in output
         ),
         output_type=ContactResearchOutput,
     )
