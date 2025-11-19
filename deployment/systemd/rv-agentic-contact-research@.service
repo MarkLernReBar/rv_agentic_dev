@@ -1,0 +1,47 @@
+[Unit]
+Description=RV Agentic Contact Research Runner (Instance %i)
+Documentation=https://github.com/your-org/rv-agentic
+After=network.target postgresql.service rv-agentic-heartbeat.service
+Wants=rv-agentic-heartbeat.service
+
+[Service]
+Type=simple
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/home/ubuntu/rv-agentic
+
+# Environment
+EnvironmentFile=/home/ubuntu/rv-agentic/.env.production
+Environment="PATH=/home/ubuntu/rv-agentic/.venv/bin:/usr/local/bin:/usr/bin:/bin"
+Environment="PYTHONUNBUFFERED=1"
+Environment="WORKER_INSTANCE=%i"
+
+# Execution
+ExecStart=/home/ubuntu/rv-agentic/.venv/bin/python -m rv_agentic.workers.contact_research_runner
+
+# Restart policy
+Restart=always
+RestartSec=15
+StartLimitInterval=300
+StartLimitBurst=5
+
+# Resource limits
+MemoryMax=2G
+CPUQuota=100%
+
+# Logging
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=rv-contact-research-%i
+
+# Security
+NoNewPrivileges=true
+PrivateTmp=true
+
+# Graceful shutdown
+TimeoutStopSec=120
+KillMode=mixed
+KillSignal=SIGTERM
+
+[Install]
+WantedBy=multi-user.target
