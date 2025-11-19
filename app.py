@@ -157,7 +157,32 @@ with st.sidebar:
     if "view_mode" not in st.session_state:
         st.session_state.view_mode = "Agents"
 
-    # Agent and Dashboard buttons
+    # Dashboard button (shown first for quick access)
+    is_dashboard_active = st.session_state.view_mode == "Dashboard"
+    if is_dashboard_active:
+        st.markdown(
+            """
+            <div style="
+                background-color: #d4edda;
+                border: 2px solid #28a745;
+                border-radius: 8px;
+                padding: 8px;
+                margin-bottom: 8px;
+                text-align: center;
+                font-weight: bold;
+                color: #155724;
+            ">
+                📊 Dashboard ✓ (Active)
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
+    else:
+        if st.button("📊 Dashboard", use_container_width=True, key="btn_dashboard"):
+            st.session_state.view_mode = "Dashboard"
+            st.rerun()
+
+    # Agent buttons
     agents = {
         "Company Researcher": "🔍",
         "Contact Researcher": "👤",
@@ -201,31 +226,6 @@ with st.sidebar:
                 st.session_state.view_mode = "Agents"
                 st.session_state.messages = []  # Clear messages when switching agents
                 st.rerun()
-
-    # Dashboard button
-    is_dashboard_active = st.session_state.view_mode == "Dashboard"
-    if is_dashboard_active:
-        st.markdown(
-            """
-            <div style="
-                background-color: #d4edda;
-                border: 2px solid #28a745;
-                border-radius: 8px;
-                padding: 8px;
-                margin-bottom: 8px;
-                text-align: center;
-                font-weight: bold;
-                color: #155724;
-            ">
-                📊 Dashboard ✓ (Active)
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-    else:
-        if st.button("📊 Dashboard", use_container_width=True, key="btn_dashboard"):
-            st.session_state.view_mode = "Dashboard"
-            st.rerun()
 
     st.markdown("---")
 
@@ -364,9 +364,14 @@ if st.session_state.get("view_mode") == "Dashboard":
 
     # Check for runs needing user attention
     try:
+        recent_runs = _sb.get_active_and_recent_runs(limit=20)
         runs_needing_attention = [
-            r for r in _sb.get_active_and_recent_runs(limit=20)
+            r for r in recent_runs
             if str(r.get("status")) == "needs_user_decision"
+        ]
+        completed_runs = [
+            r for r in recent_runs
+            if str(r.get("status")) == "completed" and str(r.get("stage")) == "done"
         ]
 
         if runs_needing_attention:
@@ -398,6 +403,42 @@ if st.session_state.get("view_mode") == "Dashboard":
                             # Navigate to Lead List Generator
                             st.session_state.current_agent = "Lead List Generator"
                             st.session_state.view_mode = "Agents"
+                            st.rerun()
+                    st.markdown("---")
+
+        # Highlight completed runs with downloadable CSVs
+        if completed_runs:
+            st.markdown("### ✅ New Lead Lists Ready to Download")
+            st.markdown(
+                "The following lead list run(s) have completed and are ready for CSV download "
+                "from the **Lead List Generator → Active & Recent Runs** section."
+            )
+
+            for run in completed_runs[:5]:  # Show max 5 on dashboard
+                rid = str(run.get("id"))
+                created_at = run.get("created_at", "")
+                criteria = run.get("criteria", {})
+                target_qty = run.get("target_quantity", "?")
+
+                cities = criteria.get("cities", [])
+                state = criteria.get("state", "")
+                pms = criteria.get("pms") or criteria.get("pms_required") or ""
+
+                location_str = ", ".join(cities) if cities else state if state else "Various"
+                pms_str = pms if isinstance(pms, str) and pms else ", ".join(pms) if isinstance(pms, list) and pms else "Any"
+
+                with st.container():
+                    col1, col2 = st.columns([3, 1])
+                    with col1:
+                        st.markdown(f"**Run:** `{rid[:13]}...` (completed)")
+                        st.markdown(f"*{target_qty} companies • {location_str} • PMS: {pms_str}*")
+                        st.caption(f"Completed: {created_at}")
+                    with col2:
+                        if st.button("View Downloads", key=f"dashboard_download_{rid}", use_container_width=True):
+                            # Navigate to Lead List Generator and focus this run's downloads
+                            st.session_state.current_agent = "Lead List Generator"
+                            st.session_state.view_mode = "Agents"
+                            st.session_state["focus_run_id"] = rid
                             st.rerun()
                     st.markdown("---")
     except Exception as e:
@@ -440,8 +481,60 @@ if st.session_state.get("view_mode") == "Dashboard":
             with c4:
                 st.metric("Total Gap", total_gap)
 
-            # Main table (kept simple and non-scrollable)
-            st.table(cleaned)
+            # Main table: lightly styled, readable summary with no scroll
+            try:
+                import pandas as pd
+
+                df = pd.DataFrame(cleaned)
+                # Rename columns for readability
+                df = df.rename(
+                    columns={
+                        "owner_email": "Owner",
+                        "role": "Role",
+                        "target": "Target",
+                        "current": "Current",
+                        "gap": "Gap",
+                        "status": "Status",
+                    }
+                )
+                # Sort by largest gap first to surface priorities
+                if "Gap" in df.columns:
+                    df = df.sort_values(by="Gap", ascending=False)
+
+                # Convert to records and render a simple HTML table so we can
+                # avoid the numeric index column and automatic email links.
+                records = df.to_dict(orient="records")
+                headers = ["Owner", "Role", "Target", "Current", "Gap", "Status"]
+
+                def _esc(val: object) -> str:
+                    import html as _html
+
+                    s = "" if val is None else str(val)
+                    # Insert a zero-width space before '@' to prevent email
+                    # auto-linking while keeping the visual text unchanged.
+                    s = s.replace("@", "@\u200b")
+                    return _html.escape(s)
+
+                rows_html = []
+                for row in records:
+                    cells = "".join(f"<td>{_esc(row.get(h))}</td>" for h in headers)
+                    rows_html.append(f"<tr>{cells}</tr>")
+
+                header_html = "".join(f"<th>{h}</th>" for h in headers)
+                table_html = f"""
+                <table style="width:100%; border-collapse:collapse; font-size:0.9rem;">
+                  <thead>
+                    <tr>{header_html}</tr>
+                  </thead>
+                  <tbody>
+                    {''.join(rows_html)}
+                  </tbody>
+                </table>
+                """
+                st.markdown(table_html, unsafe_allow_html=True)
+            except Exception:
+                # Fallback to simple table if pandas styling fails
+                st.table(cleaned)
     except Exception as e:
         st.error(f"Error loading dashboard metrics: {e}")
     # Skip the rest of the chat UI
@@ -477,22 +570,55 @@ if st.session_state.current_agent == "Lead List Generator":
 
     # Auto-fetch active and recent runs
     try:
-        runs = _sb.get_active_and_recent_runs(limit=10)
+        # Fetch runs from Supabase and hide internal/test runs from the UI.
+        raw_runs = _sb.get_active_and_recent_runs(limit=20)
+        runs: list[dict[str, object]] = []
+        for r in raw_runs:
+            criteria = r.get("criteria") or {}
+            try:
+                is_test = bool(criteria.get("test_run")) if isinstance(criteria, dict) else False
+            except Exception:
+                is_test = False
+            if not is_test:
+                runs.append(r)
 
         if not runs:
             st.info("No active or recent runs found. Submit a new lead list request to get started!")
         else:
-            # Show runs needing attention first
-            runs_needing_attention = [r for r in runs if str(r.get("status")) == "needs_user_decision"]
-            active_runs = [r for r in runs if r.get("stage") != "done" and str(r.get("status")) != "needs_user_decision"]
-            completed_runs = [r for r in runs if r.get("stage") == "done" and str(r.get("status")) == "completed"]
+            # Partition runs: attention, active, and completed.
+            runs_needing_attention = []
+            active_runs = []
+            completed_runs = []
+            for r in runs:
+                status = str(r.get("status") or "")
+                stage = str(r.get("stage") or "")
+                # Hide archived runs from the UI completely; these are
+                # typically old test runs or manually retired tasks.
+                if status == "archived":
+                    continue
+                if status == "needs_user_decision":
+                    runs_needing_attention.append(r)
+                elif status == "completed":
+                    completed_runs.append(r)
+                elif stage != "done":
+                    active_runs.append(r)
+
+            # Only surface the single most recent completed run to avoid
+            # filling the screen with historical lists.
+            completed_runs = sorted(
+                completed_runs,
+                key=lambda r: str(r.get("created_at") or ""),
+                reverse=True,
+            )[:1]
+
+            ordered_runs = runs_needing_attention + active_runs + completed_runs
 
             # Alert for runs needing attention
             if runs_needing_attention:
                 st.warning(f"⚠️ {len(runs_needing_attention)} run(s) need your attention")
 
             # Display each run
-            for run in runs:
+            for run in ordered_runs:
                 rid = str(run.get("id"))
                 run_status = str(run.get("status", "unknown"))
                 run_stage = str(run.get("stage", "unknown"))
@@ -502,7 +628,7 @@ if st.session_state.current_agent == "Lead List Generator":
                 if run_status == "needs_user_decision":
                     emoji = "⚠️"
                     title_suffix = "(Action Required)"
-                elif run_stage == "done" and run_status == "completed":
+                elif run_status == "completed":
                     emoji = "✅"
                     title_suffix = "(Completed)"
                 elif run_status == "error":
@@ -513,7 +639,11 @@ if st.session_state.current_agent == "Lead List Generator":
                     title_suffix = "(In Progress)"
 
                 # Create expandable section for each run
-                with st.expander(f"{emoji} Run {rid[:8]}... {title_suffix}", expanded=(run_status == "needs_user_decision")):
+                expanded = (
+                    run_status == "needs_user_decision"
+                    or rid == str(st.session_state.get("focus_run_id") or "")
+                )
+                with st.expander(f"{emoji} Run {rid[:8]}... {title_suffix}", expanded=expanded):
                     try:
                         # Use orchestrator.get_run_progress for enhanced progress display
                         progress = orchestrator.get_run_progress(rid)

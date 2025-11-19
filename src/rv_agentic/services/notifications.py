@@ -2,7 +2,7 @@ import logging
 import os
 import smtplib
 from email.message import EmailMessage
-from typing import Optional
+from typing import Optional, List, Tuple
 
 
 logger = logging.getLogger(__name__)
@@ -14,6 +14,7 @@ def send_run_notification(
     subject: str,
     body: str,
     to_email: Optional[str] = None,
+    attachments: Optional[List[Tuple[str, bytes, str]]] = None,
 ) -> None:
     """Best-effort email notification for a pm_pipeline run.
 
@@ -46,6 +47,24 @@ def send_run_notification(
     msg["To"] = recipient
     msg.set_content(body)
 
+    # Attach any files (e.g. CSV exports) if provided.
+    for filename, content_bytes, mime_type in attachments or []:
+        try:
+            maintype, subtype = (mime_type.split("/", 1) + ["octet-stream"])[:2]
+            msg.add_attachment(
+                content_bytes,
+                maintype=maintype,
+                subtype=subtype,
+                filename=filename,
+            )
+        except Exception as exc:
+            logger.warning(
+                "Failed to attach %s to notification for run %s: %s",
+                filename,
+                run_id,
+                exc,
+            )
+
     try:
         with smtplib.SMTP(host, port, timeout=10) as smtp:
             # Use STARTTLS when available; ignore failures gracefully.
@@ -67,4 +86,3 @@ def send_run_notification(
             run_id,
             exc,
         )
-

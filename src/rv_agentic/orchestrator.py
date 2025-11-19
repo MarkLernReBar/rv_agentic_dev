@@ -211,6 +211,32 @@ def execute_full_pipeline(
         # Send notification if email provided
         if notify_email:
             try:
+                # Best-effort: attach CSV contents directly to email so the
+                # recipient can download them without needing filesystem access.
+                attachments = []
+                try:
+                    with open(companies_path, "rb") as f:
+                        attachments.append(
+                            (os.path.basename(companies_path), f.read(), "text/csv")
+                        )
+                except Exception as exc:
+                    logger.warning(
+                        "Failed to read companies CSV for email attachment (run %s): %s",
+                        run_id,
+                        exc,
+                    )
+                try:
+                    with open(contacts_path, "rb") as f:
+                        attachments.append(
+                            (os.path.basename(contacts_path), f.read(), "text/csv")
+                        )
+                except Exception as exc:
+                    logger.warning(
+                        "Failed to read contacts CSV for email attachment (run %s): %s",
+                        run_id,
+                        exc,
+                    )
+
                 notifications.send_run_notification(
                     run_id=run_id,
                     subject=f"Lead list run {run_id[:8]} completed",
@@ -219,8 +245,10 @@ def execute_full_pipeline(
                         f"Run ID: {run_id}\n"
                         f"Companies CSV: {companies_path}\n"
                         f"Contacts CSV: {contacts_path}\n"
+                        "\nThe CSV files are attached to this email when possible."
                     ),
                     to_email=notify_email,
+                    attachments=attachments or None,
                 )
             except Exception as e:
                 logger.warning("Failed to send completion notification: %s", e)

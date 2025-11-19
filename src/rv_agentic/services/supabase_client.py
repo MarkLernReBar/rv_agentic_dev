@@ -1780,7 +1780,7 @@ def get_active_and_recent_runs(limit: int = 10) -> List[Dict[str, Any]]:
             SELECT *
             FROM pm_pipeline.runs
             WHERE stage != 'done'
-               OR (stage = 'done' AND updated_at > NOW() - INTERVAL '48 hours')
+               OR (stage = 'done' AND created_at > NOW() - INTERVAL '48 hours')
             ORDER BY created_at DESC
             LIMIT %s
             """,
