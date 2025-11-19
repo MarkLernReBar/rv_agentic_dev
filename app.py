@@ -1,9 +1,18 @@
 import os
 import re
+import sys
 import time
 from datetime import datetime
 
 import streamlit as st
+
+# Ensure the local `src` directory is on sys.path so that the
+# running app uses the in-repo rv_agentic code (including fixes)
+# instead of any previously installed wheel.
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+SRC_DIR = os.path.join(BASE_DIR, "src")
+if SRC_DIR not in sys.path:
+    sys.path.insert(0, SRC_DIR)
 
 from rv_agentic.agents.company_researcher_agent import create_company_researcher_agent
 from rv_agentic.agents.contact_researcher_agent import create_contact_researcher_agent
@@ -943,15 +952,20 @@ def _process_prompt(prompt: str):
                                 continue
                             # Allow leading whitespace before emoji
                             lstripped = stripped.lstrip()
+                            # Treat both plain emoji-prefixed lines and bullet-emoji lines as status updates
                             starts_with_status = any(lstripped.startswith(p) for p in status_prefixes)
-                            is_list_line = bool(re.match(r"^\s*(\d+\.|[-*])\s+", stripped))
+                            bullet_emoji_status = any(
+                                re.match(rf"^\s*[-*]\s*{re.escape(p)}", stripped) for p in status_prefixes
+                            )
                             is_heading = bool(re.match(r"^\s*#{1,6}\s+", stripped))
-                            is_status = starts_with_status and not is_list_line and not is_heading
+                            is_status = (starts_with_status or bullet_emoji_status) and not is_heading
                             if is_status:
                                 gap = time.time() - last_status_time
                                 if gap < 0.08:
                                     time.sleep(0.08 - gap)
-                                status_container.markdown(lstripped)
+                                # Strip any leading bullet when displaying inside the status container
+                                display_text = re.sub(r"^\s*[-*]\s*", "", lstripped)
+                                status_container.markdown(display_text)
                                 last_status_time = time.time()
                             else:
                                 content_buffer += line
@@ -1026,7 +1040,16 @@ def _process_prompt(prompt: str):
 
                         criteria_summary = "\n- ".join(criteria_items) if criteria_items else "No specific criteria detected"
 
-                        # Let the Lead List Agent generate a human-friendly confirmation / summary.
+                        # Let the Lead List Agent generate a traceable confirmation,
+                        # but always show a deterministic, human-friendly summary in the UI.
+                        fallback_response = (
+                            "### ✅ Lead List Request Queued\n\n"
+                            f"- **Run ID:** `{run_id}`\n"
+                            f"- **Requested Quantity:** {requested_qty} companies\n\n"
+                            "**Criteria:**\n"
+                            f"- {criteria_summary}\n\n"
+                            "Your lead list will be generated asynchronously. Use the **Run ID** above to check status."
+                        )
                         try:
                             agent_prompt = (
                                 f"User lead list request: {prompt}\n\n"
@@ -1035,17 +1058,11 @@ def _process_prompt(prompt: str):
                                 "Summarize the request parameters clearly for the user and confirm "
                                 "that the list will be generated asynchronously."
                             )
-                            result = run_agent_sync(current_agent, agent_prompt)
-                            response = getattr(result, "final_output", "") or ""
+                            # We run the agent mainly for traces/observability; UI uses fallback text.
+                            _ = run_agent_sync(current_agent, agent_prompt)
+                            response = fallback_response
                         except Exception:
-                            response = (
-                                "### ✅ Lead List Request Queued\n\n"
-                                f"- **Run ID:** `{run_id}`\n"
-                                f"- **Requested Quantity:** {requested_qty} companies\n\n"
-                                "**Criteria:**\n"
-                                f"- {criteria_summary}\n\n"
-                                "Your lead list will be generated asynchronously. Use the **Run ID** above to check status."
-                            )
+                            response = fallback_response
 
                         # Add backend run metadata to the status stream
                         if run_id:
@@ -1065,6 +1082,18 @@ def _process_prompt(prompt: str):
                                 # Other agents (Lead List, Sequence Enroller) without streaming
                                 result = run_agent_sync(current_agent, prompt)
                                 response = getattr(result, "final_output", "") or ""
+
+                    # Normalize non-string responses (e.g., Pydantic models) into text
+                    # so downstream markdown/JSON handling is consistent.
+                    if not isinstance(response, str):
+                        try:
+                            # Prefer Pydantic-style JSON when available
+                            if hasattr(response, "model_dump_json"):
+                                response = response.model_dump_json()
+                            else:
+                                response = str(response)
+                        except Exception:
+                            response = str(response)
 
                     # Final render with minimal newline-after-headings pass outside code fences.
                     # If nothing was streamed as content, fall back to the agent's return value

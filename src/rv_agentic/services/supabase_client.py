@@ -1772,17 +1772,18 @@ def get_active_and_recent_runs(limit: int = 10) -> List[Dict[str, Any]]:
     Returns:
         List of run dicts sorted by created_at desc (newest first)
     """
-    with _pg_conn() as conn:
-        with conn.cursor(cursor_factory=RealDictCursor) as cur:
-            cur.execute(
-                """
-                SELECT *
-                FROM pm_pipeline.runs
-                WHERE stage != 'done'
-                   OR (stage = 'done' AND updated_at > NOW() - INTERVAL '48 hours')
-                ORDER BY created_at DESC
-                LIMIT %s
-                """,
-                (limit,),
-            )
-            return cur.fetchall()
+    # Use psycopg row factory so we always get dict-like rows without relying on
+    # adapter-specific cursor classes (e.g. RealDictCursor).
+    with _pg_conn() as conn, conn.cursor(row_factory=psycopg.rows.dict_row) as cur:
+        cur.execute(
+            """
+            SELECT *
+            FROM pm_pipeline.runs
+            WHERE stage != 'done'
+               OR (stage = 'done' AND updated_at > NOW() - INTERVAL '48 hours')
+            ORDER BY created_at DESC
+            LIMIT %s
+            """,
+            (limit,),
+        )
+        return list(cur.fetchall())

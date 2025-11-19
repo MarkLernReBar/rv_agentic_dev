@@ -35,6 +35,7 @@ tests/test_agents_creation.py
 tests/test_export.py
 tests/test_heartbeat.py
 tests/test_lead_list_batching.py
+tests/test_mcp_verified_emails_schema.py
 tests/test_orchestrator.py
 tests/test_retry.py
 tests/test_worker_retry.py

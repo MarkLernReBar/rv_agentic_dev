@@ -153,6 +153,25 @@ def _contact_research_tools():
     return tools
 
 
+def _build_verified_emails_payload(
+    person_name: str,
+    company_name: str,
+    domain: Optional[str],
+) -> Dict[str, Any] | None:
+    """Helper to build payload for get_verified_emails MCP tool."""
+
+    person = (person_name or "").strip()
+    company = (company_name or "").strip()
+    dom = normalize_domain(domain or "")
+    if not person or not company or not dom:
+        return None
+    return {
+        "person_name": person,
+        "company_name": company,
+        "domain": dom,
+    }
+
+
 @function_tool
 async def mcp_get_contacts_for_company(
     company_name: str,
@@ -183,14 +202,9 @@ async def mcp_get_verified_emails(
 
     if not person_name or not company_name:
         return []
-    domain_value = normalize_domain(domain or "")
-    if not domain_value:
+    payload = _build_verified_emails_payload(person_name, company_name, domain)
+    if not payload:
         return []
-    payload = {
-        "person_name": person_name,
-        "company_name": company_name,
-        "domain": domain_value,
-    }
     return await mcp_client.call_tool_async("get_verified_emails", payload)
 
 

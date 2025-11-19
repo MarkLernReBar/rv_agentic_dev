@@ -23,6 +23,12 @@ for p in (SRC, ROOT):
     if str(p) not in sys.path:
         sys.path.insert(0, str(p))
 
+# Ensure .env.local / .env are loaded so POSTGRES_URL and OPENAI_API_KEY
+# are visible to the skip conditions and the test body.
+from rv_agentic.workers.utils import load_env_files  # type: ignore
+
+load_env_files()
+
 import pytest
 
 
@@ -44,9 +50,9 @@ def test_real_25_company_run_with_batching():
     5. Verifies batching checkpoints work
     6. Measures actual performance
 
-    Expected results:
-    - 3 batches (10 + 10 + 5)
-    - 12-15 minutes total time
+    Expected results (approximate, not strict):
+    - Up to 3 batches (10 + 10 + 5), but may complete sooner if discovery is fast
+    - Under ~20 minutes total time
     - 24-25 companies found (96%+ success rate)
     - Progress tracked at each checkpoint
     """
@@ -89,8 +95,8 @@ def test_real_25_company_run_with_batching():
     print(f"Run ID: {test_run_id}")
     print(f"Target: {target_quantity} companies")
     print(f"Batch Size: {batch_size}")
-    print(f"Expected Batches: 3 (10 + 10 + 5)")
-    print(f"Expected Time: 12-15 minutes")
+    print(f"Expected Batches (max): 3 (10 + 10 + 5)")
+    print(f"Expected Time: up to ~20 minutes")
     print(f"{'='*80}\n")
 
     # Set batch size for this test
@@ -187,10 +193,12 @@ def test_real_25_company_run_with_batching():
         assert final_companies >= target_quantity * 0.9, \
             f"Should find at least 90% of target (got {final_companies}/{target_quantity})"
 
-        # Verify batching worked as expected
+        # Verify batching worked as expected: we should never need MORE batches
+        # than ceiling(target_quantity / batch_size), but we may complete in fewer
+        # if discovery and inserts overshoot the target in early batches.
         expected_batches = (target_quantity + batch_size - 1) // batch_size  # Ceiling division
-        assert batches_completed == expected_batches, \
-            f"Expected {expected_batches} batches for {target_quantity} companies with batch_size={batch_size}, got {batches_completed}"
+        assert 1 <= batches_completed <= expected_batches, \
+            f"Expected between 1 and {expected_batches} batches for {target_quantity} companies with batch_size={batch_size}, got {batches_completed}"
 
         print(f"✅ All assertions passed!")
         print(f"\nTest Summary:")

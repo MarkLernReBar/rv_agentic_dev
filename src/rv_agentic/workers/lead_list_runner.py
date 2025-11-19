@@ -169,7 +169,6 @@ def _run_region_agent(
             prompt,
             max_attempts=3,
             base_delay=1.0,
-            max_turns=30
         )
 
         # Extract structured output
@@ -344,9 +343,21 @@ def process_run(run: Dict[str, Any], heartbeat: WorkerHeartbeat | None = None) -
         pms = criteria.get("pms") or "any"
         state = criteria.get("state") or "any"
 
-        # Check current progress for batch status
-        existing_companies = supabase_client.get_pm_company_gap(run_id)
-        companies_ready = int(existing_companies.get("companies_ready") or 0) if existing_companies else 0
+        # Check current progress for batch status; treat failures as 0-ready.
+        try:
+            existing_companies = supabase_client.get_pm_company_gap(run_id)
+        except Exception:
+            logger.exception(
+                "get_pm_company_gap failed while updating heartbeat for run_id=%s; treating as 0-ready",
+                run_id,
+            )
+            existing_companies = None
+        companies_ready = 0
+        if isinstance(existing_companies, dict):
+            try:
+                companies_ready = int(existing_companies.get("companies_ready") or 0)
+            except Exception:
+                companies_ready = 0
 
         task_description = f"Lead discovery: {companies_ready}/{quantity} companies (PMS={pms}, State={state})"
 
@@ -474,9 +485,21 @@ def process_run(run: Dict[str, Any], heartbeat: WorkerHeartbeat | None = None) -
     oversample_factor = float(os.getenv("LEAD_LIST_OVERSAMPLE_FACTOR", "2.0"))
     discovery_target = int(target_qty * oversample_factor) if target_qty > 0 else 0
 
-    # Check how many companies we already have
-    existing_companies = supabase_client.get_pm_company_gap(run_id)
-    companies_ready = int(existing_companies.get("companies_ready") or 0) if existing_companies else 0
+    # Check how many companies we already have; treat errors as 0-ready.
+    try:
+        existing_companies = supabase_client.get_pm_company_gap(run_id)
+    except Exception:
+        logger.exception(
+            "get_pm_company_gap failed before agent call for run_id=%s; treating as 0-ready",
+            run_id,
+        )
+        existing_companies = None
+    companies_ready = 0
+    if isinstance(existing_companies, dict):
+        try:
+            companies_ready = int(existing_companies.get("companies_ready") or 0)
+        except Exception:
+            companies_ready = 0
     companies_remaining = max(0, discovery_target - companies_ready)
 
     logger.info(
@@ -614,37 +637,6 @@ def process_run(run: Dict[str, Any], heartbeat: WorkerHeartbeat | None = None) -
             )
 
     if not companies:
-        # Fallback path: parse from final text (CANDIDATE_COMPANIES).
-        logger.warning(
-            "No company_candidates inserted for run %s after primary agent run; "
-            "attempting fallback extraction from final output.",
-            run_id,
-        )
-        raw_output = getattr(result, "final_output", "") or ""
-        if isinstance(raw_output, LeadListOutput):
-            # When output_type is active, final_output may already be the model.
-            # Convert to a plain string representation for fallback parsing.
-            final_text = raw_output.model_dump_json()
-        else:
-            final_text = str(raw_output)
-        try:
-            _fallback_insert_companies_from_output(
-                run_id=run_id,
-                criteria=criteria,
-                final_output=final_text,
-                supabase_client=supabase_client,
-            )
-        except Exception:  # pragma: no cover
-            logger.exception(
-                "Fallback insertion failed for run id=%s; will surface as error", run_id
-            )
-
-        companies = supabase_client._get_pm(  # type: ignore[attr-defined]
-            supabase_client.PM_COMPANY_CANDIDATES_TABLE,
-            {"run_id": f"eq.{run_id}"},
-        )
-
-    if not companies:
         # No companies were inserted even after seeding + agent run. In a strict
         # PMS/location scenario this likely means there are no eligible companies
         # at all, not a pipeline failure. Mark the run as completed-without-matches
@@ -659,7 +651,7 @@ def process_run(run: Dict[str, Any], heartbeat: WorkerHeartbeat | None = None) -
             supabase_client.update_pm_run_status(run_id=run_id, status="completed", error=msg)
         except Exception:
             logger.exception("Failed to update run status after empty company set for run %s", run_id)
-        return result
+        return typed
 
     # Insert contacts based on structured output, mapping by company domain.
     domain_to_company_id: Dict[str, str] = {}
@@ -719,7 +711,7 @@ def process_run(run: Dict[str, Any], heartbeat: WorkerHeartbeat | None = None) -
         len(contacts),
     )
     _maybe_advance_run_stage(str(run.get("id") or ""))
-    return result
+    return typed
 
 
 def _fallback_insert_companies_from_output(

@@ -7,7 +7,7 @@ and queue asynchronous enrichment runs via the pm_pipeline tables.
 
 from __future__ import annotations
 
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import logging
 from pydantic import BaseModel, Field
@@ -16,6 +16,7 @@ from agents.model_settings import ModelSettings, Reasoning
 from agents.tool import function_tool
 
 from rv_agentic.services import supabase_client as sb
+from rv_agentic.services.utils import normalize_domain
 from rv_agentic.tools import mcp_client
 
 
@@ -280,12 +281,21 @@ async def mcp_get_contacts_for_company(
 
 
 @function_tool
-async def mcp_get_verified_emails(person_name: str, company_name: str) -> List[Dict[str, Any]]:
-    """Use MCP `get_verified_emails` to get verified emails for a person."""
+async def mcp_get_verified_emails(
+    person_name: str,
+    company_name: str,
+    domain: Optional[str] = None,
+) -> List[Dict[str, Any]]:
+    """Use MCP `get_verified_emails` to get verified emails for a person.
+
+    The underlying MCP tool requires person_name, company_name, and domain.
+    """
 
     if not person_name or not company_name:
         return []
-    payload = {"person_name": person_name, "company_name": company_name}
+    payload = _build_verified_emails_payload(person_name, company_name, domain)
+    if not payload:
+        return []
     return await mcp_client.call_tool_async("get_verified_emails", payload)
 
 
@@ -318,6 +328,25 @@ def get_blocked_domains_tool() -> List[str]:
     domains = sb.get_blocked_domains()
     logger.info("[LeadListAgent] get_blocked_domains_tool -> %d domains", len(domains))
     return domains
+
+
+def _build_verified_emails_payload(
+    person_name: str,
+    company_name: str,
+    domain: Optional[str],
+) -> Dict[str, Any] | None:
+    """Helper to build payload for get_verified_emails MCP tool."""
+
+    person = (person_name or "").strip()
+    company = (company_name or "").strip()
+    dom = normalize_domain(domain or "")
+    if not person or not company or not dom:
+        return None
+    return {
+        "person_name": person,
+        "company_name": company,
+        "domain": dom,
+    }
 
 
 @function_tool

@@ -173,11 +173,13 @@ def test_lead_list_runner_retry_on_failure():
                     "target_quantity": 5
                 }
 
-                # This should retry once and succeed
+                # This should retry on failure; with the multi-region design
+                # there may be multiple agent invocations, but at least one
+                # retry should have occurred.
                 result = lead_list_runner.process_run(run)
 
                 assert result is not None
-                assert call_count[0] == 2  # Failed once, succeeded on retry
+                assert call_count[0] >= 2  # Failed at least once, then succeeded
 
 
 def test_retry_exhaustion_raises_error():

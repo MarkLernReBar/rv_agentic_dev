@@ -167,6 +167,25 @@ def hubspot_find_company(domain_or_name: str) -> Dict[str, Any]:
     return {}
 
 
+def _build_verified_emails_payload(
+    person_name: str,
+    company_name: str,
+    domain: str,
+) -> Dict[str, Any] | None:
+    """Helper to build payload for get_verified_emails MCP tool."""
+
+    person = (person_name or "").strip()
+    company = (company_name or "").strip()
+    dom = normalize_domain(domain or "")
+    if not person or not company or not dom:
+        return None
+    return {
+        "person_name": person,
+        "company_name": company,
+        "domain": dom,
+    }
+
+
 @function_tool
 def neo_find_company(
     domain: Optional[str] = None,
@@ -278,11 +297,9 @@ async def mcp_get_verified_emails(person_name: str, company_name: str, domain: s
 
     if not person_name or not company_name or not domain:
         return []
-    payload = {
-        "person_name": person_name,
-        "company_name": company_name,
-        "domain": domain,
-    }
+    payload = _build_verified_emails_payload(person_name, company_name, domain)
+    if not payload:
+        return []
     return await mcp_client.call_tool_async("get_verified_emails", payload)
 
 

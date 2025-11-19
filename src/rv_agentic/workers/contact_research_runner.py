@@ -21,7 +21,7 @@ from rv_agentic.agents.contact_researcher_agent import (
     ContactResearchOutput,
 )
 from rv_agentic.config.settings import get_settings
-from rv_agentic.services import supabase_client, retry
+from rv_agentic.services import supabase_client, retry, research_backfill
 from rv_agentic.services.heartbeat import WorkerHeartbeat
 from rv_agentic.services.notifications import send_run_notification
 from rv_agentic.workers.utils import load_env_files
@@ -115,6 +115,7 @@ def _advance_stage_if_ready(run_id: str) -> None:
     if not resume:
         return
     stage = (resume.get("stage") or "").strip()
+    original_stage = stage
     if stage == "company_discovery":
         companies_gap = int(resume.get("companies_gap") or 0)
         if companies_gap <= 0:
@@ -128,7 +129,21 @@ def _advance_stage_if_ready(run_id: str) -> None:
         gap = supabase_client.get_contact_gap_summary(run_id)
         total_gap = int(gap.get("contacts_min_gap_total") or 0) if gap else 0
         if total_gap <= 0:
+            # Mark run as completed and backfill researched data into the shared
+            # research_database so no fully researched company/contact goes to waste.
             supabase_client.set_run_stage(run_id=run_id, stage="done", status="completed")
+            try:
+                companies_summary = research_backfill.backfill_run_companies(run_id)
+                contacts_summary = research_backfill.backfill_run_contacts(run_id)
+                logger.info(
+                    "Backfill complete for run_id=%s companies=%s contacts=%s",
+                    run_id,
+                    companies_summary,
+                    contacts_summary,
+                )
+            except Exception:
+                # Backfill is best-effort and must not break the main pipeline.
+                logger.exception("Backfill failed for run_id=%s", run_id)
 
 
 def process_contact_gap(agent, worker_id: str, lease_seconds: int, heartbeat: WorkerHeartbeat | None = None) -> bool:
