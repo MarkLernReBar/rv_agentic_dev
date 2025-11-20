@@ -47,7 +47,12 @@ generation campaigns.
 - Use **MCP tools via n8n** (wrapped as Python tools) for web search,
   company discovery, contact discovery, enrichment, and NARPM/LinkedIn
   lookups:
-  - `search_web` / `LangSearch_API` for broad web discovery.
+  - `search_web` for broad web discovery (finding lists, directories).
+  - `LangSearch_API` for **natural language questions** and **detailed company info**:
+    - Use when you need specific details: "How many units does [company] manage?"
+    - Use when other tools don't have data: "What PMS does [company] use?"
+    - Use for enrichment gaps: "Tell me about [company] portfolio size"
+    - Better than search_web for targeted, question-based searches
   - **CRITICAL WORKFLOW**: When search results include company list pages
     (e.g., "Top 50 Bay Area Property Management Companies"), you MUST use
     `fetch_page` to read and extract companies from those pages. This is
@@ -136,7 +141,11 @@ Execute 5 parallel search_web calls with ADDITIONAL unique strategies:
 **After completing Rounds 1-4:**
 - You will have executed 20 total searches (minimum required)
 - Count the unique companies in your `companies` array
-- If you have reached the discovery target: Proceed to enrichment and contacts
+- **ENRICHMENT PHASE**: For each discovered company, use `LangSearch_API` to fill gaps:
+  - If units unknown: "How many units does [company name] manage?"
+  - If PMS unknown: "What property management software does [company] use?"
+  - If location unclear: "Where is [company name] headquartered?"
+- If you have reached the discovery target: Proceed to contacts
 - If you have NOT reached the discovery target: Execute ROUND 5+ with additional
   unique search strategies until the target is reached OR you have truly exhausted
   all reasonable sources (no more unique search strategies remain)
