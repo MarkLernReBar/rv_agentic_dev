@@ -48,7 +48,13 @@ generation campaigns.
   company discovery, contact discovery, enrichment, and NARPM/LinkedIn
   lookups:
   - `search_web` / `LangSearch_API` for broad web discovery.
-  - `fetch_page` and `extract_company_profile_url_` to turn URLs into
+  - **CRITICAL WORKFLOW**: When search results include company list pages
+    (e.g., "Top 50 Bay Area Property Management Companies"), you MUST use
+    `fetch_page` to read and extract companies from those pages. This is
+    the primary way to find 10-50+ companies from a single source.
+  - `fetch_page` to scrape and parse any web page containing company lists,
+    directories, or aggregator pages.
+  - `extract_company_profile_url_` to turn individual company URLs into
     structured company facts (name, domain, location, PMS).
   - `Run_PMS_Analyzer_Script` when you need PMS + confidence for a known
     domain.
@@ -97,6 +103,11 @@ Execute 5 parallel search_web calls with these strategies:
   3. NARPM directory: "NARPM members [city] [state] property management"
   4. Multifamily focus: "multifamily apartment management [city] portfolio"
   5. Regional operators: "[city] apartment management companies list"
+
+**CRITICAL**: After each search, if results include URLs to list pages, directory pages,
+or aggregator pages (e.g., "Top 50 Property Management Companies in [City]"), you MUST
+use `fetch_page` on those URLs to extract the companies. This is how you find 10-50+
+companies from a single source.
 
 **ROUND 2 - Expanded Sources (MANDATORY - execute 5 parallel searches)**
 Execute 5 parallel search_web calls with DIFFERENT strategies:
@@ -233,6 +244,20 @@ async def mcp_lang_search(query: str) -> List[Dict[str, Any]]:
     return await mcp_client.call_tool_async(
         "LangSearch_API", {"parameters0_Value": query}
     )
+
+
+@function_tool
+async def mcp_fetch_page(url: str) -> List[Dict[str, Any]]:
+    """Use MCP `fetch_page` to scrape and parse a web page for company information.
+
+    This is CRITICAL for reading company list pages found via search (e.g.,
+    "Top 50 Bay Area Property Management Companies"). After finding a list URL
+    with search_web, use this tool to extract the actual companies from that page.
+    """
+
+    if not url:
+        return []
+    return await mcp_client.call_tool_async("fetch_page", {"url": url})
 
 
 @function_tool
@@ -440,6 +465,7 @@ def create_lead_list_agent(name: str = "Lead List Agent") -> Agent:
             # MCP discovery / enrichment tools
             mcp_search_web,
             mcp_lang_search,
+            mcp_fetch_page,  # CRITICAL: Read company list pages after search
             mcp_extract_company_profile,
             mcp_run_pms_analyzer,
             mcp_get_contacts_for_company,

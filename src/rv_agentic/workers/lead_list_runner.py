@@ -162,13 +162,13 @@ def _run_region_agent(
             "Focus on your region only. Return your best 8-12 companies from this area.\n"
         )
 
-        # Call agent with retry logic
-        result = retry.retry_agent_call(
-            Runner.run_sync,
+        # Call agent with increased turn limit
+        # Default max_turns is 10, but we need ~20+ for the search rounds
+        # Timeout is enforced at the ThreadPoolExecutor level (see as_completed with timeout)
+        result = Runner.run_sync(
             agent,
             prompt,
-            max_attempts=3,
-            base_delay=1.0,
+            max_turns=100,  # Increased from default 10 to allow full search rounds
         )
 
         # Extract structured output
@@ -257,14 +257,20 @@ def _discover_companies_multi_region(
             )
             futures[future] = (i, region)
 
-        # Collect results as they complete
-        for future in as_completed(futures):
+        # Collect results as they complete with 15-minute timeout per region
+        for future in as_completed(futures, timeout=900):  # 900s = 15 minutes
             region_index, region = futures[future]
-            region_name, result, error = future.result()
+            try:
+                region_name, result, error = future.result(timeout=1)  # result() should be immediate since future is done
+            except TimeoutError:
+                region_name = futures[future][1]["name"]
+                error = f"Region {region_name} exceeded 15-minute timeout"
+                result = None
+                logger.error(error)
 
             if error:
-                failed_regions.append(region_name)
-                logger.warning(f"Region {region_name} failed: {error}")
+                failed_regions.append((region_index, region, error))
+                logger.warning(f"Region {region_name} failed on first attempt: {error}")
                 continue
 
             if result:
@@ -281,12 +287,76 @@ def _discover_companies_multi_region(
                     region_name, len(region_companies), len(region_contacts)
                 )
 
+    # RETRY FAILED REGIONS (up to 2 additional attempts with backoff)
+    if failed_regions:
+        logger.info(f"Retrying {len(failed_regions)} failed regions...")
+        import time
+
+        for retry_attempt in range(1, 3):  # 2 more attempts
+            if not failed_regions:
+                break
+
+            backoff_delay = 30 * retry_attempt  # 30s, 60s
+            logger.info(f"Retry attempt {retry_attempt}: waiting {backoff_delay}s before retrying {len(failed_regions)} regions")
+            time.sleep(backoff_delay)
+
+            regions_to_retry = failed_regions[:]
+            failed_regions = []
+
+            with ThreadPoolExecutor(max_workers=4) as executor:
+                retry_futures = {}
+                for region_index, region, prev_error in regions_to_retry:
+                    logger.info(f"Retrying region {region['name']} (previous error: {prev_error})")
+                    future = executor.submit(
+                        _run_region_agent,
+                        region,
+                        region_index,
+                        len(regions),
+                        run_id,
+                        criteria,
+                        target_qty,
+                        discovery_target,
+                        oversample_factor
+                    )
+                    retry_futures[future] = (region_index, region, prev_error)
+
+                for future in as_completed(retry_futures, timeout=900):  # 15-minute timeout
+                    region_index, region, prev_error = retry_futures[future]
+                    try:
+                        region_name, result, error = future.result(timeout=1)
+                    except TimeoutError:
+                        region_name = retry_futures[future][1]["name"]
+                        error = f"Region {region_name} exceeded 15-minute timeout on retry"
+                        result = None
+                        logger.error(error)
+
+                    if error:
+                        failed_regions.append((region_index, region, error))
+                        logger.warning(f"Region {region_name} failed on retry attempt {retry_attempt}: {error}")
+                        continue
+
+                    if result:
+                        region_companies = [c.model_dump() for c in (result.companies or [])]
+                        region_contacts = [c.model_dump() for c in (result.contacts or [])]
+
+                        all_companies.extend(region_companies)
+                        all_contacts.extend(region_contacts)
+                        successful_regions.append(region_name)
+
+                        logger.info(
+                            "✅ Retry succeeded for %s: %d companies, %d contacts",
+                            region_name, len(region_companies), len(region_contacts)
+                        )
+
     # Deduplicate by domain
     all_companies_deduped = _deduplicate_companies_by_domain(all_companies)
 
+    # Extract just region names from failed regions list (which now contains tuples)
+    failed_region_names = [region[1]["name"] for region in failed_regions] if failed_regions else []
+
     logger.info(
         "Parallel multi-region discovery complete: %d successful regions, %d failed regions",
-        len(successful_regions), len(failed_regions)
+        len(successful_regions), len(failed_region_names)
     )
     logger.info(
         "Results: %d total companies, %d after dedup, %d contacts",
@@ -302,8 +372,8 @@ def _discover_companies_multi_region(
     quality_notes = (
         f"Parallel multi-region discovery: {len(successful_regions)}/{len(regions)} regions succeeded"
     )
-    if failed_regions:
-        quality_notes += f" (failed: {', '.join(failed_regions)})"
+    if failed_region_names:
+        quality_notes += f" (failed after retries: {', '.join(failed_region_names)})"
 
     return LeadListOutput(
         companies=company_models,
@@ -890,6 +960,9 @@ def run_forever(fetch_active_runs: ActiveRunsFetcher, mark_run_complete: RunMark
         logger.info("Found %d active run(s) to process", len(runs))
         for run in runs:
             try:
+                # Process run
+                # Timeout protection is handled at region level (15min per region)
+                # With 4 regions + retries, worst case is ~90 minutes
                 process_run(run, heartbeat)
 
                 # Check if we've met the discovery target for this run
