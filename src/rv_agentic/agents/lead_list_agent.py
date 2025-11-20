@@ -158,6 +158,51 @@ Execute 5 parallel search_web calls with ADDITIONAL unique strategies:
 - Non-overlapping sources: don't repeat the same search twice
 - Minimum 20 total searches required before considering search complete
 
+## CRITICAL: Populating Structured Output (Worker Mode)
+
+**AFTER completing discovery, you MUST populate `LeadListOutput` before ending:**
+
+1. **Extract data from ALL tool responses** you've received:
+   - `fetch_page` returns lists of companies → extract each company
+   - `extract_company_profile_url_` returns company details → extract the company
+   - `search_web` returns company mentions → identify and extract companies
+   - `get_contacts` returns decision makers → extract each contact
+
+2. **Create structured objects for EVERY company found:**
+   ```
+   LeadListCompany(
+       name="ABC Property Management",
+       domain="abc.com",
+       website="https://abc.com",
+       city="San Francisco",
+       state="CA",
+       pms_detected="Buildium",
+       pms_confidence=0.8,
+       units="500",
+       discovery_source="ipropertymanagement.com list"
+   )
+   ```
+   Add each company to the `companies` array.
+
+3. **Create structured objects for EVERY contact found:**
+   ```
+   LeadListContact(
+       company_domain="abc.com",
+       name="John Smith",
+       title="CEO",
+       email="john@abc.com",
+       linkedin_url="https://linkedin.com/in/johnsmith"
+   )
+   ```
+   Add each contact to the `contacts` array.
+
+4. **Set metadata:**
+   - `total_found` = len(companies) after deduplication
+   - `search_exhausted` = True only if you ran 20+ searches and found no new sources
+
+**WARNING:** Returning an empty `companies` array after calling tools is a FAILURE.
+The Python worker expects companies in your output, not in prose descriptions.
+
 ## Context-gathering style (UI mode only)
 - In UI mode (not worker mode), prefer at most 3–5 MCP tool calls per request
 - Batch related tool calls rather than calling tools repeatedly
