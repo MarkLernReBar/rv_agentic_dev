@@ -1,0 +1,16 @@
+Traceback (most recent call last):
+  File "/Users/marklerner/RV_Agentic_FrontEnd_Dev/test_structured_output_fix.py", line 45, in test_minimal_discovery
+    result = Runner.run_sync(
+             ^^^^^^^^^^^^^^^^
+  File "/Users/marklerner/RV_Agentic_FrontEnd_Dev/.venv/lib/python3.12/site-packages/agents/run.py", line 418, in run_sync
+    return runner.run_sync(
+           ^^^^^^^^^^^^^^^^
+  File "/Users/marklerner/RV_Agentic_FrontEnd_Dev/.venv/lib/python3.12/site-packages/agents/run.py", line 741, in run_sync
+    raise RuntimeError(
+RuntimeError: AgentRunner.run_sync() cannot be called when an event loop is already running.
+Creating Lead List Agent...
+
+Running agent...
+================================================================================
+
+❌ ERROR: AgentRunner.run_sync() cannot be called when an event loop is already running.

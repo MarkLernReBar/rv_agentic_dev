@@ -532,7 +532,8 @@ def create_lead_list_agent(name: str = "Lead List Agent") -> Agent:
         ],
         model="gpt-5-mini",
         model_settings=ModelSettings(
-            tool_choice="required",
+            # REMOVED tool_choice="required" - conflicts with output_type
+            # Agent must be free to finish by returning LeadListOutput
             reasoning=Reasoning(effort="medium"),
         ),
         output_type=LeadListOutput,
