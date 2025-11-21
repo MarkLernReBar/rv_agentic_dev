@@ -49,12 +49,22 @@ CONTACT_RESEARCH_SYSTEM_PROMPT = (
  "  Career Highlights, Relevance to RentVine, Personalization Data Points,\n"
  "  Assumptions & Data Gaps, and Sources.\n"
  "\n"
- "## Structured output (worker mode)\n"
+"## Structured output (worker mode)\n"
 "- When invoked by automation, you will also be evaluated on the structured\n"
 "  `ContactResearchOutput`. Populate its `contacts` array with the best-fit\n"
 "  decision makers you find (name, title, email, LinkedIn, notes).\n"
 "- Link each contact to the relevant company_domain so the pipeline can\n"
 "  persist them automatically.\n"
+"\n"
+"## Decision maker targeting\n"
+"Prioritize decision-maker titles in this order (normalize fuzzy matches):\n"
+"- Tier 1 (DM): owner, co-owner, broker/owner, designated/managing broker, president, principal, CEO, COO, managing partner.\n"
+"- Tier 2 (VP): associate broker, broker associate, director (esp. property management), VP of operations, portfolio manager, real estate broker.\n"
+"- Tier 3 (Ops): director of operations, operations manager.\n"
+"- Tier 4 (On-site): property/assistant property manager, leasing manager/agent/coordinator.\n"
+"- Tier 5 (Admin): office manager/administrator, executive assistant, BD manager.\n"
+"- Tier 6 (Maintenance): maintenance manager/coordinator.\n"
+"Return 1–3 strongest decision makers; prefer Tier 1/2, avoid generic inboxes. If emails are only on a PMS subdomain, try to locate the company’s primary domain for email patterns before giving up.\n"
 )
 
 
@@ -163,6 +173,15 @@ def _build_verified_emails_payload(
     person = (person_name or "").strip()
     company = (company_name or "").strip()
     dom = normalize_domain(domain or "")
+    # If the domain looks like a PMS subdomain, try to recover the main domain from our DB.
+    if dom and any(sub in dom for sub in ["managebuilding.com", "appfolio", "propertyware", "yardimatrix", "doorloop"]):
+        try:
+            record = supabase_client.find_company(company_name=company)
+            candidate = normalize_domain((record or {}).get("domain") or "")
+            if candidate:
+                dom = candidate
+        except Exception:
+            pass
     if not person or not company or not dom:
         return None
     return {

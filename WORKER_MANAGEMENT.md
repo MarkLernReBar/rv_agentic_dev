@@ -193,6 +193,17 @@ pm2 startup  # Enable auto-start on boot
    - Decision maker identification
    - Email verification
 
+### Recommended staged, event-driven flow (use staging_companies)
+
+- **Staging first:** Insert all discovery output into `pm_pipeline.staging_companies` with discovery_source and raw signals. Do not wait for the whole run to finish; promote winners continuously.
+- **Promotion to company_candidates:** Promote from staging when minimum criteria are met (PMS/location/blocked-domain check). This preserves every discovered lead and avoids re-search. Mark promoted rows with status=discovered.
+- **Streaming handoff between workers:**
+  - Discovery → immediately enqueue/promote to company enrichment queue.
+  - Company research → if ICP fit, enqueue to contact discovery; if not, archive to research_database (no waste).
+  - Contact discovery/enrichment → insert contacts; backfill any researched-but-unused contacts into contacts table.
+- **Targeted contact scope:** Downstream gaps/completion are computed on the top `target_quantity` companies only; oversample is for buffer/backfill, not for contact quotas.
+- **Visibility:** Emit structured events (insert/suppress/promote/enriched/contact_insert/contact_skip/stage_advance) into logs/UI so accepted candidates and contacts are visible in real time.
+
 ### Worker Health System
 
 Workers maintain health via:

@@ -1094,6 +1094,35 @@ def get_contact_gap_summary(run_id: str) -> Optional[Dict[str, Any]]:
         return None
 
 
+def get_contact_gap_for_top_companies(
+    run_id: str,
+    target_quantity: int,
+) -> Optional[Dict[str, Any]]:
+    """Return contact gap limited to the top N companies for a run.
+
+    This prevents oversampled companies from inflating the contact gap.
+    """
+    if not run_id or target_quantity <= 0:
+        return None
+    sql = """
+    SELECT COALESCE(v.contacts_min_gap, 0) AS contacts_min_gap
+    FROM pm_pipeline.v_contact_gap_per_company v
+    JOIN pm_pipeline.company_candidates c ON c.id = v.company_id
+    WHERE c.run_id = %s
+    ORDER BY c.created_at ASC, c.id ASC
+    LIMIT %s
+    """
+    with _pg_conn() as conn, conn.cursor(row_factory=psycopg.rows.dict_row) as cur:
+        cur.execute(sql, (run_id, target_quantity))
+        rows = cur.fetchall()
+    if not rows:
+        return None
+    gaps = [int(r.get("contacts_min_gap") or 0) for r in rows]
+    ready = sum(1 for g in gaps if g <= 0)
+    gap_total = sum(max(0, g) for g in gaps)
+    return {"ready_companies": ready, "gap_total": gap_total}
+
+
 def get_contact_gap_for_company(run_id: str, company_id: str) -> Optional[Dict[str, Any]]:
     """Return contact gap info for a single company."""
 
@@ -1206,8 +1235,16 @@ def claim_company_for_contacts(
     params.extend([worker_id, interval_literal])
 
     sql = f"""
-WITH candidate AS (
-    SELECT c.id
+WITH ranked AS (
+    SELECT
+        c.id,
+        r.id AS run_id,
+        r.target_quantity,
+        v.contacts_min_gap,
+        ROW_NUMBER() OVER (
+            PARTITION BY r.id
+            ORDER BY c.created_at ASC, c.id ASC
+        ) AS rn
     FROM pm_pipeline.v_contact_gap_per_company v
     JOIN pm_pipeline.company_candidates c ON c.id = v.company_id
     JOIN pm_pipeline.runs r ON r.id = c.run_id
@@ -1215,7 +1252,12 @@ WITH candidate AS (
       AND v.contacts_min_gap > 0
       AND (c.worker_id IS NULL OR c.worker_lease_until < now())
       {run_filter_clause}
-    ORDER BY v.contacts_min_gap DESC
+),
+candidate AS (
+    SELECT id
+    FROM ranked
+    WHERE (target_quantity IS NULL OR target_quantity <= 0) OR rn <= target_quantity
+    ORDER BY contacts_min_gap DESC
     LIMIT 1
 )
 UPDATE pm_pipeline.company_candidates AS c

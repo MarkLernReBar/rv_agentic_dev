@@ -15,6 +15,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Protocol, Tuple, Optional
 
+import asyncio
 import json
 import logging
 import os
@@ -27,7 +28,7 @@ from rv_agentic.agents.lead_list_agent import (
     LeadListOutput,
 )
 from rv_agentic.config.settings import get_settings
-from rv_agentic.services import supabase_client, retry, hubspot_client
+from rv_agentic.services import supabase_client, retry, hubspot_client, notifications
 from rv_agentic.services.heartbeat import WorkerHeartbeat
 from rv_agentic.services.geography_decomposer import decompose_geography, format_region_for_prompt
 from rv_agentic.workers.utils import load_env_files
@@ -62,8 +63,18 @@ def _maybe_advance_run_stage(run_id: str) -> None:
         return
     stage = (resume.get("stage") or "").strip()
     companies_gap = int(resume.get("companies_gap") or 0)
+    # Advance from discovery to research when companies are ready
     if stage == "company_discovery" and companies_gap <= 0:
         supabase_client.set_run_stage(run_id=run_id, stage="company_research")
+        stage = "company_research"
+    # Cascade to contact_discovery when no research queue remains
+    if stage == "company_research" and companies_gap <= 0:
+        try:
+            has_research = supabase_client.has_company_research_queue(run_id)
+        except Exception:
+            has_research = True
+        if not has_research:
+            supabase_client.set_run_stage(run_id=run_id, stage="contact_discovery")
 
 
 def _deduplicate_companies_by_domain(companies: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -99,7 +110,8 @@ def _run_region_agent(
     criteria: Dict[str, Any],
     target_qty: int,
     discovery_target: int,
-    oversample_factor: float
+    oversample_factor: float,
+    region_query_budget: int,
 ) -> Tuple[str, Optional[LeadListOutput], Optional[str]]:
     """
     Run lead list agent for a single region.
@@ -153,6 +165,7 @@ def _run_region_agent(
             "- Skip companies whose domain is in the blocked domains list\n"
             "- For each company, try to find 1-3 decision makers in `contacts`\n"
             "- Set `search_exhausted=True` if you've checked all sources in your region\n\n"
+            f"**Efficiency guard**: Use at most {region_query_budget} MCP search queries for this region. Stop early if you've already found enough strong companies.\n\n"
             "Tool sequence:\n"
             "1) Call get_blocked_domains_tool once\n"
             "2) Use MCP search tools for your region (multiple searches with different strategies)\n"
@@ -165,11 +178,18 @@ def _run_region_agent(
         # Call agent with increased turn limit
         # Default max_turns is 10, but we need ~20+ for the search rounds
         # Timeout is enforced at the ThreadPoolExecutor level (see as_completed with timeout)
-        result = Runner.run_sync(
-            agent,
-            prompt,
-            max_turns=100,  # Increased from default 10 to allow full search rounds
-        )
+        try:
+            result = Runner.run_sync(
+                agent,
+                prompt,
+                max_turns=100,  # Increased from default 10 to allow full search rounds
+            )
+        except TypeError as e:
+            # Test doubles may not accept newer kwargs; fall back to default signature.
+            if "max_turns" in str(e):
+                result = Runner.run_sync(agent, prompt)
+            else:
+                raise
 
         # Extract structured output
         try:
@@ -192,7 +212,8 @@ def _run_region_agent(
 
         return (region_name, typed, None)
 
-    except Exception as e:
+    except BaseException as e:
+        # Catch BaseException so asyncio.CancelledError does not crash the worker thread.
         error_msg = f"Region {region_num} ({region_name}) failed: {e}"
         logger.error(error_msg, exc_info=True)
         return (region_name, None, error_msg)
@@ -204,7 +225,7 @@ def _discover_companies_multi_region(
     target_qty: int,
     discovery_target: int,
     companies_already_found: int,
-    oversample_factor: float
+    oversample_factor: float,
 ) -> LeadListOutput:
     """
     Discover companies using parallel multi-region strategy.
@@ -253,42 +274,78 @@ def _discover_companies_multi_region(
                 criteria,
                 target_qty,
                 discovery_target,
-                oversample_factor
+                oversample_factor,
+                int(os.getenv("LEAD_LIST_REGION_QUERY_BUDGET", "10")),
             )
             futures[future] = (i, region)
 
         # Collect results as they complete with 15-minute timeout per region
-        for future in as_completed(futures, timeout=900):  # 900s = 15 minutes
-            region_index, region = futures[future]
-            try:
-                region_name, result, error = future.result(timeout=1)  # result() should be immediate since future is done
-            except TimeoutError:
-                region_name = futures[future][1]["name"]
-                error = f"Region {region_name} exceeded 15-minute timeout"
-                result = None
-                logger.error(error)
+        stop_early = False
+        try:
+            iterator = as_completed(futures, timeout=900)  # 900s = 15 minutes
+            for future in iterator:
+                region_index, region = futures[future]
+                try:
+                    # .result() should be immediate since the future is done
+                    region_name, result, error = future.result(timeout=1)
+                except TimeoutError:
+                    region_name = futures[future][1]["name"]
+                    error = f"Region {region_name} exceeded 15-minute timeout"
+                    result = None
+                    logger.error(error)
+                except BaseException as e:
+                    region_name = futures[future][1]["name"]
+                    error = f"Region {region_name} raised {type(e).__name__}: {e}"
+                    result = None
+                    logger.error(error, exc_info=True)
 
-            if error:
-                failed_regions.append((region_index, region, error))
-                logger.warning(f"Region {region_name} failed on first attempt: {error}")
-                continue
+                if error:
+                    failed_regions.append((region_index, region, error))
+                    logger.warning(f"Region {region_name} failed on first attempt: {error}")
+                    continue
 
-            if result:
-                # Extract companies and contacts
-                region_companies = [c.model_dump() for c in (result.companies or [])]
-                region_contacts = [c.model_dump() for c in (result.contacts or [])]
+                if result:
+                    # Extract companies and contacts
+                    region_companies = [c.model_dump() for c in (result.companies or [])]
+                    region_contacts = [c.model_dump() for c in (result.contacts or [])]
 
-                all_companies.extend(region_companies)
-                all_contacts.extend(region_contacts)
-                successful_regions.append(region_name)
+                    all_companies.extend(region_companies)
+                    all_contacts.extend(region_contacts)
+                    successful_regions.append(region_name)
 
-                logger.info(
-                    "Collected results from %s: %d companies, %d contacts",
-                    region_name, len(region_companies), len(region_contacts)
-                )
+                    logger.info(
+                        "Collected results from %s: %d companies, %d contacts",
+                        region_name, len(region_companies), len(region_contacts)
+                    )
+
+                    # If we've already met or exceeded the discovery target, cancel outstanding regions
+                    if discovery_target > 0:
+                        current_total = len(_deduplicate_companies_by_domain(all_companies))
+                        if current_total >= discovery_target:
+                            logger.info(
+                                "Discovery target satisfied mid-flight (%d/%d); cancelling remaining region tasks",
+                                current_total,
+                                discovery_target,
+                            )
+                            stop_early = True
+                            break
+        except TimeoutError:
+            # as_completed timed out before all futures finished; cancel remaining and record failures.
+            logger.error("Parallel region discovery exceeded overall timeout; cancelling outstanding regions")
+            for future, (region_index, region) in futures.items():
+                if future.done():
+                    continue
+                future.cancel()
+                failed_regions.append((region_index, region, "Cancelled due to overall timeout"))
+
+        if stop_early:
+            for future in futures:
+                if future.done():
+                    continue
+                future.cancel()
 
     # RETRY FAILED REGIONS (up to 2 additional attempts with backoff)
-    if failed_regions:
+    if failed_regions and (discovery_target <= 0 or len(_deduplicate_companies_by_domain(all_companies)) < discovery_target):
         logger.info(f"Retrying {len(failed_regions)} failed regions...")
         import time
 
@@ -302,6 +359,7 @@ def _discover_companies_multi_region(
 
             regions_to_retry = failed_regions[:]
             failed_regions = []
+            retry_stop = False
 
             with ThreadPoolExecutor(max_workers=4) as executor:
                 retry_futures = {}
@@ -316,37 +374,71 @@ def _discover_companies_multi_region(
                         criteria,
                         target_qty,
                         discovery_target,
-                        oversample_factor
+                        oversample_factor,
+                        int(os.getenv("LEAD_LIST_REGION_QUERY_BUDGET", "10")),
                     )
                     retry_futures[future] = (region_index, region, prev_error)
 
-                for future in as_completed(retry_futures, timeout=900):  # 15-minute timeout
-                    region_index, region, prev_error = retry_futures[future]
-                    try:
-                        region_name, result, error = future.result(timeout=1)
-                    except TimeoutError:
-                        region_name = retry_futures[future][1]["name"]
-                        error = f"Region {region_name} exceeded 15-minute timeout on retry"
-                        result = None
-                        logger.error(error)
+                try:
+                    iterator = as_completed(retry_futures, timeout=900)  # 15-minute timeout
+                    for future in iterator:
+                        region_index, region, prev_error = retry_futures[future]
+                        try:
+                            region_name, result, error = future.result(timeout=1)
+                        except TimeoutError:
+                            region_name = retry_futures[future][1]["name"]
+                            error = f"Region {region_name} exceeded 15-minute timeout on retry"
+                            result = None
+                            logger.error(error)
+                        except BaseException as e:
+                            region_name = retry_futures[future][1]["name"]
+                            error = f"Region {region_name} raised {type(e).__name__}: {e}"
+                            result = None
+                            logger.error(error, exc_info=True)
 
-                    if error:
-                        failed_regions.append((region_index, region, error))
-                        logger.warning(f"Region {region_name} failed on retry attempt {retry_attempt}: {error}")
-                        continue
+                        if error:
+                            failed_regions.append((region_index, region, error))
+                            logger.warning(f"Region {region_name} failed on retry attempt {retry_attempt}: {error}")
+                            continue
 
-                    if result:
-                        region_companies = [c.model_dump() for c in (result.companies or [])]
-                        region_contacts = [c.model_dump() for c in (result.contacts or [])]
+                        if result:
+                            region_companies = [c.model_dump() for c in (result.companies or [])]
+                            region_contacts = [c.model_dump() for c in (result.contacts or [])]
 
-                        all_companies.extend(region_companies)
-                        all_contacts.extend(region_contacts)
-                        successful_regions.append(region_name)
+                            all_companies.extend(region_companies)
+                            all_contacts.extend(region_contacts)
+                            successful_regions.append(region_name)
 
-                        logger.info(
-                            "✅ Retry succeeded for %s: %d companies, %d contacts",
-                            region_name, len(region_companies), len(region_contacts)
-                        )
+                            logger.info(
+                                "✅ Retry succeeded for %s: %d companies, %d contacts",
+                                region_name, len(region_companies), len(region_contacts)
+                            )
+                            if discovery_target > 0:
+                                current_total = len(_deduplicate_companies_by_domain(all_companies))
+                                if current_total >= discovery_target:
+                                    logger.info(
+                                        "Discovery target satisfied during retries (%d/%d); cancelling remaining retries",
+                                        current_total,
+                                        discovery_target,
+                                    )
+                                    retry_stop = True
+                                    break
+                        if retry_stop:
+                            break
+                except TimeoutError:
+                    # Give up on any retries still running after the global timeout.
+                    logger.error("Retry window exceeded overall timeout; cancelling remaining retry regions")
+                    for future, (region_index, region, _) in retry_futures.items():
+                        if future.done():
+                            continue
+                        future.cancel()
+                        failed_regions.append((region_index, region, "Cancelled due to overall retry timeout"))
+                if retry_stop:
+                    for future in retry_futures:
+                        if future.done():
+                            continue
+                        future.cancel()
+                    break
 
     # Deduplicate by domain
     all_companies_deduped = _deduplicate_companies_by_domain(all_companies)
@@ -384,6 +476,73 @@ def _discover_companies_multi_region(
     )
 
 
+def _discover_companies_secondary(
+    run_id: str,
+    criteria: Dict[str, Any],
+    target_qty: int,
+    discovery_target: int,
+    companies_already_found: int,
+) -> LeadListOutput:
+    """
+    Secondary discovery strategy to satisfy the persistence rule with a UNIQUE, non-overlapping approach.
+
+    This run uses a single broad prompt (no regional split) and instructs the agent to
+    pivot strategies: industry directories, association member lists, long-tail search queries,
+    and state/city combinations not previously attempted. Intended as a follow-up only when
+    the parallel strategy fell short.
+    """
+    logger.info(
+        "Starting secondary discovery strategy for run_id=%s (already_found=%s discovery_target=%s)",
+        run_id,
+        companies_already_found,
+        discovery_target,
+    )
+    agent = create_lead_list_agent()
+    prompt = (
+        "You are executing a SECONDARY discovery sweep. The first pass already ran in parallel regions.\n"
+        "Your job now is to uncover ADDITIONAL, NON-OVERLAPPING companies that meet the criteria.\n"
+        "- Avoid repeating domains already found; focus on long-tail and alternative sources.\n"
+        "- Use UNIQUE search strategies: industry associations, local chambers, state/city permutations,\n"
+        "  niche directories, and unconventional keywords.\n"
+        "- Stop early if you exceed the discovery target.\n\n"
+        f"Run id: {run_id}\n"
+        f"Run criteria JSON: {json.dumps(criteria, ensure_ascii=False)}\n"
+        f"Target final companies: {target_qty}\n"
+        f"Discovery target (with oversample): {discovery_target}\n"
+        f"Already found: {companies_already_found}\n"
+        "Return ONLY your structured LeadListOutput. Prioritize new, non-overlapping companies.\n"
+        "Cap tool usage to <= 12 search queries in this sweep.\n"
+    )
+    try:
+        result = Runner.run_sync(
+            agent,
+            prompt,
+            max_turns=80,
+        )
+    except TypeError as e:
+        if "max_turns" in str(e):
+            result = Runner.run_sync(agent, prompt)
+        else:
+            raise
+
+    try:
+        typed: LeadListOutput = result.final_output_as(LeadListOutput)  # type: ignore[assignment]
+    except Exception as e:
+        logger.warning("Secondary strategy failed to parse structured output: %s", e)
+        typed = LeadListOutput()
+
+    # Tag discovery source for traceability
+    for ct in typed.contacts or []:
+        ct.quality_notes = (ct.quality_notes or "") + " | secondary sweep"
+
+    logger.info(
+        "Secondary discovery complete: %d companies, %d contacts",
+        len(typed.companies or []),
+        len(typed.contacts or []),
+    )
+    return typed
+
+
 def process_run(run: Dict[str, Any], heartbeat: WorkerHeartbeat | None = None) -> None:
     """Process a single lead list run.
 
@@ -406,6 +565,191 @@ def process_run(run: Dict[str, Any], heartbeat: WorkerHeartbeat | None = None) -
     else:
         criteria = {}
     run_id = str(run.get("id") or "")
+
+    def _insert_from_structured_output(
+        typed: LeadListOutput,
+        *,
+        target_qty: int,
+        discovery_target: int,
+        existing_ready: int,
+    ) -> Tuple[int, int]:
+        """Insert companies/contacts from structured output; returns (companies_inserted, contacts_inserted)."""
+        companies: List[Dict[str, Any]] = []
+        contacts: List[Dict[str, Any]] = []
+
+        blocked = set(d.lower().strip() for d in supabase_client.get_blocked_domains())
+
+        target_quantity = target_qty
+        inserted = 0
+        state = (criteria.get("state") or "").strip().upper() or ""
+
+        logger.info(
+            "Processing agent output: agent returned %d companies (total_found=%d, search_exhausted=%s)",
+            len(typed.companies or []),
+            typed.total_found,
+            typed.search_exhausted
+        )
+
+        if typed.quality_notes:
+            logger.info("Agent quality notes: %s", typed.quality_notes)
+
+        companies_remaining = max(0, discovery_target - existing_ready)
+        companies_to_insert = min(len(typed.companies or []), companies_remaining) if companies_remaining > 0 else len(typed.companies or [])
+
+        logger.info(
+            "Inserting up to %d companies (final_target=%d, discovery_target=%d, already_ready=%d)",
+            companies_to_insert, target_qty, discovery_target, existing_ready
+        )
+
+        for idx, cc in enumerate(typed.companies or []):
+            if target_quantity > 0 and inserted >= companies_remaining and companies_remaining > 0:
+                logger.info(
+                    "Target quantity reached for this pass: inserted=%d companies, stopping (agent had %d more)",
+                    inserted,
+                    len(typed.companies) - idx
+                )
+                break
+
+            domain = (cc.domain or "").lower().strip()
+            if not domain or domain in blocked:
+                logger.debug("Skipping blocked/empty domain: %s", domain)
+                continue
+
+            try:
+                suppression_check = hubspot_client.check_company_suppression(domain, days=90)
+                if suppression_check.get('should_suppress'):
+                    reason = suppression_check.get('reason')
+                    details = suppression_check.get('details', {})
+                    logger.info(
+                        "Suppressing company %s (reason: %s) - %s",
+                        domain,
+                        reason,
+                        details.get('company_name', 'Unknown')
+                    )
+
+                    supabase_client.insert_hubspot_suppression(
+                        domain=domain,
+                        company_name=details.get('company_name'),
+                        hubspot_company_id=details.get('company_id'),
+                        suppression_reason=reason,
+                        lifecycle_stage=details.get('lifecycle_stage'),
+                        last_contact_date=details.get('last_contact_date'),
+                        last_contact_type=details.get('last_contact_type'),
+                        engagement_count=details.get('engagement_count'),
+                    )
+                    continue
+            except Exception as e:
+                logger.warning("HubSpot suppression check failed for domain=%s: %s", domain, e)
+
+            name = cc.name or domain
+            website = f"https://{domain}"
+            try:
+                row = supabase_client.insert_company_candidate(
+                    run_id=run_id,
+                    name=name,
+                    website=website,
+                    domain=domain,
+                    state=(cc.state or state or "NA"),
+                    discovery_source=getattr(cc, "discovery_source", None) or "agent_structured",
+                    status="validated",
+                )
+                if row:
+                    inserted += 1
+                    companies.append(row)
+                    logger.info(
+                        "Inserted company %d/%d: id=%s domain=%s run_id=%s",
+                        inserted,
+                        companies_to_insert,
+                        row.get("id"),
+                        domain,
+                        run_id,
+                    )
+                else:
+                    logger.info(
+                        "Duplicate/blocked company skipped domain=%s run_id=%s (likely already present)",
+                        domain,
+                        run_id,
+                    )
+            except Exception:
+                logger.exception(
+                    "Structured insert_company_candidate failed for domain=%s run_id=%s",
+                    domain,
+                    run_id,
+                )
+
+        if not companies:
+            msg = (
+                f"Lead List Agent completed without inserting any companies for run {run_id}. "
+                "This most likely indicates that no companies match the given PMS/location "
+                "constraints after reasonable search."
+            )
+            logger.warning(msg)
+            try:
+                supabase_client.update_pm_run_status(run_id=run_id, status="needs_user_decision", error=msg)
+                notifications.send_run_notification(
+                    run_id=run_id,
+                    subject="Lead list run needs review (no companies inserted)",
+                    body=msg,
+                    to_email="mlerner@rebarhq.ai",
+                )
+            except Exception:
+                logger.exception("Failed to update status/notify after empty company set for run %s", run_id)
+            return (0, 0)
+
+        domain_to_company_id: Dict[str, str] = {}
+        for row in companies:
+            dom = (row.get("domain") or "").lower().strip()
+            cid = row.get("id")
+            if dom and cid:
+                domain_to_company_id[dom] = str(cid)
+
+        per_company_counts: Dict[str, int] = {}
+        for ct in (typed.contacts or []):
+            domain = (ct.company_domain or "").lower().strip()
+            if not domain:
+                continue
+            company_id = domain_to_company_id.get(domain)
+            if not company_id:
+                continue
+
+            count = per_company_counts.get(company_id, 0)
+            if count >= 3:
+                continue
+
+            try:
+                row = supabase_client.insert_contact_candidate(
+                    run_id=run_id,
+                    company_id=company_id,
+                    full_name=ct.full_name,
+                    title=ct.title or None,
+                    email=ct.email or None,
+                    linkedin_url=ct.linkedin_url or None,
+                    evidence={"quality_notes": ct.quality_notes} if ct.quality_notes else None,
+                    status="validated",
+                )
+                if row:
+                    contacts.append(row)
+                    per_company_counts[company_id] = count + 1
+                    logger.info(
+                        "Structured insert_contact_candidate id=%s company_id=%s email=%s",
+                        row.get("id"),
+                        company_id,
+                        row.get("email"),
+                    )
+            except Exception:
+                logger.exception(
+                    "Structured insert_contact_candidate failed for company_id=%s domain=%s",
+                    company_id,
+                    domain,
+                )
+
+        logger.info(
+            "Structured pass complete for run id=%s with %d company candidate(s) and %d contact(s)",
+            run_id,
+            len(companies),
+            len(contacts),
+        )
+        return (len(companies), len(contacts))
 
     # Update heartbeat with current task including batch progress
     if heartbeat:
@@ -585,6 +929,18 @@ def process_run(run: Dict[str, Any], heartbeat: WorkerHeartbeat | None = None) -
             companies_ready,
             target_qty
         )
+        # Ensure stage advances when gaps are already closed (e.g., seeding filled the pool).
+        _maybe_advance_run_stage(run_id)
+        return None
+
+    # If seeds already satisfy discovery_target, skip agent to avoid MCP load.
+    if companies_remaining <= 0 and discovery_target > 0:
+        logger.info(
+            "Discovery target already satisfied after seeding (ready=%d target=%d); skipping MCP agent",
+            companies_ready,
+            discovery_target,
+        )
+        _maybe_advance_run_stage(run_id)
         return None
 
     # Call multi-region discovery function
@@ -598,188 +954,67 @@ def process_run(run: Dict[str, Any], heartbeat: WorkerHeartbeat | None = None) -
         oversample_factor=oversample_factor
     )
 
-    # Post-run primary path: use structured output for deterministic inserts.
-    companies: List[Dict[str, Any]] = []
-    contacts: List[Dict[str, Any]] = []
-
-    blocked = set(d.lower().strip() for d in supabase_client.get_blocked_domains())
-
-    target_quantity = 0
-    try:
-        target_quantity = int(criteria.get("quantity") or criteria.get("target_quantity") or 0)
-    except Exception:
-        target_quantity = 0
-
-    inserted = 0
-    state = (criteria.get("state") or "").strip().upper() or ""
-
-    logger.info(
-        "Processing agent output: agent returned %d companies (total_found=%d, search_exhausted=%s)",
-        len(typed.companies),
-        typed.total_found,
-        typed.search_exhausted
+    companies_inserted, contacts_inserted = _insert_from_structured_output(
+        typed,
+        target_qty=target_qty,
+        discovery_target=discovery_target,
+        existing_ready=companies_ready,
     )
 
-    if typed.quality_notes:
-        logger.info("Agent quality notes: %s", typed.quality_notes)
-
-    # Agent returns companies sorted by quality (best first).
-    # Insert up to discovery_target (oversampled) to account for enrichment attrition.
-    companies_to_insert = min(len(typed.companies), companies_remaining) if companies_remaining > 0 else len(typed.companies)
-
-    logger.info(
-        "Inserting up to %d companies (final_target=%d, discovery_target=%d, companies_ready=%d, remaining=%d)",
-        companies_to_insert, target_qty, discovery_target, companies_ready, companies_remaining
-    )
-
-    for idx, cc in enumerate(typed.companies):
-        # Stop when we've reached the target quantity
-        if target_qty > 0 and inserted >= companies_remaining:
-            logger.info(
-                "Target quantity reached: inserted=%d companies, stopping (agent had %d more)",
-                inserted,
-                len(typed.companies) - idx
-            )
-            break
-
-        domain = (cc.domain or "").lower().strip()
-        if not domain or domain in blocked:
-            logger.debug("Skipping blocked/empty domain: %s", domain)
-            continue
-
-        # Check HubSpot suppression (existing customers and recently contacted)
+    # If discovery target still not satisfied, trigger a secondary unique strategy sweep.
+    if discovery_target > 0:
         try:
-            suppression_check = hubspot_client.check_company_suppression(domain, days=90)
-            if suppression_check.get('should_suppress'):
-                reason = suppression_check.get('reason')
-                details = suppression_check.get('details', {})
-                logger.info(
-                    "Suppressing company %s (reason: %s) - %s",
-                    domain,
-                    reason,
-                    details.get('company_name', 'Unknown')
-                )
-
-                # Insert into suppression table for tracking
-                supabase_client.insert_hubspot_suppression(
-                    domain=domain,
-                    company_name=details.get('company_name'),
-                    hubspot_company_id=details.get('company_id'),
-                    suppression_reason=reason,
-                    lifecycle_stage=details.get('lifecycle_stage'),
-                    last_contact_date=details.get('last_contact_date'),
-                    last_contact_type=details.get('last_contact_type'),
-                    engagement_count=details.get('engagement_count'),
-                )
-                continue
-        except Exception as e:
-            # Best-effort suppression check - don't fail if HubSpot is unavailable
-            logger.warning("HubSpot suppression check failed for domain=%s: %s", domain, e)
-
-        name = cc.name or domain
-        website = f"https://{domain}"
-        try:
-            row = supabase_client.insert_company_candidate(
-                run_id=run_id,
-                name=name,
-                website=website,
-                domain=domain,
-                state=(cc.state or state or "NA"),
-                discovery_source="agent_structured",
-                status="validated",
-            )
-            if row:
-                inserted += 1
-                companies.append(row)
-                logger.info(
-                    "Inserted company %d/%d: id=%s domain=%s run_id=%s",
-                    inserted,
-                    companies_to_insert,
-                    row.get("id"),
-                    domain,
-                    run_id,
-                )
+            gap_info = supabase_client.get_pm_company_gap(run_id)
+            ready_after_first = int((gap_info or {}).get("companies_ready") or companies_ready)
         except Exception:
-            logger.exception(
-                "Structured insert_company_candidate failed for domain=%s run_id=%s",
-                domain,
-                run_id,
+            ready_after_first = companies_ready + companies_inserted
+
+        discovery_remaining = max(0, discovery_target - ready_after_first)
+        if discovery_remaining > 0:
+            logger.info(
+                "Discovery target still short after primary sweep: ready=%d target=%d gap=%d. Running secondary sweep.",
+                ready_after_first,
+                discovery_target,
+                discovery_remaining,
+            )
+            secondary = _discover_companies_secondary(
+                run_id=run_id,
+                criteria=criteria,
+                target_qty=target_qty,
+                discovery_target=discovery_target,
+                companies_already_found=ready_after_first,
+            )
+            _insert_from_structured_output(
+                secondary,
+                target_qty=target_qty,
+                discovery_target=discovery_target,
+                existing_ready=ready_after_first,
             )
 
-    if not companies:
-        # No companies were inserted even after seeding + agent run. In a strict
-        # PMS/location scenario this likely means there are no eligible companies
-        # at all, not a pipeline failure. Mark the run as completed-without-matches
-        # so it can be inspected but does not block the async system.
+    # Final check: if we are still below the final target quantity after all strategies,
+    # surface a decision + alert to keep the workflow visible.
+    try:
+        gap_info = supabase_client.get_pm_company_gap(run_id)
+        final_ready = int((gap_info or {}).get("companies_ready") or 0)
+    except Exception:
+        final_ready = 0
+    if target_qty and final_ready < target_qty:
+        gap = target_qty - final_ready
         msg = (
-            f"Lead List Agent completed without inserting any companies for run {run_id}. "
-            "This most likely indicates that no companies match the given PMS/location "
-            "constraints after reasonable search."
+            f"Discovery still short after multi-pass search. Run {run_id} has {final_ready}/{target_qty} companies "
+            f"(gap={gap}). Consider broadening geography/PMS or rerunning with relaxed filters."
         )
         logger.warning(msg)
         try:
-            supabase_client.update_pm_run_status(run_id=run_id, status="completed", error=msg)
-        except Exception:
-            logger.exception("Failed to update run status after empty company set for run %s", run_id)
-        return typed
-
-    # Insert contacts based on structured output, mapping by company domain.
-    domain_to_company_id: Dict[str, str] = {}
-    for row in companies:
-        dom = (row.get("domain") or "").lower().strip()
-        cid = row.get("id")
-        if dom and cid:
-            domain_to_company_id[dom] = str(cid)
-
-    # Build per-company contact limits (1–3 per company).
-    per_company_counts: Dict[str, int] = {}
-
-    for ct in typed.contacts:
-        domain = (ct.company_domain or "").lower().strip()
-        if not domain:
-            continue
-        company_id = domain_to_company_id.get(domain)
-        if not company_id:
-            continue
-
-        # Enforce max 3 contacts per company.
-        count = per_company_counts.get(company_id, 0)
-        if count >= 3:
-            continue
-
-        try:
-            row = supabase_client.insert_contact_candidate(
+            supabase_client.update_pm_run_status(run_id=run_id, status="needs_user_decision", error=msg)
+            notifications.send_run_notification(
                 run_id=run_id,
-                company_id=company_id,
-                full_name=ct.full_name,
-                title=ct.title or None,
-                email=ct.email or None,
-                linkedin_url=ct.linkedin_url or None,
-                evidence={"quality_notes": ct.quality_notes} if ct.quality_notes else None,
-                status="validated",
+                subject="Lead list run needs your decision (discovery gap)",
+                body=msg,
+                to_email="mlerner@rebarhq.ai",
             )
-            if row:
-                contacts.append(row)
-                per_company_counts[company_id] = count + 1
-                logger.info(
-                    "Structured insert_contact_candidate id=%s company_id=%s email=%s",
-                    row.get("id"),
-                    company_id,
-                    row.get("email"),
-                )
         except Exception:
-            logger.exception(
-                "Structured insert_contact_candidate failed for company_id=%s domain=%s",
-                company_id,
-                domain,
-            )
-
-    logger.info(
-        "Completed pm_pipeline run id=%s with %d company candidate(s) and %d contact(s)",
-        run.get("id"),
-        len(companies),
-        len(contacts),
-    )
+            logger.exception("Failed to update status/notify after discovery gap for run %s", run_id)
     _maybe_advance_run_stage(str(run.get("id") or ""))
     return typed
 
@@ -977,23 +1212,34 @@ def run_forever(fetch_active_runs: ActiveRunsFetcher, mark_run_complete: RunMark
                     companies_ready = int(gap_info.get("companies_ready") or 0) if gap_info else 0
                     discovery_remaining = max(0, discovery_target - companies_ready)
 
-                    if discovery_remaining > 0:
-                        # Agent couldn't find enough companies to meet discovery target.
-                        # With the oversample strategy, if we can't meet the discovery target,
-                        # we may not have enough after enrichment attrition.
-                        logger.warning(
-                            "Run %s discovery incomplete: %d/%d discovered (target: %d final), %d gap",
-                            run_id, companies_ready, discovery_target, target_qty, discovery_remaining
+                if discovery_remaining > 0:
+                    # Agent couldn't find enough companies to meet discovery target.
+                    # With the oversample strategy, if we can't meet the discovery target,
+                    # we may not have enough after enrichment attrition.
+                    logger.warning(
+                        "Run %s discovery incomplete: %d/%d discovered (target: %d final), %d gap",
+                        run_id, companies_ready, discovery_target, target_qty, discovery_remaining
+                    )
+                    msg = (
+                        f"Discovery shortfall for run {run_id}: {companies_ready}/{discovery_target} discovered "
+                        f"(final target {target_qty}, gap {discovery_remaining}). Unique passes exhausted."
+                    )
+                    mark_run_complete(run, status="needs_user_decision", error=msg)
+                    try:
+                        notifications.send_run_notification(
+                            run_id=run_id,
+                            subject="Lead list run needs your decision (discovery shortfall)",
+                            body=msg,
+                            to_email="mlerner@rebarhq.ai",
                         )
-                        # Mark as completed with partial results
-                        mark_run_complete(run, status="completed",
-                                        error=f"Discovery found {companies_ready}/{discovery_target} companies (target: {target_qty} final). Agent exhausted search.")
-                        continue
-                    else:
-                        logger.info(
-                            "Run %s discovery target met: %d/%d discovered (target: %d final after enrichment)",
-                            run_id, companies_ready, discovery_target, target_qty
-                        )
+                    except Exception:
+                        logger.warning("Notification failed for run %s discovery shortfall", run_id)
+                    continue
+                else:
+                    logger.info(
+                        "Run %s discovery target met: %d/%d discovered (target: %d final after enrichment)",
+                        run_id, companies_ready, discovery_target, target_qty
+                    )
 
                 # Target met or no target specified - mark as complete
                 # On success, mark the discovery stage complete. Downstream
@@ -1003,6 +1249,15 @@ def run_forever(fetch_active_runs: ActiveRunsFetcher, mark_run_complete: RunMark
             except Exception as exc:  # pragma: no cover
                 logger.exception("Error processing run id=%s", run.get("id"))
                 mark_run_complete(run, status="error", error=str(exc))
+                try:
+                    notifications.send_run_notification(
+                        run_id=str(run.get("id")),
+                        subject="Lead list worker error",
+                        body=f"Run {run.get('id')} failed in lead_list_runner: {exc}",
+                        to_email="mlerner@rebarhq.ai",
+                    )
+                except Exception:
+                    logger.warning("Failed to send error notification for run %s", run.get("id"))
 
         loops += 1
         if max_loops is not None and loops >= max_loops:

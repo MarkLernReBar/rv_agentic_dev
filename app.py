@@ -655,6 +655,14 @@ if st.session_state.current_agent == "Lead List Generator":
                             f"- **Target Quantity:** `{progress.get('target_quantity')}`\n"
                         )
 
+                        # Surface errors/notes for quicker diagnosis
+                        error_msg = progress.get("error") or run.get("error")
+                        notes_msg = progress.get("notes") or run.get("notes")
+                        if error_msg:
+                            st.error(error_msg)
+                        elif notes_msg:
+                            st.info(notes_msg)
+
                         st.markdown("#### Progress")
 
                         # Company progress bar
@@ -664,7 +672,7 @@ if st.session_state.current_agent == "Lead List Generator":
                         company_progress_pct = companies_info.get("progress_pct", 0)
 
                         st.markdown(f"**Companies: {companies_ready} / {progress.get('target_quantity')} ({company_progress_pct}%)**")
-                        st.progress(company_progress_pct / 100.0)
+                        st.progress(min(company_progress_pct, 100) / 100.0)
                         st.caption(f"Gap: {companies_gap} companies remaining")
 
                         # Contact progress bar
@@ -672,9 +680,15 @@ if st.session_state.current_agent == "Lead List Generator":
                         contacts_ready = contacts_info.get("ready", 0)
                         contacts_gap = contacts_info.get("gap", 0)
                         contact_progress_pct = contacts_info.get("progress_pct", 0)
+                        # Derive ready if not provided but gap and target are known
+                        if not contacts_ready and companies_ready and progress.get("contacts", {}):
+                            try:
+                                contacts_ready = max(0, companies_ready * int(progress.get("contacts_min", 1)) - int(contacts_gap or 0))
+                            except Exception:
+                                pass
 
                         st.markdown(f"**Contacts: {contacts_ready} total ({contact_progress_pct}% of minimum)**")
-                        st.progress(contact_progress_pct / 100.0)
+                        st.progress(min(contact_progress_pct, 100) / 100.0)
                         st.caption(f"Gap: {contacts_gap} contacts remaining to meet minimum")
 
                         # Export CSV button when run is completed

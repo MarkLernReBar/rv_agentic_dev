@@ -67,6 +67,7 @@ class WorkerHeartbeat:
         self._thread: Optional[threading.Thread] = None
         self._stop_event = threading.Event()
         self._lock = threading.Lock()
+        self._disabled = False
 
         # Current task information
         self._current_run_id: Optional[str] = None
@@ -95,6 +96,12 @@ class WorkerHeartbeat:
 
         # Send initial heartbeat immediately
         self._send_heartbeat()
+        if self._disabled:
+            logger.warning(
+                "Heartbeat disabled for worker %s (missing DB function); continuing without heartbeat",
+                self.worker_id,
+            )
+            return
 
         # Start background thread
         self._thread = threading.Thread(
@@ -121,11 +128,12 @@ class WorkerHeartbeat:
         self._thread.join(timeout=5.0)
 
         # Send final heartbeat marking worker as stopped
-        try:
-            supabase_client.stop_worker(self.worker_id)
-            logger.info("Worker %s marked as stopped", self.worker_id)
-        except Exception as e:
-            logger.error("Failed to mark worker %s as stopped: %s", self.worker_id, e)
+        if not self._disabled:
+            try:
+                supabase_client.stop_worker(self.worker_id)
+                logger.info("Worker %s marked as stopped", self.worker_id)
+            except Exception as e:
+                logger.error("Failed to mark worker %s as stopped: %s", self.worker_id, e)
 
     def update_task(
         self,
@@ -161,6 +169,8 @@ class WorkerHeartbeat:
     def _heartbeat_loop(self) -> None:
         """Background thread that sends periodic heartbeats."""
         while not self._stop_event.is_set():
+            if self._disabled:
+                break
             try:
                 self._send_heartbeat()
             except Exception as e:
@@ -203,11 +213,20 @@ class WorkerHeartbeat:
             )
         except Exception as e:
             # Log but don't crash - heartbeat failures shouldn't stop work
-            logger.warning(
-                "Failed to send heartbeat for worker %s: %s",
-                self.worker_id,
-                e,
-            )
+            message = str(e)
+            if "upsert_worker_heartbeat" in message:
+                self._disabled = True
+                logger.warning(
+                    "Disabling heartbeat for worker %s: %s",
+                    self.worker_id,
+                    message,
+                )
+            else:
+                logger.warning(
+                    "Failed to send heartbeat for worker %s: %s",
+                    self.worker_id,
+                    e,
+                )
 
 
 def cleanup_dead_workers() -> int:

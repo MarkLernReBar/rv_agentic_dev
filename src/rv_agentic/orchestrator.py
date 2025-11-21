@@ -266,6 +266,15 @@ def execute_full_pipeline(
             )
         except Exception:
             pass
+        try:
+            notifications.send_run_notification(
+                run_id=run_id,
+                subject="Lead list orchestrator error",
+                body=f"Run {run_id} failed in orchestrator: {e}",
+                to_email="mlerner@rebarhq.ai",
+            )
+        except Exception:
+            logger.warning("Failed to send orchestrator error notification for run %s", run_id)
         raise
 
 
@@ -299,17 +308,22 @@ def get_run_progress(run_id: str) -> Dict[str, Any]:
     contacts_ready_total = int(contact_gap.get("contacts_min_ready_total") or 0)
     contacts_min_gap_total = int(contact_gap.get("contacts_min_gap_total") or 0)
     contacts_target_total = companies_ready * contacts_min
+    if contacts_ready_total == 0 and contacts_target_total > 0 and contacts_min_gap_total:
+        # Derive ready count when the view does not expose it explicitly.
+        contacts_ready_total = max(0, contacts_target_total - contacts_min_gap_total)
 
     contact_progress_pct = 0
     if contacts_target_total > 0:
-        contact_progress_pct = int((contacts_ready_total / contacts_target_total) * 100)
+        contact_progress_pct = min(100, int((contacts_ready_total / contacts_target_total) * 100))
 
+    company_progress_pct = min(100, company_progress_pct)
     return {
         "run_id": run_id,
         "stage": run.get("stage"),
         "status": run.get("status"),
         "criteria": run.get("criteria"),
         "target_quantity": target_qty,
+        "contacts_min": contacts_min,
         "companies": {
             "ready": companies_ready,
             "gap": companies_gap,
@@ -322,6 +336,7 @@ def get_run_progress(run_id: str) -> Dict[str, Any]:
         },
         "created_at": run.get("created_at"),
         "notes": run.get("notes"),
+        "error": run.get("error"),
     }
 
 
