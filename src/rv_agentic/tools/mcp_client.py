@@ -9,14 +9,41 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import time
+import os
 from typing import Any, Dict, List
 
 from agents.mcp.server import MCPServerStreamableHttp, MCPServerStreamableHttpParams
 
 from rv_agentic.config.settings import get_settings
+import httpx
 
 
 logger = logging.getLogger(__name__)
+_MCP_CALL_COUNT = 0
+_MCP_MAX_CALLS = int(__import__("os").environ.get("MCP_MAX_CALLS_PER_PROCESS", "300"))
+_MCP_TOOL_COUNTS: dict[str, int] = {}
+# Optional per-tool caps to prevent bombardment of a single MCP workflow.
+# Override via MCP_TOOL_LIMITS_JSON='{"search_web":120,"enrich_contacts":80}'.
+try:
+    import json as _json  # pragma: no cover
+
+    _MCP_TOOL_LIMITS = _json.loads(
+        __import__("os").environ.get(
+            "MCP_TOOL_LIMITS_JSON",
+            '{"search_web": 120, "search_company_profiles": 80, "search_people": 120}',
+        )
+    )
+except Exception:  # pragma: no cover
+    _MCP_TOOL_LIMITS = {
+        "search_web": 120,
+        "search_company_profiles": 80,
+        "search_people": 120,
+    }
+
+# Bound total in-flight MCP calls to protect n8n.
+_MCP_MAX_CONCURRENCY = int(os.environ.get("MCP_MAX_CONCURRENCY", "6"))
+_MCP_SEMAPHORE = asyncio.Semaphore(_MCP_MAX_CONCURRENCY)
 
 # CRITICAL FIX for Streamlit: Ensure all threads can create event loops
 # Streamlit's ScriptRunner threads don't have event loop policies by default
@@ -39,6 +66,19 @@ async def call_tool_async(tool_name: str, arguments: Dict[str, Any]) -> List[Dic
     This is intended for use inside Agents SDK tools, which already run
     inside an event loop.
     """
+    global _MCP_CALL_COUNT
+    _MCP_CALL_COUNT += 1
+    if _MCP_CALL_COUNT > _MCP_MAX_CALLS:
+        raise RuntimeError(f"MCP call limit exceeded ({_MCP_CALL_COUNT}/{_MCP_MAX_CALLS}); halting further calls.")
+
+    # Per-tool guard to stop runaway bombardment of a single workflow
+    _MCP_TOOL_COUNTS[tool_name] = _MCP_TOOL_COUNTS.get(tool_name, 0) + 1
+    tool_cap = _MCP_TOOL_LIMITS.get(tool_name)
+    if tool_cap is not None and _MCP_TOOL_COUNTS[tool_name] > tool_cap:
+        raise RuntimeError(
+            f"MCP tool limit exceeded for {tool_name} "
+            f"({_MCP_TOOL_COUNTS[tool_name]}/{tool_cap}); halting further calls."
+        )
 
     url = _get_mcp_url()
     # Allow long-running tools (1–2 minutes) to complete.
@@ -52,23 +92,47 @@ async def call_tool_async(tool_name: str, arguments: Dict[str, Any]) -> List[Dic
     }
     logger.info("MCP call start: tool=%s url=%s args=%s", tool_name, url, arguments)
     items: List[Dict[str, Any]] = []
-    async with MCPServerStreamableHttp(
-        name="n8n",
-        params=params,
-        cache_tools_list=True,
-        # Critical: increase client session timeout beyond the 5s default
-        # so that long-running MCP workflows are not cut off by the client.
-        client_session_timeout_seconds=600.0,
-    ) as server:
-        result = await server.call_tool(tool_name, arguments=arguments)
-        for content in result.content:
-            t = getattr(content, "type", None)
-            if t == "text":
-                items.append({"type": "text", "text": content.text})
-            elif t == "structured":
-                items.append({"type": "structured", "data": content.data})
-            else:
-                items.append({"type": t or "unknown"})
+    backoff_seconds = 1.0
+    attempts = 0
+    while True:
+        attempts += 1
+        try:
+            async with _MCP_SEMAPHORE:
+                async with MCPServerStreamableHttp(
+                    name="n8n",
+                    params=params,
+                    cache_tools_list=True,
+                    # Critical: increase client session timeout beyond the 5s default
+                    # so that long-running MCP workflows are not cut off by the client.
+                    client_session_timeout_seconds=600.0,
+                ) as server:
+                    result = await server.call_tool(tool_name, arguments=arguments)
+                    for content in result.content:
+                        t = getattr(content, "type", None)
+                        if t == "text":
+                            items.append({"type": "text", "text": content.text})
+                        elif t == "structured":
+                            items.append({"type": "structured", "data": content.data})
+                        else:
+                            items.append({"type": t or "unknown"})
+                break
+        except httpx.HTTPStatusError as exc:
+            # Treat 5xx from MCP as transient; retry a couple of times then abort.
+            if attempts >= 3:
+                logger.error("MCP tool %s failed after %d attempts: %s", tool_name, attempts, exc)
+                raise RuntimeError(f"MCP tool {tool_name} failed with HTTP {exc.response.status_code}") from exc
+            logger.warning(
+                "MCP tool %s HTTP %s; retrying in %.1fs (attempt %d/3)",
+                tool_name,
+                exc.response.status_code,
+                backoff_seconds,
+                attempts,
+            )
+            await asyncio.sleep(backoff_seconds)
+            backoff_seconds *= 2
+            continue
+        except Exception:
+            raise
     logger.info("MCP call complete: tool=%s items=%d", tool_name, len(items))
     return items
 
@@ -110,3 +174,11 @@ def call_tool(tool_name: str, arguments: Dict[str, Any]) -> List[Dict[str, Any]]
         raise RuntimeError(
             f"call_tool({tool_name}) failed to execute: {exc}"
         ) from exc
+
+
+def reset_mcp_counters() -> None:
+    """Reset MCP counters between runs to avoid leakage across batches."""
+
+    global _MCP_CALL_COUNT, _MCP_TOOL_COUNTS
+    _MCP_CALL_COUNT = 0
+    _MCP_TOOL_COUNTS = {}

@@ -85,12 +85,21 @@ def _insert_contacts(
     run_id: str,
     company_id: str,
     contacts: List[Dict[str, Any]],
+    agent_markdown: str = "",
 ) -> None:
     for contact in contacts:
         email = contact.get("email")
         linkedin = contact.get("linkedin_url")
         notes = contact.get("notes")
         idem = (email or linkedin or contact.get("full_name") or "").lower().strip()
+
+        # Store both the agent markdown output and contact-specific notes
+        evidence = []
+        if agent_markdown:
+            evidence.append({"agent_output": agent_markdown})
+        if notes:
+            evidence.append({"notes": notes})
+
         try:
             supabase_client.insert_contact_candidate(
                 run_id=run_id,
@@ -99,7 +108,7 @@ def _insert_contacts(
                 title=contact.get("title"),
                 email=email,
                 linkedin_url=linkedin,
-                evidence=[{"notes": notes}] if notes else None,
+                evidence=evidence if evidence else None,
                 status="validated",
                 idem_key=idem or None,
             )
@@ -110,6 +119,23 @@ def _insert_contacts(
                 contact.get("full_name"),
                 email,
                 linkedin,
+            )
+            supabase_client.insert_audit_event(
+                run_id=run_id,
+                entity_type="contact",
+                entity_id=None,
+                event="contact_inserted",
+                meta={"company_id": company_id, "name": contact.get("full_name"), "email": email, "linkedin": linkedin},
+            )
+            logger.info(
+                "EVENT|run_id=%s|stage=contact_discovery|action=contact_inserted|data=%s",
+                run_id,
+                {
+                    "company_id": company_id,
+                    "name": contact.get("full_name"),
+                    "email": email,
+                    "linkedin": linkedin,
+                },
             )
         except Exception:
             logger.exception(
@@ -162,6 +188,80 @@ def _advance_stage_if_ready(run_id: str) -> None:
                 # Backfill is best-effort and must not break the main pipeline.
                 logger.exception("Backfill failed for run_id=%s", run_id)
 
+            # COMPLETION FLOW: Export CSVs and send email notification
+            try:
+                from rv_agentic.services import export
+                import os
+                import tempfile
+
+                # Create temp directory for CSV exports
+                output_dir = tempfile.mkdtemp(prefix=f"leadlist_{run_id[:8]}_")
+                logger.info("Exporting run_id=%s to %s", run_id, output_dir)
+
+                # Export both CSVs
+                companies_path, contacts_path = export.export_run_to_files(run_id, output_dir)
+                logger.info("Exported CSVs: companies=%s contacts=%s", companies_path, contacts_path)
+
+                # Read CSV files as bytes for email attachments
+                with open(companies_path, "rb") as f:
+                    companies_bytes = f.read()
+                with open(contacts_path, "rb") as f:
+                    contacts_bytes = f.read()
+
+                # Get notification email from run criteria
+                criteria = run.get("criteria") or {}
+                notification_email = criteria.get("notification_email")
+
+                if notification_email:
+                    # Get company/contact counts for email body
+                    from rv_agentic.services.notifications import send_run_notification
+                    companies_count = len(companies_summary.get("backfilled", [])) if companies_summary else target_qty
+                    contacts_count = len(contacts_summary.get("backfilled", [])) if contacts_summary else 0
+
+                    email_body = f"""Lead List Complete!
+
+Your lead list request has been successfully completed.
+
+Results:
+- Companies: {companies_count}
+- Contacts: {contacts_count}
+- Run ID: {run_id}
+
+The attached CSV files contain all enriched company and contact data including:
+- Company agent summaries, PMS info, ICP scores
+- Contact details with personal/professional anecdotes and agent summaries
+
+Please review the attached files and reach out if you have any questions.
+"""
+
+                    # Send email with CSV attachments
+                    attachments = [
+                        (os.path.basename(companies_path), companies_bytes, "text/csv"),
+                        (os.path.basename(contacts_path), contacts_bytes, "text/csv"),
+                    ]
+
+                    send_run_notification(
+                        run_id=run_id,
+                        subject=f"Lead List Complete: {companies_count} companies ready",
+                        body=email_body,
+                        to_email=notification_email,
+                        attachments=attachments,
+                    )
+                    logger.info("Sent completion email to %s for run_id=%s", notification_email, run_id)
+                else:
+                    logger.warning("No notification_email in criteria for run_id=%s - skipping email", run_id)
+
+                # Clean up temp files
+                try:
+                    import shutil
+                    shutil.rmtree(output_dir)
+                except Exception:
+                    pass
+
+            except Exception:
+                # Completion flow is best-effort - don't break the pipeline
+                logger.exception("Completion flow failed for run_id=%s", run_id)
+
 
 def process_contact_gap(agent, worker_id: str, lease_seconds: int, heartbeat: WorkerHeartbeat | None = None) -> bool:
     claim = supabase_client.claim_company_for_contacts(worker_id, lease_seconds)
@@ -209,6 +309,7 @@ def process_contact_gap(agent, worker_id: str, lease_seconds: int, heartbeat: Wo
             base_delay=1.0
         )
         typed = result.final_output_as(ContactResearchOutput)
+        agent_markdown = result.final_output  # Capture full markdown output
         structured_contacts = _contacts_to_insert(typed, needed)
         logger.info(
             "Contact researcher returned %d structured contact(s) (needed %d) for run_id=%s company_id=%s",
@@ -218,7 +319,7 @@ def process_contact_gap(agent, worker_id: str, lease_seconds: int, heartbeat: Wo
             company_id,
         )
         if structured_contacts:
-            _insert_contacts(run_id, company_id, structured_contacts)
+            _insert_contacts(run_id, company_id, structured_contacts, agent_markdown=agent_markdown)
         else:
             logger.warning(
                 "No insertable contacts produced for run_id=%s company_id=%s (gap remains=%s)",
@@ -234,6 +335,22 @@ def process_contact_gap(agent, worker_id: str, lease_seconds: int, heartbeat: Wo
             company_id,
         )
     finally:
+        # CRITICAL: Reset MCP counters after each agent run to prevent deluge
+        try:
+            from rv_agentic.tools import mcp_client
+            mcp_client.reset_mcp_counters()
+            logger.debug("Reset MCP counters after contact research for run_id=%s company_id=%s", run_id, company_id)
+        except Exception as mcp_err:
+            logger.warning("Failed to reset MCP counters: %s", mcp_err)
+
+        # Force garbage collection to clean up any orphaned async tasks
+        import gc
+        gc.collect()
+
+        # Extended pause for MCP session cleanup (1.0s instead of 0.3s)
+        import time
+        time.sleep(1.0)
+
         if company_id:
             supabase_client.release_company_lease(company_id)
         # Mark worker as idle after processing

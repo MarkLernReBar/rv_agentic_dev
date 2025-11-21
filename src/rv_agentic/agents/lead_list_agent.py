@@ -36,44 +36,105 @@ generation campaigns.
   - Add ALL eligible companies to the `companies` array (focus on quality over quantity).
   - Python will select the best N companies from your results, so return them sorted
     by quality/confidence with the strongest matches first.
-  - Add 1–3 decision maker contacts per company to the `contacts` array.
+  - **DO NOT fetch contacts during company discovery** - contacts are handled by a
+    separate agent in a later pipeline stage. Leave the `contacts` array EMPTY.
   - Set `total_found` to the actual count of companies you discovered.
   - Set `search_exhausted=True` if you've checked all reasonable sources and can't find more.
 - Python will perform all database writes based on your structured output. Merely
   describing companies in prose without updating `LeadListOutput` is considered a
   failure in worker mode.
 
-## Tooling
-- Use **MCP tools via n8n** (wrapped as Python tools) for web search,
-  company discovery, contact discovery, enrichment, and NARPM/LinkedIn
-  lookups:
-  - `search_web` for broad web discovery (finding lists, directories).
-  - `LangSearch_API` for **natural language questions** and **detailed company info**:
-    - Use when you need specific details: "How many units does [company] manage?"
-    - Use when other tools don't have data: "What PMS does [company] use?"
-    - Use for enrichment gaps: "Tell me about [company] portfolio size"
-    - Better than search_web for targeted, question-based searches
-  - **CRITICAL WORKFLOW**: When search results include company list pages
-    (e.g., "Top 50 Bay Area Property Management Companies"), you MUST use
-    `fetch_page` to read and extract companies from those pages. This is
-    the primary way to find 10-50+ companies from a single source.
-  - `fetch_page` to scrape and parse any web page containing company lists,
-    directories, or aggregator pages.
-  - `extract_company_profile_url_` to turn individual company URLs into
-    structured company facts (name, domain, location, PMS).
-  - `Run_PMS_Analyzer_Script` when you need PMS + confidence for a known
-    domain.
-  - `get_contacts` / `get_verified_emails` / `get_linkedin_profile_url`
-    to move from companies → decision-makers with emails + profiles.
-  - `Query_NARPM` to confirm NARPM membership and member details.
-- Use `get_blocked_domains_tool` to understand which company domains are suppressed.
-- Never attempt to synthesize SQL or write directly to the database; you only plan and
-  populate `LeadListOutput`.
+## MANDATORY ReAct Pattern - STRICT ENFORCEMENT
+
+**You MUST use the ReAct pattern for EVERY action. This is NON-NEGOTIABLE:**
+
+### MANDATORY ReAct Workflow
+
+**RULE: You MUST call `mcp_think` BEFORE and AFTER EVERY tool call. NO EXCEPTIONS.**
+
+1. **BEFORE EVERY tool call** - Use `mcp_think` to plan:
+   - What you've found so far (count, quality)
+   - What you still need (gap to discovery target)
+   - Which tool to use next and WHY
+   - What specific query/parameters you'll use
+
+2. **Act** - Execute ONE tool call based on your plan
+
+3. **AFTER EVERY tool call** - Use `mcp_think` to observe and decide:
+   - What did this tool return? (summarize results)
+   - How many companies/contacts did I find?
+   - **FOR EACH COMPANY**: Does it meet criteria? ACCEPT or REJECT? WHY?
+   - Current progress toward discovery target (e.g., "5/40 companies found")
+   - What should I do next?
+
+4. **Repeat** - Continue: think → tool → think → tool → think...
+
+### CRITICAL: Explicit Company Acceptance Reasoning
+
+**For EVERY company you discover, you MUST use `mcp_think` to explicitly reason about accepting or rejecting it:**
+
+```
+mcp_think("Observe: Extracted 12 companies from ipropertymanagement.com. Analyzing each:
+
+1. ABC Property Management (abc-pm.com):
+   - Location: San Francisco, CA ✓
+   - PMS: Mentions Buildium on website ✓
+   - Units: 75+ units (has 10-person team, multiple offices) ✓
+   → ACCEPT - meets all criteria
+
+2. XYZ Realty (xyz.com):
+   - Location: San Francisco, CA ✓
+   - PMS: Unknown, but professional site suggests established company
+   - Units: Likely 50+ based on team size and portfolio descriptions
+   → ACCEPT - reasonable indicators suggest criteria met, will verify PMS
+
+3. Small & Co (smallco.com):
+   - Location: San Francisco, CA ✓
+   - PMS: Unknown
+   - Units: Only 2 staff listed, appears boutique
+   → REJECT - likely <50 units based on small team
+
+Accepted: 8/12 companies. Total progress: 23/40 companies.
+Next: Need 17 more. Will search NARPM directory.")
+```
+
+### Example MANDATORY ReAct Sequence
+```
+mcp_think("Starting discovery. Need 40 Buildium companies in SF. Discovery target: 80 (2x oversample). Will call get_blocked_domains first, then query_pms_subdomains for seed data.")
+get_blocked_domains_tool()
+mcp_think("Observe: Retrieved 3500 blocked domains. Now will query pms_subdomains for Buildium + SF.")
+query_pms_subdomains_tool(pms='Buildium', state='CA', city='San Francisco')
+mcp_think("Observe: Found 12 Buildium companies in SF from pms_subdomains. Analyzing each... [explicit accept/reject for each]. Accepted 10/12. Need 70 more. Next: search for list pages.")
+mcp_search_web("top property management companies San Francisco")
+mcp_think("Observe: Found 5 URLs including ipropertymanagement.com/san-francisco. Will fetch this page next.")
+mcp_fetch_page("https://ipropertymanagement.com/san-francisco")
+mcp_think("Observe: Extracted 25 companies from page. Analyzing each... [explicit accept/reject]. Accepted 18/25. Progress: 28/80. Need 52 more. Next: try expertise.com list.")
+```
+
+**WARNING: Failure to use think BEFORE and AFTER every tool call is a CRITICAL ERROR.**
+
+### Available Tools
+- `mcp_think` - **CRITICAL**: Use before/after EVERY action for planning and reflection
+- `get_blocked_domains_tool` - Check suppressed domains (call once at start)
+- `query_pms_subdomains_tool` - **USE THIS FIRST for PMS-specific discovery**: Query pre-validated
+  companies using specific PMS platforms. Contains thousands of companies indexed by PMS, state, and
+  city. This is your PRIMARY seed data source when PMS is specified (e.g., Buildium, AppFolio, Yardi).
+  Example: `query_pms_subdomains_tool(pms='Buildium', state='CO')` returns all Buildium users in CO.
+- `search_web` - Find list pages and directories
+- `fetch_page` - **PRIMARY STRATEGY for web discovery**: Extract companies from list pages (10-50 per page)
+- `LangSearch_API` - Natural language questions for enrichment and specific lookups
+- `Run_PMS_Analyzer_Script` - Verify PMS for a domain
+- `extract_company_profile_url_` - Get structured facts for a company
+- `get_contacts` / `get_verified_emails` / `get_linkedin_profile_url` - Find decision makers
+- `Query_NARPM` - NARPM membership verification
 
 ## Required behavior in worker mode
 - Always begin by:
   - Reading the provided `run_id` and criteria JSON from the prompt.
   - Calling `get_blocked_domains_tool` once to get suppressed domains.
+  - **When PMS is specified**, IMMEDIATELY call `query_pms_subdomains_tool` with the PMS name,
+    state, and city to get seed data. This table contains thousands of pre-validated companies
+    and is your FASTEST path to meeting the discovery target.
 - For each company you determine is eligible:
   - Ensure its **domain is not blocked**.
   - Add a `LeadListCompany` entry to your `companies` array with:
@@ -87,76 +148,101 @@ generation campaigns.
     short `quality_notes` field explaining why they are a good target.
 - Do **not** end the run after only describing candidates in prose. You must
   actually populate `companies` and `contacts` with the entities you deem eligible.
-- Treat PMS/vendor requirements (e.g. \"Buildium\") as **hard eligibility constraints**
-  for your `companies` array in worker mode. Only add a company when you have strong
-  evidence (from PMS analyzer, trusted profiles, or authoritative data) that it uses
-  the required PMS. If you cannot find enough such companies after reasonable search,
-  return fewer and clearly explain the gap in natural language.
-- Only return an empty `companies` array when there are truly no reasonable
-  candidates at all; this should be very rare. In typical cases you should
-  always return your best-effort set of candidates, even when some criteria
-  are partially met.
+- **PMS is a HARD requirement when specified** - Only include companies with confirmed PMS evidence:
+  - Priority 1: Check `query_pms_subdomains_tool` first - companies in this table are pre-validated
+  - Priority 2a: **AFTER fetch_page extracts multiple companies → Use `mcp_batch_pms_analyzer`** (PREFERRED for list pages)
+    - Extract all domains from the list page
+    - Call mcp_batch_pms_analyzer(domains=[list_of_domains]) ONCE
+    - Accept companies where PMS matches requirement, reject others
+    - Example: fetch_page finds 15 companies → extract domains → batch_pms_analyzer → accept Buildium matches
+  - Priority 2b: Use `mcp_run_pms_analyzer` - for individual domain verification
+  - Priority 3: Use `LangSearch_API` - search for company PMS information
+  - Priority 4: Check company website/profiles for PMS mentions
+  - **Only ACCEPT companies when you have positive PMS confirmation from one of these sources**
+  - **REJECT if PMS cannot be confirmed after exhausting these verification methods**
+  - Example: "Boulder company, found in pms_subdomains with Buildium" → ACCEPT
+  - Example: "Boulder company, batch analyzer returns Buildium" → ACCEPT
+  - Example: "Boulder company, PMS analyzer detects Buildium subdomain" → ACCEPT
+  - Example: "Boulder company, search shows 'powered by Buildium'" → ACCEPT
+  - Example: "Boulder company, searched but NO PMS evidence found" → REJECT (persist until found)
+- **Unit count requirements should allow inference**:
+  - If exact units unavailable, ACCEPT companies when reasonable indicators suggest they meet threshold
+  - Indicators: team size, office locations, portfolio descriptions, property types
+  - Example: "50+ units required, found 10-person team with multiple offices" → ACCEPT
+  - Example: "50+ units required, only 2 staff, appears boutique" → REJECT
+- **Persistence is CRITICAL**:
+  - You MUST continue searching until you find enough companies that meet ALL criteria
+  - Try multiple list pages, directories, search queries, geographic expansions
+  - Only set `search_exhausted=True` after exhausting 20+ unique search strategies
+  - If you can't find enough in the target city, expand to state level
+  - The pipeline depends on you finding the full discovery_target quantity
 
-## Mandatory search process (worker mode) - CRITICAL
-**YOU MUST execute search rounds sequentially to reach the discovery target.**
-The discovery target will be specified in the prompt (e.g., "discovery target: 40 companies").
+## Search Strategy (worker mode) - THE PROVEN WORKFLOW
 
-**ROUND 1 - Initial Discovery (MANDATORY - execute 5 parallel searches)**
-Execute 5 parallel search_web calls with these strategies:
-  1. Major PM companies + city: "largest property management [city] [state]"
-  2. City-specific: "property management companies [city] managing 100+ units"
-  3. NARPM directory: "NARPM members [city] [state] property management"
-  4. Multifamily focus: "multifamily apartment management [city] portfolio"
-  5. Regional operators: "[city] apartment management companies list"
+**Your goal**: Reach the discovery target (specified in the prompt, e.g., "discovery target: 40 companies").
 
-**CRITICAL**: After each search, if results include URLs to list pages, directory pages,
-or aggregator pages (e.g., "Top 50 Property Management Companies in [City]"), you MUST
-use `fetch_page` on those URLs to extract the companies. This is how you find 10-50+
-companies from a single source.
+### PHASE 1: Find List Pages (Priority 1 - THIS IS YOUR PRIMARY STRATEGY)
 
-**ROUND 2 - Expanded Sources (MANDATORY - execute 5 parallel searches)**
-Execute 5 parallel search_web calls with DIFFERENT strategies:
-  1. LinkedIn: "property management companies [city] LinkedIn"
-  2. Listing aggregators: "[city] property management Apartments.com Zillow"
-  3. Local business: "[city] Chamber of Commerce property management members"
-  4. Industry lists: "top property management firms [state] 2024"
-  5. Regional focus: "[region] property management association members"
+**Search for aggregator pages that contain 10-50+ companies in a single source:**
 
-**ROUND 3 - Specialized Discovery (MANDATORY - execute 5 parallel searches)**
-Execute 5 parallel search_web calls with NEW strategies:
-  1. Property type: "affordable housing management [city]"
-  2. Multifamily specific: "multifamily property manager [city] [state]"
-  3. Real estate focus: "[city] real estate management companies"
-  4. Industry publications: "property management [state] industry news companies"
-  5. Local directories: "[city] [state] property management directory"
+1. **Start with these HIGH-YIELD searches** (do these FIRST):
+   - "top property management companies [city] [state]"
+   - "best property management [city] 2024"
+   - "[city] property management companies list"
+   - "largest property managers [state]"
 
-**ROUND 4 - Deep Discovery (MANDATORY - execute 5 parallel searches)**
-Execute 5 parallel search_web calls with ADDITIONAL unique strategies:
-  1. Owner-operators: "[city] apartment owner operator companies"
-  2. Asset managers: "[city] [state] multifamily asset management"
-  3. REITs: "[state] REIT property management [city]"
-  4. Property owners: "[city] apartment building owners large portfolio"
-  5. Management firms: "[state] residential property management firms"
+2. **Look for URLs containing company lists in search results:**
+   - ipropertymanagement.com/[city]-property-management
+   - expertise.com/property-management/[city]
+   - propertymanagementinsider.com/directory
+   - clutch.co/real-estate/property-management
+   - Local Chamber of Commerce directories
+   - NARPM member lists
+   - State association member pages
 
-**After completing Rounds 1-4:**
-- You will have executed 20 total searches (minimum required)
-- Count the unique companies in your `companies` array
-- **ENRICHMENT PHASE**: For each discovered company, use `LangSearch_API` to fill gaps:
-  - If units unknown: "How many units does [company name] manage?"
-  - If PMS unknown: "What property management software does [company] use?"
-  - If location unclear: "Where is [company name] headquartered?"
-- If you have reached the discovery target: Proceed to contacts
-- If you have NOT reached the discovery target: Execute ROUND 5+ with additional
-  unique search strategies until the target is reached OR you have truly exhausted
-  all reasonable sources (no more unique search strategies remain)
-- Only set `search_exhausted=True` after completing at least 20 searches and
-  confirming no more reasonable search strategies exist
+3. **IMMEDIATELY use `fetch_page` on these URLs:**
+   - When you see a URL like "Top 50 Property Management Companies in [City]",
+     STOP and call `fetch_page` with that URL
+   - Extract ALL companies from the page
+   - Add them to your `companies` array
+   - This is how you get 10-50 companies from ONE source
 
-**Key requirements:**
-- Each round must use DIFFERENT query patterns than previous rounds
-- Discovery target (e.g. 40) is your goal - do not stop at 10-15 companies
-- Non-overlapping sources: don't repeat the same search twice
-- Minimum 20 total searches required before considering search complete
+4. **Repeat until you have enough companies:**
+   - Continue searching for list pages and fetching them
+   - Each list page can give you 10-50 companies
+   - You typically need only 3-5 good list pages to hit your target
+
+### PHASE 2: Direct Company Discovery (Use only if list pages are insufficient)
+
+If you can't find enough list pages, search for individual companies:
+- "property management [city] managing 100+ units [PMS]"
+- "[PMS] customers [city] property management"
+- "NARPM members [city] [state]"
+- "[city] multifamily apartment management companies"
+
+### PHASE 3: Enrichment (After you have companies)
+
+For each company in your `companies` array:
+- If PMS unknown and PMS is required: Use `LangSearch_API` or `Run_PMS_Analyzer_Script`
+  - "What property management software does [company] use?"
+- If units unknown: Use `LangSearch_API`
+  - "How many units does [company name] manage?"
+  - **IMPORTANT**: If exact unit count unavailable, INFER from observations:
+    - Check company size indicators (team size, office locations, portfolio descriptions)
+    - Property types mentioned (single-family vs. multifamily suggests scale)
+    - If company appears professional/established with multiple staff → likely 50+ units
+    - If criteria requires "50+ units" and you cannot confirm exact count, include the company
+      if there are reasonable indicators suggesting they meet the threshold
+- If location unclear: Use `LangSearch_API`
+  - "Where is [company name] located?"
+
+### Search Efficiency Rules
+
+- **Prefer list pages over individual searches** - 1 list page = 10-50 companies
+- **Stop when you reach the discovery target** - don't over-search
+- **Use `fetch_page` aggressively** - this is the highest-yield tool
+- **Set `search_exhausted=True`** only if you've tried at least 10 different list page searches
+  and none yielded results
 
 ## CRITICAL: Populating Structured Output (Worker Mode)
 
@@ -264,7 +350,7 @@ class LeadListOutput(BaseModel):
     )
     contacts: List[LeadListContact] = Field(
         default_factory=list,
-        description="List of candidate contacts across all companies.",
+        description="List of candidate contacts across all companies. LEAVE EMPTY during discovery - contacts are fetched by a separate agent.",
     )
     total_found: int = Field(
         default=0,
@@ -340,6 +426,60 @@ async def mcp_run_pms_analyzer(domain: str) -> List[Dict[str, Any]]:
 
 
 @function_tool
+async def mcp_batch_pms_analyzer(domains: List[str], batch_size: int = 10) -> List[Dict[str, Any]]:
+    """Use MCP `Batch_PMS_Analyzer` to analyze multiple domains for PMS efficiently.
+
+    This is the PREFERRED tool when you have multiple domains to verify (e.g., after
+    extracting companies from a list page). Instead of calling mcp_run_pms_analyzer
+    individually for each domain, use this tool to analyze them in batches.
+
+    Args:
+        domains: List of domain names to analyze (e.g., ["company1.com", "company2.com"])
+        batch_size: Number of domains to process per batch (default: 10)
+
+    Returns:
+        List of dicts with PMS analysis for each domain:
+        [
+            {"domain": "company1.com", "pms": "Buildium", "confidence": 0.9},
+            {"domain": "company2.com", "pms": "AppFolio", "confidence": 0.85},
+            {"domain": "company3.com", "pms": "Unknown", "confidence": 0.0}
+        ]
+
+    Example workflow:
+        1. fetch_page("ipropertymanagement.com/boulder-co") → extract 15 companies
+        2. Extract domains: ["matrix.com", "boulderpm.com", ...]
+        3. mcp_batch_pms_analyzer(domains=list_of_domains) → get PMS for all
+        4. Accept companies matching required PMS, reject others
+    """
+
+    if not domains:
+        return []
+
+    logger.info("[LeadListAgent] mcp_batch_pms_analyzer analyzing %d domains", len(domains))
+
+    # Call Batch_PMS_Analyzer for each domain
+    # The n8n tool processes batches internally based on batch_size parameter
+    results = []
+    for domain in domains:
+        try:
+            result = await mcp_client.call_tool_async(
+                "Batch_PMS_Analyzer",
+                {"domain": domain, "Batch_Size": batch_size}
+            )
+            # Ensure result is a dict with domain key
+            if isinstance(result, list) and len(result) > 0:
+                result = result[0]
+            if isinstance(result, dict):
+                result["domain"] = domain  # Ensure domain is set
+                results.append(result)
+        except Exception as e:
+            logger.warning("[LeadListAgent] Batch PMS analyzer failed for %s: %s", domain, e)
+            results.append({"domain": domain, "pms": "Unknown", "confidence": 0.0})
+
+    return results
+
+
+@function_tool
 async def mcp_get_contacts_for_company(
     company_name: str,
     company_domain: str,
@@ -401,12 +541,110 @@ async def mcp_query_narpm(page_offset: str, state: str, city: str) -> List[Dict[
 
 
 @function_tool
+async def mcp_think(thought: str) -> str:
+    """Use MCP `think` tool for reflection and planning (ReAct pattern).
+
+    Use this to:
+    - Plan your next search strategy before executing searches
+    - Reflect on what you've found so far and what's missing
+    - Decide which tool to use next based on current progress
+    - Evaluate if you've reached the discovery target
+
+    Example thoughts:
+    - "I need to find list pages for SF property management companies. Will search for 'top property management San Francisco'."
+    - "Found 3 companies so far, need 7 more. Should try NARPM directory next."
+    - "Just fetched ipropertymanagement.com page, found 15 companies. Now need to verify PMS for each."
+    """
+
+    if not thought:
+        return "No thought provided"
+    result = await mcp_client.call_tool_async("think", {"thought": thought})
+    logger.info("[LeadListAgent] think: %s", thought[:100])
+    return f"Reflected: {thought}"
+
+
+@function_tool
 def get_blocked_domains_tool() -> List[str]:
     """Return blocked domains from the pm_pipeline.v_blocked_domains view."""
 
     domains = sb.get_blocked_domains()
     logger.info("[LeadListAgent] get_blocked_domains_tool -> %d domains", len(domains))
     return domains
+
+
+@function_tool
+def query_pms_subdomains_tool(
+    pms: Optional[str] = None,
+    state: Optional[str] = None,
+    city: Optional[str] = None,
+    limit: int = 100,
+) -> List[Dict[str, Any]]:
+    """Query the public.pms_subdomains table for companies using specific PMS software.
+
+    This table contains pre-validated companies with known PMS platforms, indexed by
+    state/city. It's an excellent seed data source for discovery when PMS is specified.
+
+    Args:
+        pms: PMS name to filter by (e.g., 'Buildium', 'AppFolio', 'Yardi')
+        state: Two-letter state code (e.g., 'CO', 'CA', 'TX')
+        city: City name to filter by
+        limit: Maximum number of results to return (default: 100)
+
+    Returns:
+        List of company records with pms_subdomain, company_name, real_domain, city, state
+
+    Example:
+        # Find Buildium users in Colorado
+        query_pms_subdomains_tool(pms='Buildium', state='CO')
+
+        # Find all AppFolio users in Austin
+        query_pms_subdomains_tool(pms='AppFolio', city='Austin', state='TX')
+    """
+    # Build WHERE clauses based on filters
+    where_clauses = []
+    if pms:
+        where_clauses.append(f"pms ILIKE '%{pms}%'")
+    if state:
+        where_clauses.append(f"state = '{state}'")
+    if city:
+        where_clauses.append(f"city ILIKE '%{city}%'")
+
+    where_sql = " AND ".join(where_clauses) if where_clauses else "TRUE"
+
+    query = f"""
+        SELECT
+            pms_subdomain,
+            company_name,
+            real_domain,
+            city,
+            state,
+            pms
+        FROM public.pms_subdomains
+        WHERE {where_sql}
+        ORDER BY company_name
+        LIMIT {limit}
+    """
+
+    try:
+        # Use psycopg connection to query public schema directly
+        conn = sb._pg_conn()
+        with conn.cursor() as cur:
+            cur.execute(query)
+            columns = [desc[0] for desc in cur.description]
+            rows = cur.fetchall()
+            results = [dict(zip(columns, row)) for row in rows]
+
+        logger.info(
+            "[LeadListAgent] query_pms_subdomains_tool pms=%s state=%s city=%s -> %d results",
+            pms,
+            state,
+            city,
+            len(results),
+        )
+        return results
+    except Exception as e:
+        logger.error("[LeadListAgent] query_pms_subdomains_tool failed: %s", e)
+        return []
 
 
 def _build_verified_emails_payload(
@@ -516,19 +754,22 @@ def create_lead_list_agent(name: str = "Lead List Agent") -> Agent:
         name=name,
         instructions=LEAD_LIST_SYSTEM_PROMPT,
         tools=[
+            # ReAct pattern: think tool for planning and reflection
+            mcp_think,
+            # Database seed data tools - USE THESE FIRST for PMS-specific discovery
+            get_blocked_domains_tool,
+            query_pms_subdomains_tool,  # CRITICAL: Query first for PMS-specific discovery
             # MCP discovery / enrichment tools
             mcp_search_web,
             mcp_lang_search,
             mcp_fetch_page,  # CRITICAL: Read company list pages after search
             mcp_extract_company_profile,
             mcp_run_pms_analyzer,
+            mcp_batch_pms_analyzer,  # PREFERRED: Batch PMS verification for list pages
             mcp_get_contacts_for_company,
             mcp_get_verified_emails,
             mcp_get_linkedin_profile_url,
             mcp_query_narpm,
-            # DB-facing tools are exposed for UI / other flows,
-            # but the async worker relies on structured output only.
-            get_blocked_domains_tool,
         ],
         model="gpt-5-mini",
         model_settings=ModelSettings(

@@ -1,0 +1,62 @@
+full_name,title,email,linkedin_url,department,seniority,quality_score,icp_score,company_name,company_domain,company_website,company_state,personalization_notes,personal_anecdotes,professional_anecdotes,data_sources,additional_research_notes,agent_summary,created_at
+Garrett Smith,Managing Broker / President,garrett@streamlinepropertygroup.com,https://www.linkedin.com/in/garrett-smith-62005555,,,,,Streamline Property Management,streamlinepropertymanagement.managebuilding.com,https://streamlinepropertymanagement.managebuilding.com,CO,"MARKDOWN_BRIEF:
+
+Agent Summary
+- Quick identity lock on Garrett Smith, Managing Broker / President at Streamline Property Group (operating as Streamline Property Management). Verified LinkedIn and high-confidence work email identified.
+
+Contact Overview
+- Name: Garrett Smith
+- Title: Managing Broker / President
+- Company: Streamline Property Group / Streamline Property Management
+- Location: Colorado (company pages reference Denver/Boulder area) — state confirmed: CO
+- Email: garrett@streamlinepropertygroup.com (validated, confidence 0.98)
+- LinkedIn: https://www.linkedin.com/in/garrett-smith-62005555 (confidence ~0.78)
+
+Professional Summary
+- Senior operator and public-facing leader for Streamline Property Group (also referenced as Streamline Property Management). Listed on company 'Meet the Team' and company pages as President/Managing Broker; appears responsible for operations and owner relations.
+
+Career Highlights (pulled from company pages / public profiles)
+- Leadership role (President / Managing Broker) at Streamline Property Group — primary decision-maker for property management services.
+- Company provides residential property management and lists multiple rental properties on their site, indicating active portfolio management.
+
+Relevance to RentVine (ICP fit)
+- Title match: Managing Broker / President is a high-value operator for RentVine outreach (decision-maker for tech/platform decisions).
+- Likely fit: Medium-High. Role aligns strongly with RentVine ICP (property management operators). Portfolio size not confirmed — RentVine requires 50+ units; this is an open qualification item. If Streamline manages 50+ units, Garrett is an ideal target.
+
+Personalization Data Points
+- Company site lists Garrett on the team page; use mention of Streamline Property Group and recent rental listings in outreach.
+- Reference local market (Denver/Boulder area) and use knowledge that they use ManageBuilding (company uses ManageBuilding subdomain) to personalize value props around migration/integration.
+
+Assumptions & Data Gaps
+- Portfolio size (number of units under management) not found in public data — unknown if 50+ units. Recommend quick qualification question in outreach.
+- Company appears under brand 'Streamline Property Group' while ManageBuilding subdomain exists (streamlinepropertymanagement.managebuilding.com). Primary corporate site used for verification: streamlinepropertygroup.com.
+- Email for Garrett validated at streamlinepropertygroup.com; generic gmail (streamlinepropertygroup@gmail.com) also appears publicly but personal work email garrett@streamlinepropertygroup.com validated via MX/mailbox check.
+
+Next recommended actions
+- Outbound: Send personalized email to garrett@streamlinepropertygroup.com referencing Streamline's local market and ManageBuilding usage; include a quick unit-count qualification ask.
+- If no response, follow up via LinkedIn using the provided profile.
+
+Sources
+- Company team page / About: https://www.streamlinepropertygroup.com/about-us/meet-the-team/ (source for name/title/email)
+- Company site: https://www.streamlinepropertygroup.com/ (property listings / service pages)
+- LinkedIn profile: https://www.linkedin.com/in/garrett-smith-62005555 (matched via MCP)
+- ManageBuilding subdomain (from intake): streamlinepropertymanagement.managebuilding.com (platform used by the company)
+
+Confidence summary
+- Identity (name + title + LinkedIn): High (0.78–0.85)
+- Email (garrett@streamlinepropertygroup.com): Very High (0.98)
+- Portfolio size (50+ units): Unknown — requires qualification.
+",,,,,,2025-11-21 02:00:10.464571+00:00
+Matthew Hill,Owner / Managing Broker,Matt@PremierREM.com,https://www.linkedin.com/in/matthew-hill-95740326,,,,,Premier Real Estate Management,premierrem.managebuilding.com,https://premierrem.managebuilding.com,CO,"Verified owner/managing broker for Premier Real Estate Management (confidence high). Public-facing email (Matt@PremierREM.com) validated by mailbox/MX checks. Firm is Denver/Arvada metro focused with mixed portfolio (fix-and-flip, cash-flow, rent-to-own, luxury). ICP fit: possible (unit count unknown). Outreach hooks: local Arvada recognition, owner-operated firm, emphasis on prompt/personal service; position RentVine as a way to scale reporting/tenant communication and streamline mixed-portfolio workflows.",,,,,,2025-11-21 01:57:29.747139+00:00
+Kristopher (Kris) Aliabadi,Owner / Property Manager / Designated Managing Broker,,https://www.linkedin.com/in/kristopher-aliabadi-realtor-cpl-a652bb6a,,,,,The Property Management Co.,thepmco.managebuilding.com,https://thepmco.managebuilding.com,CO,"Primary owner and listed managing broker for The Property Management Co. (Fort Collins). LinkedIn profile matches company. Public phone numbers (970) 999-2997 and (970) 297-7773 appear on local listings; no verified email found at the company subdomain (thepmco.managebuilding.com) — domain appears to be a ManageBuilding-hosted subdomain with no verifiable mailboxes. Company appears to be Fort Collins-based (registered agent address 1926 Silvergate Rd) not Boulder, and I found no evidence they use Buildium or manage 50+ units. Confidence: contact identity ~85%, email: not found/0% verified.",,,,,,2025-11-21 02:01:07.481409+00:00
+Michael Braskich,Owner,michael@brasskey.biz,https://www.linkedin.com/in/michael-braskich,,,,,Brass Key Property Management,brasskey.biz,https://brasskey.biz,CO,High-confidence email (validated: confidence 0.95). LinkedIn URL is plausible but low-confidence (0.42) — recommend manual verification. No CRM (HubSpot) or NEO DB records found; MCP discovery and local business listings (BBB) indicate Michael is Owner. Unit count and Buildium usage not confirmed.,,,,,,2025-11-21 02:10:45.751491+00:00
+Andrew Purdy,Owner / Managing Broker,,https://www.linkedin.com/in/andrew-purdy-crs-gri-7b961b34,,,,,Independence Realty & Property Management (Independence / Rocky Mtn Rental),rockymtnrental.managebuilding.com,https://rockymtnrental.managebuilding.com,CO,Owner-level LinkedIn found; company ManageBuilding portal is Buildium. No verified personal email; company/generic contact exists on portal. | secondary sweep,,,,,,2025-11-21 01:48:15.606262+00:00
+Mark Barrett Stang,Registered Agent / Owner (Principal),markbstang@gmail.com,,,,,,"Barrett Property Management & Realty, LLC",barrettpropertymanagementrealty1.managebuilding.com,https://barrettpropertymanagementrealty1.managebuilding.com,CO,"Identity confidence: 0.85. Email verified confidence: 0.90 (public ManageBuilding/company contact page + email validation). No LinkedIn profile found. Source: bizofco, nestfully, ManageBuilding public listing, ratemyagent. Likely a small, owner-operated shop; appears to use ManageBuilding, not Buildium.",,,,,,2025-11-21 02:04:52.164239+00:00
+Amy Alexander,Real Estate Agent,amy.alexander@matrixrealestate.com,https://www.linkedin.com/in/amyalexander1,,,,,"Matrix Real Estate, LLC",matrixrealestate.managebuilding.com,https://matrixrealestate.managebuilding.com,CO,"Identified as an agent linked to Matrix Real Estate, LLC (source: nestfully agent directory). Email validated with high confidence (0.95). LinkedIn match moderate confidence (0.52). Role appears to be sales/agent — may not be the portfolio-level property manager; verify if she manages the company's rental portfolio or can introduce the property manager/owner. Company domain provided is a managebuilding subdomain (matrixrealestate.managebuilding.com) — this suggests use of ManageBuilding rather than Buildium (potential mismatch with original Buildium requirement).",,,,,,2025-11-21 01:57:21.187744+00:00
+Kurt Johnson,Broker / Owner,kurt@kurtjohnson.com,https://www.linkedin.com/in/kurt-johnson-32994810,,,,,Kurts Property Management,kurtspropertymanagement.managebuilding.com,https://kurtspropertymanagement.managebuilding.com,CO,"Owner / Broker at Kurts Property Management. Website hosted on kurtspropertymanagement.managebuilding.com (Buildium-hosted). Verified email kurt@kurtjohnson.com (confidence 0.95). LinkedIn profile surfaced by MCP (confidence 0.9). Unit count / company size not available in sources — unknown whether they manage 50+ units; location assumed Boulder, CO per run criteria.",,,,,,2025-11-21 01:58:54.942323+00:00
+Brian Franzen,Broker Associate,franzen_brian@yahoo.com,https://www.linkedin.com/in/brian-franzen-1877852a,,,,,365 REAL Property Management LLC,realpropertymanagement2.managebuilding.com,https://realpropertymanagement2.managebuilding.com,CO,Top decision-maker candidate returned by MCP get_contacts. Email is a high-confidence personal address (Yahoo) — validated (confidence 0.9). LinkedIn profile match confidence ~0.8. Unknown portfolio/unit count (no evidence of 50+ units).,,,,,,2025-11-21 02:02:43.377295+00:00
+Cody Bergan,Owner / Managing Broker / President,cody@berganco.com,https://www.linkedin.com/in/cody-bergan-9ba48638,,,,,Bergan and Company,berganandcompany.managebuilding.com,https://berganandcompany.managebuilding.com,CO,Primary decision maker for property management operations. Email verified via validation tool (confidence 0.95). High fit for RentVine outreach for operations/portfolio tools. Source: Bergan & Co team page and email validation.,,,,,,2025-11-21 02:07:23.134716+00:00
+Greg Moser,Owner / Principal (registered agent),greg.moser@integritypropmgmt.com,,,,,,Integrity Property Management,integritypropmgmt.managebuilding.com,https://integritypropmgmt.managebuilding.com,CO,Owner/principal with validated company email. Integrity uses Buildium portal; local property listing footprint suggests portfolio >50 units in area. | secondary sweep,,,,,,2025-11-21 01:48:16.042458+00:00
+Owner / Property Manager (name not published),Owner / Property Manager,,,,,,,Pier Property Services,pier.managebuilding.com,https://pier.managebuilding.com,CO,"No named decision-maker found in public sources. Company appears to operate out of 4501 Boardwalk Dr, Fort Collins, CO (phone 970-568-8331). Likely a small/local operator; unable to verify email or LinkedIn. Next steps: call phone to ask for owner/manager name or check Colorado SOS/property records; consider deprioritizing—does not match RentVine ICP (uses ManageBuilding; appears <50 units).",,,,,,2025-11-21 02:06:11.429603+00:00
+Jason Reed,Owner,jason@dakotamgmt.com,https://www.linkedin.com/company/dakota-property-management-llc,,,,,Dakota Management,dakotamgmt.managebuilding.com,https://dakotamgmt.managebuilding.com,CO,Owner contact; email validated. ManageBuilding portal confirms Buildium usage; local listings indicate multi-property portfolio. | secondary sweep,,,,,,2025-11-21 01:48:16.512265+00:00
+Steven O'Donnell,Owner / Partner,steve@point-west.com,https://www.linkedin.com/in/steven-odonnell-33b97989,,,,,Point West Properties,point-west.com,https://point-west.com,CO,Owner-level contact; email validated. Point West confirmed Buildium and 200+ units — high-value decision maker. | secondary sweep,,,,,,2025-11-21 01:48:15.082155+00:00

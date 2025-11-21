@@ -1,0 +1,1237 @@
+========================================
+🔍 Check #1 - Thu Nov 20 17:47:52 EST 2025
+========================================
+📊 Run Status:
+Stage: company_discovery
+Status: active
+Target: 5
+Discovery Target: N/A
+
+🏢 Companies Found:
+Total: 0
+Validated: 0
+
+🧠 Recent Agent Reasoning (last 10 think calls):
+2025-11-20 17:45:38,746 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': "Run start. Run ID 0915b268... Goal: find 10 Boulder, CO companies using Buildium with 50+ units. Plan: 1) get blocked domains. 2) Query pms_subdomains for Buildium in Boulder, CO to get seed companies. 3) If <10 results, search web for list pages (queries: 'top property management Boulder CO', 'Buildium Boulder CO property management', 'property managers Boulder CO list') and fetch list pages. 4) For each candidate, verify PMS via pms_subdomains or Run_PMS_Analyzer, and infer unit count from team/portfolio. 5) Collect contacts via get_contacts and verified emails. Will call get_blocked_domains_tool now."}
+2025-11-20 17:45:38,823 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+--
+2025-11-20 17:45:47,906 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': "Observe: get_blocked_domains_tool returned a large list of suppressed/blocked domains (~several hundred entries). Will use this to exclude companies whose domains appear here. Next step: query pms_subdomains_tool for PMS='Buildium', state='CO', city='Boulder' with limit=200 to get pre-validated Buildium companies in Boulder, CO as seed data."}
+2025-11-20 17:45:47,997 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+--
+2025-11-20 17:45:53,715 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': "Observe: get_blocked_domains_tool returned many blocked domains including specific ones like 'boulder creek homes', 'rentbouldernow.com', 'longmont property group llc', 'pmi mountain west' etc. I'll exclude any candidate whose domain exactly matches a blocked entry. Next action: query pms_subdomains_tool for Buildium in Boulder, CO, limit 200 to seed companies."}
+2025-11-20 17:45:54,010 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+--
+2025-11-20 17:46:09,062 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': "Observe: query_pms_subdomains_tool returned 1 Buildium company in Boulder: Matrix Real Estate, LLC (managebuilding subdomain). ACCEPT because PMS pre-validated. Progress: 1/10. Need 9 more. Next: perform web searches for list pages using queries: 'top property management Boulder CO', 'best property management Boulder CO 2024', 'property management companies Boulder CO list'. Will call mcp_search_web with first query."}
+2025-11-20 17:46:09,362 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+
+⚠️  Recent Errors:
+
+✅ Worker still running
+
+========================================
+Next check in 5 minutes...
+
+========================================
+🔍 Check #2 - Thu Nov 20 17:52:52 EST 2025
+========================================
+📊 Run Status:
+Stage: company_discovery
+Status: needs_user_decision
+Target: 5
+Discovery Target: N/A
+
+🏢 Companies Found:
+Total: 1
+Validated: 1
+
+🧠 Recent Agent Reasoning (last 10 think calls):
+2025-11-20 17:45:38,746 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': "Run start. Run ID 0915b268... Goal: find 10 Boulder, CO companies using Buildium with 50+ units. Plan: 1) get blocked domains. 2) Query pms_subdomains for Buildium in Boulder, CO to get seed companies. 3) If <10 results, search web for list pages (queries: 'top property management Boulder CO', 'Buildium Boulder CO property management', 'property managers Boulder CO list') and fetch list pages. 4) For each candidate, verify PMS via pms_subdomains or Run_PMS_Analyzer, and infer unit count from team/portfolio. 5) Collect contacts via get_contacts and verified emails. Will call get_blocked_domains_tool now."}
+2025-11-20 17:45:38,823 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+--
+2025-11-20 17:45:47,906 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': "Observe: get_blocked_domains_tool returned a large list of suppressed/blocked domains (~several hundred entries). Will use this to exclude companies whose domains appear here. Next step: query pms_subdomains_tool for PMS='Buildium', state='CO', city='Boulder' with limit=200 to get pre-validated Buildium companies in Boulder, CO as seed data."}
+2025-11-20 17:45:47,997 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+--
+2025-11-20 17:45:53,715 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': "Observe: get_blocked_domains_tool returned many blocked domains including specific ones like 'boulder creek homes', 'rentbouldernow.com', 'longmont property group llc', 'pmi mountain west' etc. I'll exclude any candidate whose domain exactly matches a blocked entry. Next action: query pms_subdomains_tool for Buildium in Boulder, CO, limit 200 to seed companies."}
+2025-11-20 17:45:54,010 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+--
+2025-11-20 17:46:09,062 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': "Observe: query_pms_subdomains_tool returned 1 Buildium company in Boulder: Matrix Real Estate, LLC (managebuilding subdomain). ACCEPT because PMS pre-validated. Progress: 1/10. Need 9 more. Next: perform web searches for list pages using queries: 'top property management Boulder CO', 'best property management Boulder CO 2024', 'property management companies Boulder CO list'. Will call mcp_search_web with first query."}
+2025-11-20 17:46:09,362 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+
+⚠️  Recent Errors:
+
+✅ Worker still running
+
+========================================
+Next check in 5 minutes...
+
+========================================
+🔍 Check #3 - Thu Nov 20 17:57:53 EST 2025
+========================================
+📊 Run Status:
+Stage: company_research
+Status: completed
+Target: 5
+Discovery Target: N/A
+
+🏢 Companies Found:
+Total: 15
+Validated: 15
+
+🧠 Recent Agent Reasoning (last 10 think calls):
+2025-11-20 17:45:38,746 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': "Run start. Run ID 0915b268... Goal: find 10 Boulder, CO companies using Buildium with 50+ units. Plan: 1) get blocked domains. 2) Query pms_subdomains for Buildium in Boulder, CO to get seed companies. 3) If <10 results, search web for list pages (queries: 'top property management Boulder CO', 'Buildium Boulder CO property management', 'property managers Boulder CO list') and fetch list pages. 4) For each candidate, verify PMS via pms_subdomains or Run_PMS_Analyzer, and infer unit count from team/portfolio. 5) Collect contacts via get_contacts and verified emails. Will call get_blocked_domains_tool now."}
+2025-11-20 17:45:38,823 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+--
+2025-11-20 17:45:47,906 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': "Observe: get_blocked_domains_tool returned a large list of suppressed/blocked domains (~several hundred entries). Will use this to exclude companies whose domains appear here. Next step: query pms_subdomains_tool for PMS='Buildium', state='CO', city='Boulder' with limit=200 to get pre-validated Buildium companies in Boulder, CO as seed data."}
+2025-11-20 17:45:47,997 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+--
+2025-11-20 17:45:53,715 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': "Observe: get_blocked_domains_tool returned many blocked domains including specific ones like 'boulder creek homes', 'rentbouldernow.com', 'longmont property group llc', 'pmi mountain west' etc. I'll exclude any candidate whose domain exactly matches a blocked entry. Next action: query pms_subdomains_tool for Buildium in Boulder, CO, limit 200 to seed companies."}
+2025-11-20 17:45:54,010 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+--
+2025-11-20 17:46:09,062 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': "Observe: query_pms_subdomains_tool returned 1 Buildium company in Boulder: Matrix Real Estate, LLC (managebuilding subdomain). ACCEPT because PMS pre-validated. Progress: 1/10. Need 9 more. Next: perform web searches for list pages using queries: 'top property management Boulder CO', 'best property management Boulder CO 2024', 'property management companies Boulder CO list'. Will call mcp_search_web with first query."}
+2025-11-20 17:46:09,362 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+
+⚠️  Recent Errors:
+    raise TypeError(f'Object of type {o.__class__.__name__} '
+TypeError: Object of type UUID is not JSON serializable
+2025-11-20 17:56:38,098 [ERROR] __main__: Structured insert_company_candidate failed for domain=matrixrealestate.managebuilding.com run_id=0915b268-d820-46a2-aa9b-aa1164701538
+    raise TypeError(f'Object of type {o.__class__.__name__} '
+TypeError: Object of type UUID is not JSON serializable
+
+✅ Worker still running
+
+========================================
+Next check in 5 minutes...
+
+========================================
+🔍 Check #4 - Thu Nov 20 18:02:54 EST 2025
+========================================
+📊 Run Status:
+Stage: company_research
+Status: completed
+Target: 5
+Discovery Target: N/A
+
+🏢 Companies Found:
+Total: 15
+Validated: 15
+
+🧠 Recent Agent Reasoning (last 10 think calls):
+2025-11-20 17:45:38,746 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': "Run start. Run ID 0915b268... Goal: find 10 Boulder, CO companies using Buildium with 50+ units. Plan: 1) get blocked domains. 2) Query pms_subdomains for Buildium in Boulder, CO to get seed companies. 3) If <10 results, search web for list pages (queries: 'top property management Boulder CO', 'Buildium Boulder CO property management', 'property managers Boulder CO list') and fetch list pages. 4) For each candidate, verify PMS via pms_subdomains or Run_PMS_Analyzer, and infer unit count from team/portfolio. 5) Collect contacts via get_contacts and verified emails. Will call get_blocked_domains_tool now."}
+2025-11-20 17:45:38,823 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+--
+2025-11-20 17:45:47,906 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': "Observe: get_blocked_domains_tool returned a large list of suppressed/blocked domains (~several hundred entries). Will use this to exclude companies whose domains appear here. Next step: query pms_subdomains_tool for PMS='Buildium', state='CO', city='Boulder' with limit=200 to get pre-validated Buildium companies in Boulder, CO as seed data."}
+2025-11-20 17:45:47,997 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+--
+2025-11-20 17:45:53,715 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': "Observe: get_blocked_domains_tool returned many blocked domains including specific ones like 'boulder creek homes', 'rentbouldernow.com', 'longmont property group llc', 'pmi mountain west' etc. I'll exclude any candidate whose domain exactly matches a blocked entry. Next action: query pms_subdomains_tool for Buildium in Boulder, CO, limit 200 to seed companies."}
+2025-11-20 17:45:54,010 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+--
+2025-11-20 17:46:09,062 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': "Observe: query_pms_subdomains_tool returned 1 Buildium company in Boulder: Matrix Real Estate, LLC (managebuilding subdomain). ACCEPT because PMS pre-validated. Progress: 1/10. Need 9 more. Next: perform web searches for list pages using queries: 'top property management Boulder CO', 'best property management Boulder CO 2024', 'property management companies Boulder CO list'. Will call mcp_search_web with first query."}
+2025-11-20 17:46:09,362 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+
+⚠️  Recent Errors:
+
+✅ Worker still running
+
+========================================
+Next check in 5 minutes...
+
+========================================
+🔍 Check #5 - Thu Nov 20 18:07:55 EST 2025
+========================================
+📊 Run Status:
+Stage: company_research
+Status: completed
+Target: 5
+Discovery Target: N/A
+
+🏢 Companies Found:
+Total: 15
+Validated: 15
+
+🧠 Recent Agent Reasoning (last 10 think calls):
+2025-11-20 17:45:38,746 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': "Run start. Run ID 0915b268... Goal: find 10 Boulder, CO companies using Buildium with 50+ units. Plan: 1) get blocked domains. 2) Query pms_subdomains for Buildium in Boulder, CO to get seed companies. 3) If <10 results, search web for list pages (queries: 'top property management Boulder CO', 'Buildium Boulder CO property management', 'property managers Boulder CO list') and fetch list pages. 4) For each candidate, verify PMS via pms_subdomains or Run_PMS_Analyzer, and infer unit count from team/portfolio. 5) Collect contacts via get_contacts and verified emails. Will call get_blocked_domains_tool now."}
+2025-11-20 17:45:38,823 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+--
+2025-11-20 17:45:47,906 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': "Observe: get_blocked_domains_tool returned a large list of suppressed/blocked domains (~several hundred entries). Will use this to exclude companies whose domains appear here. Next step: query pms_subdomains_tool for PMS='Buildium', state='CO', city='Boulder' with limit=200 to get pre-validated Buildium companies in Boulder, CO as seed data."}
+2025-11-20 17:45:47,997 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+--
+2025-11-20 17:45:53,715 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': "Observe: get_blocked_domains_tool returned many blocked domains including specific ones like 'boulder creek homes', 'rentbouldernow.com', 'longmont property group llc', 'pmi mountain west' etc. I'll exclude any candidate whose domain exactly matches a blocked entry. Next action: query pms_subdomains_tool for Buildium in Boulder, CO, limit 200 to seed companies."}
+2025-11-20 17:45:54,010 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+--
+2025-11-20 17:46:09,062 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': "Observe: query_pms_subdomains_tool returned 1 Buildium company in Boulder: Matrix Real Estate, LLC (managebuilding subdomain). ACCEPT because PMS pre-validated. Progress: 1/10. Need 9 more. Next: perform web searches for list pages using queries: 'top property management Boulder CO', 'best property management Boulder CO 2024', 'property management companies Boulder CO list'. Will call mcp_search_web with first query."}
+2025-11-20 17:46:09,362 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+
+⚠️  Recent Errors:
+
+✅ Worker still running
+
+========================================
+Next check in 5 minutes...
+
+========================================
+🔍 Check #6 - Thu Nov 20 18:12:56 EST 2025
+========================================
+📊 Run Status:
+Stage: company_research
+Status: completed
+Target: 5
+Discovery Target: N/A
+
+🏢 Companies Found:
+Total: 15
+Validated: 15
+
+🧠 Recent Agent Reasoning (last 10 think calls):
+2025-11-20 17:45:38,746 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': "Run start. Run ID 0915b268... Goal: find 10 Boulder, CO companies using Buildium with 50+ units. Plan: 1) get blocked domains. 2) Query pms_subdomains for Buildium in Boulder, CO to get seed companies. 3) If <10 results, search web for list pages (queries: 'top property management Boulder CO', 'Buildium Boulder CO property management', 'property managers Boulder CO list') and fetch list pages. 4) For each candidate, verify PMS via pms_subdomains or Run_PMS_Analyzer, and infer unit count from team/portfolio. 5) Collect contacts via get_contacts and verified emails. Will call get_blocked_domains_tool now."}
+2025-11-20 17:45:38,823 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+--
+2025-11-20 17:45:47,906 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': "Observe: get_blocked_domains_tool returned a large list of suppressed/blocked domains (~several hundred entries). Will use this to exclude companies whose domains appear here. Next step: query pms_subdomains_tool for PMS='Buildium', state='CO', city='Boulder' with limit=200 to get pre-validated Buildium companies in Boulder, CO as seed data."}
+2025-11-20 17:45:47,997 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+--
+2025-11-20 17:45:53,715 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': "Observe: get_blocked_domains_tool returned many blocked domains including specific ones like 'boulder creek homes', 'rentbouldernow.com', 'longmont property group llc', 'pmi mountain west' etc. I'll exclude any candidate whose domain exactly matches a blocked entry. Next action: query pms_subdomains_tool for Buildium in Boulder, CO, limit 200 to seed companies."}
+2025-11-20 17:45:54,010 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+--
+2025-11-20 17:46:09,062 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': "Observe: query_pms_subdomains_tool returned 1 Buildium company in Boulder: Matrix Real Estate, LLC (managebuilding subdomain). ACCEPT because PMS pre-validated. Progress: 1/10. Need 9 more. Next: perform web searches for list pages using queries: 'top property management Boulder CO', 'best property management Boulder CO 2024', 'property management companies Boulder CO list'. Will call mcp_search_web with first query."}
+2025-11-20 17:46:09,362 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+
+⚠️  Recent Errors:
+
+✅ Worker still running
+
+========================================
+Next check in 5 minutes...
+
+========================================
+🔍 Check #7 - Thu Nov 20 18:17:56 EST 2025
+========================================
+📊 Run Status:
+Stage: done
+Status: completed
+Target: 5
+Discovery Target: N/A
+
+🏢 Companies Found:
+Total: 15
+Validated: 15
+
+🧠 Recent Agent Reasoning (last 10 think calls):
+2025-11-20 17:45:38,746 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': "Run start. Run ID 0915b268... Goal: find 10 Boulder, CO companies using Buildium with 50+ units. Plan: 1) get blocked domains. 2) Query pms_subdomains for Buildium in Boulder, CO to get seed companies. 3) If <10 results, search web for list pages (queries: 'top property management Boulder CO', 'Buildium Boulder CO property management', 'property managers Boulder CO list') and fetch list pages. 4) For each candidate, verify PMS via pms_subdomains or Run_PMS_Analyzer, and infer unit count from team/portfolio. 5) Collect contacts via get_contacts and verified emails. Will call get_blocked_domains_tool now."}
+2025-11-20 17:45:38,823 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+--
+2025-11-20 17:45:47,906 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': "Observe: get_blocked_domains_tool returned a large list of suppressed/blocked domains (~several hundred entries). Will use this to exclude companies whose domains appear here. Next step: query pms_subdomains_tool for PMS='Buildium', state='CO', city='Boulder' with limit=200 to get pre-validated Buildium companies in Boulder, CO as seed data."}
+2025-11-20 17:45:47,997 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+--
+2025-11-20 17:45:53,715 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': "Observe: get_blocked_domains_tool returned many blocked domains including specific ones like 'boulder creek homes', 'rentbouldernow.com', 'longmont property group llc', 'pmi mountain west' etc. I'll exclude any candidate whose domain exactly matches a blocked entry. Next action: query pms_subdomains_tool for Buildium in Boulder, CO, limit 200 to seed companies."}
+2025-11-20 17:45:54,010 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+--
+2025-11-20 17:46:09,062 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': "Observe: query_pms_subdomains_tool returned 1 Buildium company in Boulder: Matrix Real Estate, LLC (managebuilding subdomain). ACCEPT because PMS pre-validated. Progress: 1/10. Need 9 more. Next: perform web searches for list pages using queries: 'top property management Boulder CO', 'best property management Boulder CO 2024', 'property management companies Boulder CO list'. Will call mcp_search_web with first query."}
+2025-11-20 17:46:09,362 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+
+⚠️  Recent Errors:
+
+✅ Worker still running
+
+========================================
+Next check in 5 minutes...
+
+========================================
+🔍 Check #8 - Thu Nov 20 18:22:57 EST 2025
+========================================
+📊 Run Status:
+Stage: done
+Status: completed
+Target: 5
+Discovery Target: N/A
+
+🏢 Companies Found:
+Total: 15
+Validated: 15
+
+🧠 Recent Agent Reasoning (last 10 think calls):
+
+⚠️  Recent Errors:
+
+✅ Worker still running
+
+========================================
+Next check in 5 minutes...
+
+========================================
+🔍 Check #9 - Thu Nov 20 18:27:58 EST 2025
+========================================
+📊 Run Status:
+Stage: done
+Status: completed
+Target: 5
+Discovery Target: N/A
+
+🏢 Companies Found:
+Total: 15
+Validated: 15
+
+🧠 Recent Agent Reasoning (last 10 think calls):
+
+⚠️  Recent Errors:
+
+✅ Worker still running
+
+========================================
+Next check in 5 minutes...
+
+========================================
+🔍 Check #10 - Thu Nov 20 18:32:59 EST 2025
+========================================
+📊 Run Status:
+Stage: done
+Status: completed
+Target: 5
+Discovery Target: N/A
+
+🏢 Companies Found:
+Total: 15
+Validated: 15
+
+🧠 Recent Agent Reasoning (last 10 think calls):
+
+⚠️  Recent Errors:
+
+✅ Worker still running
+
+========================================
+Next check in 5 minutes...
+
+========================================
+🔍 Check #11 - Thu Nov 20 18:38:00 EST 2025
+========================================
+📊 Run Status:
+Stage: done
+Status: completed
+Target: 5
+Discovery Target: N/A
+
+🏢 Companies Found:
+Total: 15
+Validated: 15
+
+🧠 Recent Agent Reasoning (last 10 think calls):
+
+⚠️  Recent Errors:
+
+✅ Worker still running
+
+========================================
+Next check in 5 minutes...
+
+========================================
+🔍 Check #12 - Thu Nov 20 18:43:01 EST 2025
+========================================
+📊 Run Status:
+Stage: done
+Status: completed
+Target: 5
+Discovery Target: N/A
+
+🏢 Companies Found:
+Total: 15
+Validated: 15
+
+🧠 Recent Agent Reasoning (last 10 think calls):
+
+⚠️  Recent Errors:
+
+✅ Worker still running
+
+========================================
+Next check in 5 minutes...
+
+========================================
+🔍 Check #13 - Thu Nov 20 18:48:02 EST 2025
+========================================
+📊 Run Status:
+Stage: done
+Status: completed
+Target: 5
+Discovery Target: N/A
+
+🏢 Companies Found:
+Total: 15
+Validated: 15
+
+🧠 Recent Agent Reasoning (last 10 think calls):
+
+⚠️  Recent Errors:
+
+✅ Worker still running
+
+========================================
+Next check in 5 minutes...
+
+========================================
+🔍 Check #14 - Thu Nov 20 18:53:03 EST 2025
+========================================
+📊 Run Status:
+Stage: done
+Status: completed
+Target: 5
+Discovery Target: N/A
+
+🏢 Companies Found:
+Total: 15
+Validated: 15
+
+🧠 Recent Agent Reasoning (last 10 think calls):
+
+⚠️  Recent Errors:
+
+✅ Worker still running
+
+========================================
+Next check in 5 minutes...
+
+========================================
+🔍 Check #15 - Thu Nov 20 18:58:04 EST 2025
+========================================
+📊 Run Status:
+Stage: done
+Status: completed
+Target: 5
+Discovery Target: N/A
+
+🏢 Companies Found:
+Total: 15
+Validated: 15
+
+🧠 Recent Agent Reasoning (last 10 think calls):
+
+⚠️  Recent Errors:
+
+✅ Worker still running
+
+========================================
+Next check in 5 minutes...
+
+========================================
+🔍 Check #16 - Thu Nov 20 19:03:05 EST 2025
+========================================
+📊 Run Status:
+Stage: done
+Status: completed
+Target: 5
+Discovery Target: N/A
+
+🏢 Companies Found:
+Total: 15
+Validated: 15
+
+🧠 Recent Agent Reasoning (last 10 think calls):
+
+⚠️  Recent Errors:
+
+✅ Worker still running
+
+========================================
+Next check in 5 minutes...
+
+========================================
+🔍 Check #17 - Thu Nov 20 19:08:05 EST 2025
+========================================
+📊 Run Status:
+Stage: done
+Status: completed
+Target: 5
+Discovery Target: N/A
+
+🏢 Companies Found:
+Total: 15
+Validated: 15
+
+🧠 Recent Agent Reasoning (last 10 think calls):
+
+⚠️  Recent Errors:
+
+✅ Worker still running
+
+========================================
+Next check in 5 minutes...
+
+========================================
+🔍 Check #18 - Thu Nov 20 19:13:06 EST 2025
+========================================
+📊 Run Status:
+Stage: done
+Status: completed
+Target: 5
+Discovery Target: N/A
+
+🏢 Companies Found:
+Total: 15
+Validated: 15
+
+🧠 Recent Agent Reasoning (last 10 think calls):
+
+⚠️  Recent Errors:
+
+✅ Worker still running
+
+========================================
+Next check in 5 minutes...
+
+========================================
+🔍 Check #19 - Thu Nov 20 19:18:07 EST 2025
+========================================
+📊 Run Status:
+Stage: done
+Status: completed
+Target: 5
+Discovery Target: N/A
+
+🏢 Companies Found:
+Total: 15
+Validated: 15
+
+🧠 Recent Agent Reasoning (last 10 think calls):
+
+⚠️  Recent Errors:
+
+✅ Worker still running
+
+========================================
+Next check in 5 minutes...
+
+========================================
+🔍 Check #20 - Thu Nov 20 19:23:08 EST 2025
+========================================
+📊 Run Status:
+Stage: done
+Status: completed
+Target: 5
+Discovery Target: N/A
+
+🏢 Companies Found:
+Total: 15
+Validated: 15
+
+🧠 Recent Agent Reasoning (last 10 think calls):
+
+⚠️  Recent Errors:
+
+✅ Worker still running
+
+========================================
+Next check in 5 minutes...
+
+========================================
+🔍 Check #21 - Thu Nov 20 19:28:09 EST 2025
+========================================
+📊 Run Status:
+Stage: done
+Status: completed
+Target: 5
+Discovery Target: N/A
+
+🏢 Companies Found:
+Total: 15
+Validated: 15
+
+🧠 Recent Agent Reasoning (last 10 think calls):
+
+⚠️  Recent Errors:
+
+✅ Worker still running
+
+========================================
+Next check in 5 minutes...
+
+========================================
+🔍 Check #22 - Thu Nov 20 19:33:10 EST 2025
+========================================
+📊 Run Status:
+Stage: done
+Status: completed
+Target: 5
+Discovery Target: N/A
+
+🏢 Companies Found:
+Total: 15
+Validated: 15
+
+🧠 Recent Agent Reasoning (last 10 think calls):
+
+⚠️  Recent Errors:
+
+✅ Worker still running
+
+========================================
+Next check in 5 minutes...
+
+========================================
+🔍 Check #23 - Thu Nov 20 19:38:10 EST 2025
+========================================
+📊 Run Status:
+Stage: done
+Status: completed
+Target: 5
+Discovery Target: N/A
+
+🏢 Companies Found:
+Total: 15
+Validated: 15
+
+🧠 Recent Agent Reasoning (last 10 think calls):
+
+⚠️  Recent Errors:
+
+✅ Worker still running
+
+========================================
+Next check in 5 minutes...
+
+========================================
+🔍 Check #24 - Thu Nov 20 19:43:11 EST 2025
+========================================
+📊 Run Status:
+Stage: done
+Status: completed
+Target: 5
+Discovery Target: N/A
+
+🏢 Companies Found:
+Total: 15
+Validated: 15
+
+🧠 Recent Agent Reasoning (last 10 think calls):
+
+⚠️  Recent Errors:
+
+✅ Worker still running
+
+========================================
+Next check in 5 minutes...
+
+========================================
+🔍 Check #25 - Thu Nov 20 19:48:12 EST 2025
+========================================
+📊 Run Status:
+Stage: done
+Status: completed
+Target: 5
+Discovery Target: N/A
+
+🏢 Companies Found:
+Total: 15
+Validated: 15
+
+🧠 Recent Agent Reasoning (last 10 think calls):
+
+⚠️  Recent Errors:
+
+✅ Worker still running
+
+========================================
+Next check in 5 minutes...
+
+========================================
+🔍 Check #26 - Thu Nov 20 19:53:13 EST 2025
+========================================
+📊 Run Status:
+Stage: company_discovery
+Status: active
+Target: 5
+Discovery Target: N/A
+
+🏢 Companies Found:
+Total: 0
+Validated: 0
+
+🧠 Recent Agent Reasoning (last 10 think calls):
+2025-11-20 19:51:36,798 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': 'Starting run 0915b268... Goal: find 10 companies in Boulder, CO that use Buildium (2x oversample for 5 target). Steps: 1) get blocked domains; 2) query pms_subdomains for Buildium+Boulder for seed companies; 3) search web for list pages for Boulder property management and fetch pages; 4) verify PMS for companies where needed; 5) gather contacts (1-3 per company). Will call get_blocked_domains_tool first.'}
+2025-11-20 19:51:37,447 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+--
+2025-11-20 19:51:51,057 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': "Ready to call get_blocked_domains_tool to retrieve suppressed domains. Plan: call functions.get_blocked_domains_tool() to get blocked domains list for filtering. After that I'll analyze and then query pms_subdomains for Buildium in Boulder, CO (limit 100)."}
+2025-11-20 19:51:56,331 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+--
+2025-11-20 19:52:40,882 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': "Observe: query_pms_subdomains_tool returned 1 Buildium company in Boulder: Matrix Real Estate, LLC (pms subdomain matrixrealestate.managebuilding.com). Analysis per company:\n1. Matrix Real Estate, LLC\n   - City: Boulder, CO ✓\n   - PMS: Buildium (pre-validated in pms_subdomains) ✓\n   - Domain: real_domain None, but pms_subdomain present → ACCEPT.\nAccepted: 1/10 companies. Progress: need 9 more. Next: search web for list pages for 'top property management Boulder CO' and fetch list pages (ipropertymanagement, expertise, etc.). Will call mcp_search_web with queries for Boulder list pages."}
+2025-11-20 19:52:40,940 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+
+⚠️  Recent Errors:
+
+✅ Worker still running
+
+========================================
+Next check in 5 minutes...
+
+========================================
+🔍 Check #27 - Thu Nov 20 19:58:14 EST 2025
+========================================
+📊 Run Status:
+Stage: company_discovery
+Status: active
+Target: 5
+Discovery Target: N/A
+
+🏢 Companies Found:
+Total: 0
+Validated: 0
+
+🧠 Recent Agent Reasoning (last 10 think calls):
+2025-11-20 19:51:36,798 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': 'Starting run 0915b268... Goal: find 10 companies in Boulder, CO that use Buildium (2x oversample for 5 target). Steps: 1) get blocked domains; 2) query pms_subdomains for Buildium+Boulder for seed companies; 3) search web for list pages for Boulder property management and fetch pages; 4) verify PMS for companies where needed; 5) gather contacts (1-3 per company). Will call get_blocked_domains_tool first.'}
+2025-11-20 19:51:37,447 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+--
+2025-11-20 19:51:51,057 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': "Ready to call get_blocked_domains_tool to retrieve suppressed domains. Plan: call functions.get_blocked_domains_tool() to get blocked domains list for filtering. After that I'll analyze and then query pms_subdomains for Buildium in Boulder, CO (limit 100)."}
+2025-11-20 19:51:56,331 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+--
+2025-11-20 19:52:40,882 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': "Observe: query_pms_subdomains_tool returned 1 Buildium company in Boulder: Matrix Real Estate, LLC (pms subdomain matrixrealestate.managebuilding.com). Analysis per company:\n1. Matrix Real Estate, LLC\n   - City: Boulder, CO ✓\n   - PMS: Buildium (pre-validated in pms_subdomains) ✓\n   - Domain: real_domain None, but pms_subdomain present → ACCEPT.\nAccepted: 1/10 companies. Progress: need 9 more. Next: search web for list pages for 'top property management Boulder CO' and fetch list pages (ipropertymanagement, expertise, etc.). Will call mcp_search_web with queries for Boulder list pages."}
+2025-11-20 19:52:40,940 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+
+⚠️  Recent Errors:
+
+✅ Worker still running
+
+========================================
+Next check in 5 minutes...
+
+========================================
+🔍 Check #28 - Thu Nov 20 20:03:15 EST 2025
+========================================
+📊 Run Status:
+Stage: company_discovery
+Status: active
+Target: 5
+Discovery Target: N/A
+
+🏢 Companies Found:
+Total: 0
+Validated: 0
+
+🧠 Recent Agent Reasoning (last 10 think calls):
+2025-11-20 19:51:36,798 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': 'Starting run 0915b268... Goal: find 10 companies in Boulder, CO that use Buildium (2x oversample for 5 target). Steps: 1) get blocked domains; 2) query pms_subdomains for Buildium+Boulder for seed companies; 3) search web for list pages for Boulder property management and fetch pages; 4) verify PMS for companies where needed; 5) gather contacts (1-3 per company). Will call get_blocked_domains_tool first.'}
+2025-11-20 19:51:37,447 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+--
+2025-11-20 19:51:51,057 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': "Ready to call get_blocked_domains_tool to retrieve suppressed domains. Plan: call functions.get_blocked_domains_tool() to get blocked domains list for filtering. After that I'll analyze and then query pms_subdomains for Buildium in Boulder, CO (limit 100)."}
+2025-11-20 19:51:56,331 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+--
+2025-11-20 19:52:40,882 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': "Observe: query_pms_subdomains_tool returned 1 Buildium company in Boulder: Matrix Real Estate, LLC (pms subdomain matrixrealestate.managebuilding.com). Analysis per company:\n1. Matrix Real Estate, LLC\n   - City: Boulder, CO ✓\n   - PMS: Buildium (pre-validated in pms_subdomains) ✓\n   - Domain: real_domain None, but pms_subdomain present → ACCEPT.\nAccepted: 1/10 companies. Progress: need 9 more. Next: search web for list pages for 'top property management Boulder CO' and fetch list pages (ipropertymanagement, expertise, etc.). Will call mcp_search_web with queries for Boulder list pages."}
+2025-11-20 19:52:40,940 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+
+⚠️  Recent Errors:
+
+✅ Worker still running
+
+========================================
+Next check in 5 minutes...
+
+========================================
+🔍 Check #29 - Thu Nov 20 20:08:17 EST 2025
+========================================
+📊 Run Status:
+Stage: company_discovery
+Status: active
+Target: 5
+Discovery Target: N/A
+
+🏢 Companies Found:
+Total: 1
+Validated: 1
+
+🧠 Recent Agent Reasoning (last 10 think calls):
+2025-11-20 19:51:36,798 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': 'Starting run 0915b268... Goal: find 10 companies in Boulder, CO that use Buildium (2x oversample for 5 target). Steps: 1) get blocked domains; 2) query pms_subdomains for Buildium+Boulder for seed companies; 3) search web for list pages for Boulder property management and fetch pages; 4) verify PMS for companies where needed; 5) gather contacts (1-3 per company). Will call get_blocked_domains_tool first.'}
+2025-11-20 19:51:37,447 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+--
+2025-11-20 19:51:51,057 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': "Ready to call get_blocked_domains_tool to retrieve suppressed domains. Plan: call functions.get_blocked_domains_tool() to get blocked domains list for filtering. After that I'll analyze and then query pms_subdomains for Buildium in Boulder, CO (limit 100)."}
+2025-11-20 19:51:56,331 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+--
+2025-11-20 19:52:40,882 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': "Observe: query_pms_subdomains_tool returned 1 Buildium company in Boulder: Matrix Real Estate, LLC (pms subdomain matrixrealestate.managebuilding.com). Analysis per company:\n1. Matrix Real Estate, LLC\n   - City: Boulder, CO ✓\n   - PMS: Buildium (pre-validated in pms_subdomains) ✓\n   - Domain: real_domain None, but pms_subdomain present → ACCEPT.\nAccepted: 1/10 companies. Progress: need 9 more. Next: search web for list pages for 'top property management Boulder CO' and fetch list pages (ipropertymanagement, expertise, etc.). Will call mcp_search_web with queries for Boulder list pages."}
+2025-11-20 19:52:40,940 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+
+⚠️  Recent Errors:
+2025-11-20 20:06:20,803 [ERROR] __main__: Parallel region discovery exceeded overall timeout; cancelling outstanding regions
+
+✅ Worker still running
+
+========================================
+Next check in 5 minutes...
+
+========================================
+🔍 Check #30 - Thu Nov 20 20:13:18 EST 2025
+========================================
+📊 Run Status:
+Stage: company_research
+Status: needs_user_decision
+Target: 5
+Discovery Target: N/A
+
+🏢 Companies Found:
+Total: 5
+Validated: 5
+
+🧠 Recent Agent Reasoning (last 10 think calls):
+2025-11-20 19:51:36,798 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': 'Starting run 0915b268... Goal: find 10 companies in Boulder, CO that use Buildium (2x oversample for 5 target). Steps: 1) get blocked domains; 2) query pms_subdomains for Buildium+Boulder for seed companies; 3) search web for list pages for Boulder property management and fetch pages; 4) verify PMS for companies where needed; 5) gather contacts (1-3 per company). Will call get_blocked_domains_tool first.'}
+2025-11-20 19:51:37,447 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+--
+2025-11-20 19:51:51,057 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': "Ready to call get_blocked_domains_tool to retrieve suppressed domains. Plan: call functions.get_blocked_domains_tool() to get blocked domains list for filtering. After that I'll analyze and then query pms_subdomains for Buildium in Boulder, CO (limit 100)."}
+2025-11-20 19:51:56,331 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+--
+2025-11-20 19:52:40,882 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': "Observe: query_pms_subdomains_tool returned 1 Buildium company in Boulder: Matrix Real Estate, LLC (pms subdomain matrixrealestate.managebuilding.com). Analysis per company:\n1. Matrix Real Estate, LLC\n   - City: Boulder, CO ✓\n   - PMS: Buildium (pre-validated in pms_subdomains) ✓\n   - Domain: real_domain None, but pms_subdomain present → ACCEPT.\nAccepted: 1/10 companies. Progress: need 9 more. Next: search web for list pages for 'top property management Boulder CO' and fetch list pages (ipropertymanagement, expertise, etc.). Will call mcp_search_web with queries for Boulder list pages."}
+2025-11-20 19:52:40,940 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+
+⚠️  Recent Errors:
+
+✅ Worker still running
+
+========================================
+Next check in 5 minutes...
+
+========================================
+🔍 Check #31 - Thu Nov 20 20:18:19 EST 2025
+========================================
+📊 Run Status:
+Stage: contact_discovery
+Status: needs_user_decision
+Target: 5
+Discovery Target: N/A
+
+🏢 Companies Found:
+Total: 5
+Validated: 5
+
+🧠 Recent Agent Reasoning (last 10 think calls):
+2025-11-20 19:51:36,798 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': 'Starting run 0915b268... Goal: find 10 companies in Boulder, CO that use Buildium (2x oversample for 5 target). Steps: 1) get blocked domains; 2) query pms_subdomains for Buildium+Boulder for seed companies; 3) search web for list pages for Boulder property management and fetch pages; 4) verify PMS for companies where needed; 5) gather contacts (1-3 per company). Will call get_blocked_domains_tool first.'}
+2025-11-20 19:51:37,447 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+--
+2025-11-20 19:51:51,057 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': "Ready to call get_blocked_domains_tool to retrieve suppressed domains. Plan: call functions.get_blocked_domains_tool() to get blocked domains list for filtering. After that I'll analyze and then query pms_subdomains for Buildium in Boulder, CO (limit 100)."}
+2025-11-20 19:51:56,331 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+--
+2025-11-20 19:52:40,882 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': "Observe: query_pms_subdomains_tool returned 1 Buildium company in Boulder: Matrix Real Estate, LLC (pms subdomain matrixrealestate.managebuilding.com). Analysis per company:\n1. Matrix Real Estate, LLC\n   - City: Boulder, CO ✓\n   - PMS: Buildium (pre-validated in pms_subdomains) ✓\n   - Domain: real_domain None, but pms_subdomain present → ACCEPT.\nAccepted: 1/10 companies. Progress: need 9 more. Next: search web for list pages for 'top property management Boulder CO' and fetch list pages (ipropertymanagement, expertise, etc.). Will call mcp_search_web with queries for Boulder list pages."}
+2025-11-20 19:52:40,940 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+--
+2025-11-20 20:16:20,002 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': "Starting run 0915b268... Goal: find 10 Boulder, CO companies using Buildium with 50+ units (2x oversample for target 5). Plan: 1) get blocked domains to filter; 2) query pms_subdomains for Buildium+Boulder (primary seed); 3) search web for list pages 'top property management Boulder CO' and fetch pages found; 4) for companies without PMS confirmation, run PMS analyzer; 5) for accepted companies, fetch contacts (1-3 each). Will call get_blocked_domains_tool first."}
+2025-11-20 20:16:20,095 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+--
+2025-11-20 20:16:24,995 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': 'Retrying initial mcp_think before calling get_blocked_domains_tool. Plan unchanged: call get_blocked_domains_tool next.'}
+2025-11-20 20:16:25,076 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+
+⚠️  Recent Errors:
+2025-11-20 20:15:36,051 [INFO] __main__: Retrying 1 failed regions...
+2025-11-20 20:16:06,070 [INFO] __main__: Retrying region Region 1 (previous error: Cancelled due to overall timeout)
+
+✅ Worker still running
+
+========================================
+Next check in 5 minutes...
+
+========================================
+🔍 Check #32 - Thu Nov 20 20:23:19 EST 2025
+========================================
+📊 Run Status:
+Stage: company_discovery
+Status: needs_user_decision
+Target: 5
+Discovery Target: N/A
+
+🏢 Companies Found:
+Total: 5
+Validated: 5
+
+🧠 Recent Agent Reasoning (last 10 think calls):
+2025-11-20 19:51:36,798 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': 'Starting run 0915b268... Goal: find 10 companies in Boulder, CO that use Buildium (2x oversample for 5 target). Steps: 1) get blocked domains; 2) query pms_subdomains for Buildium+Boulder for seed companies; 3) search web for list pages for Boulder property management and fetch pages; 4) verify PMS for companies where needed; 5) gather contacts (1-3 per company). Will call get_blocked_domains_tool first.'}
+2025-11-20 19:51:37,447 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+--
+2025-11-20 19:51:51,057 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': "Ready to call get_blocked_domains_tool to retrieve suppressed domains. Plan: call functions.get_blocked_domains_tool() to get blocked domains list for filtering. After that I'll analyze and then query pms_subdomains for Buildium in Boulder, CO (limit 100)."}
+2025-11-20 19:51:56,331 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+--
+2025-11-20 19:52:40,882 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': "Observe: query_pms_subdomains_tool returned 1 Buildium company in Boulder: Matrix Real Estate, LLC (pms subdomain matrixrealestate.managebuilding.com). Analysis per company:\n1. Matrix Real Estate, LLC\n   - City: Boulder, CO ✓\n   - PMS: Buildium (pre-validated in pms_subdomains) ✓\n   - Domain: real_domain None, but pms_subdomain present → ACCEPT.\nAccepted: 1/10 companies. Progress: need 9 more. Next: search web for list pages for 'top property management Boulder CO' and fetch list pages (ipropertymanagement, expertise, etc.). Will call mcp_search_web with queries for Boulder list pages."}
+2025-11-20 19:52:40,940 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+--
+2025-11-20 20:16:20,002 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': "Starting run 0915b268... Goal: find 10 Boulder, CO companies using Buildium with 50+ units (2x oversample for target 5). Plan: 1) get blocked domains to filter; 2) query pms_subdomains for Buildium+Boulder (primary seed); 3) search web for list pages 'top property management Boulder CO' and fetch pages found; 4) for companies without PMS confirmation, run PMS analyzer; 5) for accepted companies, fetch contacts (1-3 each). Will call get_blocked_domains_tool first."}
+2025-11-20 20:16:20,095 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+--
+2025-11-20 20:16:24,995 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': 'Retrying initial mcp_think before calling get_blocked_domains_tool. Plan unchanged: call get_blocked_domains_tool next.'}
+2025-11-20 20:16:25,076 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+
+⚠️  Recent Errors:
+2025-11-20 20:15:36,051 [INFO] __main__: Retrying 1 failed regions...
+2025-11-20 20:16:06,070 [INFO] __main__: Retrying region Region 1 (previous error: Cancelled due to overall timeout)
+
+✅ Worker still running
+
+========================================
+Next check in 5 minutes...
+
+========================================
+🔍 Check #33 - Thu Nov 20 20:28:20 EST 2025
+========================================
+📊 Run Status:
+Stage: company_discovery
+Status: active
+Target: 5
+Discovery Target: N/A
+
+🏢 Companies Found:
+Total: 5
+Validated: 5
+
+🧠 Recent Agent Reasoning (last 10 think calls):
+2025-11-20 19:51:36,798 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': 'Starting run 0915b268... Goal: find 10 companies in Boulder, CO that use Buildium (2x oversample for 5 target). Steps: 1) get blocked domains; 2) query pms_subdomains for Buildium+Boulder for seed companies; 3) search web for list pages for Boulder property management and fetch pages; 4) verify PMS for companies where needed; 5) gather contacts (1-3 per company). Will call get_blocked_domains_tool first.'}
+2025-11-20 19:51:37,447 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+--
+2025-11-20 19:51:51,057 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': "Ready to call get_blocked_domains_tool to retrieve suppressed domains. Plan: call functions.get_blocked_domains_tool() to get blocked domains list for filtering. After that I'll analyze and then query pms_subdomains for Buildium in Boulder, CO (limit 100)."}
+2025-11-20 19:51:56,331 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+--
+2025-11-20 19:52:40,882 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': "Observe: query_pms_subdomains_tool returned 1 Buildium company in Boulder: Matrix Real Estate, LLC (pms subdomain matrixrealestate.managebuilding.com). Analysis per company:\n1. Matrix Real Estate, LLC\n   - City: Boulder, CO ✓\n   - PMS: Buildium (pre-validated in pms_subdomains) ✓\n   - Domain: real_domain None, but pms_subdomain present → ACCEPT.\nAccepted: 1/10 companies. Progress: need 9 more. Next: search web for list pages for 'top property management Boulder CO' and fetch list pages (ipropertymanagement, expertise, etc.). Will call mcp_search_web with queries for Boulder list pages."}
+2025-11-20 19:52:40,940 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+--
+2025-11-20 20:16:20,002 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': "Starting run 0915b268... Goal: find 10 Boulder, CO companies using Buildium with 50+ units (2x oversample for target 5). Plan: 1) get blocked domains to filter; 2) query pms_subdomains for Buildium+Boulder (primary seed); 3) search web for list pages 'top property management Boulder CO' and fetch pages found; 4) for companies without PMS confirmation, run PMS analyzer; 5) for accepted companies, fetch contacts (1-3 each). Will call get_blocked_domains_tool first."}
+2025-11-20 20:16:20,095 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+--
+2025-11-20 20:16:24,995 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': 'Retrying initial mcp_think before calling get_blocked_domains_tool. Plan unchanged: call get_blocked_domains_tool next.'}
+2025-11-20 20:16:25,076 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+
+⚠️  Recent Errors:
+
+✅ Worker still running
+
+========================================
+Next check in 5 minutes...
+
+========================================
+🔍 Check #34 - Thu Nov 20 20:33:21 EST 2025
+========================================
+📊 Run Status:
+Stage: company_discovery
+Status: error
+Target: 5
+Discovery Target: N/A
+
+🏢 Companies Found:
+Total: 5
+Validated: 5
+
+🧠 Recent Agent Reasoning (last 10 think calls):
+2025-11-20 19:51:36,798 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': 'Starting run 0915b268... Goal: find 10 companies in Boulder, CO that use Buildium (2x oversample for 5 target). Steps: 1) get blocked domains; 2) query pms_subdomains for Buildium+Boulder for seed companies; 3) search web for list pages for Boulder property management and fetch pages; 4) verify PMS for companies where needed; 5) gather contacts (1-3 per company). Will call get_blocked_domains_tool first.'}
+2025-11-20 19:51:37,447 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+--
+2025-11-20 19:51:51,057 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': "Ready to call get_blocked_domains_tool to retrieve suppressed domains. Plan: call functions.get_blocked_domains_tool() to get blocked domains list for filtering. After that I'll analyze and then query pms_subdomains for Buildium in Boulder, CO (limit 100)."}
+2025-11-20 19:51:56,331 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+--
+2025-11-20 19:52:40,882 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': "Observe: query_pms_subdomains_tool returned 1 Buildium company in Boulder: Matrix Real Estate, LLC (pms subdomain matrixrealestate.managebuilding.com). Analysis per company:\n1. Matrix Real Estate, LLC\n   - City: Boulder, CO ✓\n   - PMS: Buildium (pre-validated in pms_subdomains) ✓\n   - Domain: real_domain None, but pms_subdomain present → ACCEPT.\nAccepted: 1/10 companies. Progress: need 9 more. Next: search web for list pages for 'top property management Boulder CO' and fetch list pages (ipropertymanagement, expertise, etc.). Will call mcp_search_web with queries for Boulder list pages."}
+2025-11-20 19:52:40,940 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+--
+2025-11-20 20:16:20,002 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': "Starting run 0915b268... Goal: find 10 Boulder, CO companies using Buildium with 50+ units (2x oversample for target 5). Plan: 1) get blocked domains to filter; 2) query pms_subdomains for Buildium+Boulder (primary seed); 3) search web for list pages 'top property management Boulder CO' and fetch pages found; 4) for companies without PMS confirmation, run PMS analyzer; 5) for accepted companies, fetch contacts (1-3 each). Will call get_blocked_domains_tool first."}
+2025-11-20 20:16:20,095 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+--
+2025-11-20 20:16:24,995 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': 'Retrying initial mcp_think before calling get_blocked_domains_tool. Plan unchanged: call get_blocked_domains_tool next.'}
+2025-11-20 20:16:25,076 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+
+⚠️  Recent Errors:
+2025-11-20 20:31:06,084 [ERROR] __main__: Retry window exceeded overall timeout; cancelling remaining retry regions
+
+✅ Worker still running
+
+========================================
+Next check in 5 minutes...
+
+========================================
+🔍 Check #35 - Thu Nov 20 20:38:22 EST 2025
+========================================
+📊 Run Status:
+Stage: company_discovery
+Status: active
+Target: 5
+Discovery Target: N/A
+
+🏢 Companies Found:
+Total: 0
+Validated: 0
+
+🧠 Recent Agent Reasoning (last 10 think calls):
+2025-11-20 19:51:36,798 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': 'Starting run 0915b268... Goal: find 10 companies in Boulder, CO that use Buildium (2x oversample for 5 target). Steps: 1) get blocked domains; 2) query pms_subdomains for Buildium+Boulder for seed companies; 3) search web for list pages for Boulder property management and fetch pages; 4) verify PMS for companies where needed; 5) gather contacts (1-3 per company). Will call get_blocked_domains_tool first.'}
+2025-11-20 19:51:37,447 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+--
+2025-11-20 19:51:51,057 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': "Ready to call get_blocked_domains_tool to retrieve suppressed domains. Plan: call functions.get_blocked_domains_tool() to get blocked domains list for filtering. After that I'll analyze and then query pms_subdomains for Buildium in Boulder, CO (limit 100)."}
+2025-11-20 19:51:56,331 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+--
+2025-11-20 19:52:40,882 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': "Observe: query_pms_subdomains_tool returned 1 Buildium company in Boulder: Matrix Real Estate, LLC (pms subdomain matrixrealestate.managebuilding.com). Analysis per company:\n1. Matrix Real Estate, LLC\n   - City: Boulder, CO ✓\n   - PMS: Buildium (pre-validated in pms_subdomains) ✓\n   - Domain: real_domain None, but pms_subdomain present → ACCEPT.\nAccepted: 1/10 companies. Progress: need 9 more. Next: search web for list pages for 'top property management Boulder CO' and fetch list pages (ipropertymanagement, expertise, etc.). Will call mcp_search_web with queries for Boulder list pages."}
+2025-11-20 19:52:40,940 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+--
+2025-11-20 20:16:20,002 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': "Starting run 0915b268... Goal: find 10 Boulder, CO companies using Buildium with 50+ units (2x oversample for target 5). Plan: 1) get blocked domains to filter; 2) query pms_subdomains for Buildium+Boulder (primary seed); 3) search web for list pages 'top property management Boulder CO' and fetch pages found; 4) for companies without PMS confirmation, run PMS analyzer; 5) for accepted companies, fetch contacts (1-3 each). Will call get_blocked_domains_tool first."}
+2025-11-20 20:16:20,095 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+--
+2025-11-20 20:16:24,995 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': 'Retrying initial mcp_think before calling get_blocked_domains_tool. Plan unchanged: call get_blocked_domains_tool next.'}
+2025-11-20 20:16:25,076 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+
+⚠️  Recent Errors:
+
+✅ Worker still running
+
+========================================
+Next check in 5 minutes...
+
+========================================
+🔍 Check #36 - Thu Nov 20 20:43:22 EST 2025
+========================================
+📊 Run Status:
+Stage: company_research
+Status: completed
+Target: 5
+Discovery Target: N/A
+
+🏢 Companies Found:
+Total: 10
+Validated: 10
+
+🧠 Recent Agent Reasoning (last 10 think calls):
+2025-11-20 19:51:36,798 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': 'Starting run 0915b268... Goal: find 10 companies in Boulder, CO that use Buildium (2x oversample for 5 target). Steps: 1) get blocked domains; 2) query pms_subdomains for Buildium+Boulder for seed companies; 3) search web for list pages for Boulder property management and fetch pages; 4) verify PMS for companies where needed; 5) gather contacts (1-3 per company). Will call get_blocked_domains_tool first.'}
+2025-11-20 19:51:37,447 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+--
+2025-11-20 19:51:51,057 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': "Ready to call get_blocked_domains_tool to retrieve suppressed domains. Plan: call functions.get_blocked_domains_tool() to get blocked domains list for filtering. After that I'll analyze and then query pms_subdomains for Buildium in Boulder, CO (limit 100)."}
+2025-11-20 19:51:56,331 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+--
+2025-11-20 19:52:40,882 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': "Observe: query_pms_subdomains_tool returned 1 Buildium company in Boulder: Matrix Real Estate, LLC (pms subdomain matrixrealestate.managebuilding.com). Analysis per company:\n1. Matrix Real Estate, LLC\n   - City: Boulder, CO ✓\n   - PMS: Buildium (pre-validated in pms_subdomains) ✓\n   - Domain: real_domain None, but pms_subdomain present → ACCEPT.\nAccepted: 1/10 companies. Progress: need 9 more. Next: search web for list pages for 'top property management Boulder CO' and fetch list pages (ipropertymanagement, expertise, etc.). Will call mcp_search_web with queries for Boulder list pages."}
+2025-11-20 19:52:40,940 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+--
+2025-11-20 20:16:20,002 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': "Starting run 0915b268... Goal: find 10 Boulder, CO companies using Buildium with 50+ units (2x oversample for target 5). Plan: 1) get blocked domains to filter; 2) query pms_subdomains for Buildium+Boulder (primary seed); 3) search web for list pages 'top property management Boulder CO' and fetch pages found; 4) for companies without PMS confirmation, run PMS analyzer; 5) for accepted companies, fetch contacts (1-3 each). Will call get_blocked_domains_tool first."}
+2025-11-20 20:16:20,095 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+--
+2025-11-20 20:16:24,995 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': 'Retrying initial mcp_think before calling get_blocked_domains_tool. Plan unchanged: call get_blocked_domains_tool next.'}
+2025-11-20 20:16:25,076 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+
+⚠️  Recent Errors:
+
+✅ Worker still running
+
+========================================
+Next check in 5 minutes...
+
+========================================
+🔍 Check #37 - Thu Nov 20 20:48:24 EST 2025
+========================================
+📊 Run Status:
+Stage: company_research
+Status: completed
+Target: 5
+Discovery Target: N/A
+
+🏢 Companies Found:
+Total: 14
+Validated: 14
+
+🧠 Recent Agent Reasoning (last 10 think calls):
+2025-11-20 19:51:36,798 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': 'Starting run 0915b268... Goal: find 10 companies in Boulder, CO that use Buildium (2x oversample for 5 target). Steps: 1) get blocked domains; 2) query pms_subdomains for Buildium+Boulder for seed companies; 3) search web for list pages for Boulder property management and fetch pages; 4) verify PMS for companies where needed; 5) gather contacts (1-3 per company). Will call get_blocked_domains_tool first.'}
+2025-11-20 19:51:37,447 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+--
+2025-11-20 19:51:51,057 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': "Ready to call get_blocked_domains_tool to retrieve suppressed domains. Plan: call functions.get_blocked_domains_tool() to get blocked domains list for filtering. After that I'll analyze and then query pms_subdomains for Buildium in Boulder, CO (limit 100)."}
+2025-11-20 19:51:56,331 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+--
+2025-11-20 19:52:40,882 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': "Observe: query_pms_subdomains_tool returned 1 Buildium company in Boulder: Matrix Real Estate, LLC (pms subdomain matrixrealestate.managebuilding.com). Analysis per company:\n1. Matrix Real Estate, LLC\n   - City: Boulder, CO ✓\n   - PMS: Buildium (pre-validated in pms_subdomains) ✓\n   - Domain: real_domain None, but pms_subdomain present → ACCEPT.\nAccepted: 1/10 companies. Progress: need 9 more. Next: search web for list pages for 'top property management Boulder CO' and fetch list pages (ipropertymanagement, expertise, etc.). Will call mcp_search_web with queries for Boulder list pages."}
+2025-11-20 19:52:40,940 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+--
+2025-11-20 20:16:20,002 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': "Starting run 0915b268... Goal: find 10 Boulder, CO companies using Buildium with 50+ units (2x oversample for target 5). Plan: 1) get blocked domains to filter; 2) query pms_subdomains for Buildium+Boulder (primary seed); 3) search web for list pages 'top property management Boulder CO' and fetch pages found; 4) for companies without PMS confirmation, run PMS analyzer; 5) for accepted companies, fetch contacts (1-3 each). Will call get_blocked_domains_tool first."}
+2025-11-20 20:16:20,095 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+--
+2025-11-20 20:16:24,995 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': 'Retrying initial mcp_think before calling get_blocked_domains_tool. Plan unchanged: call get_blocked_domains_tool next.'}
+2025-11-20 20:16:25,076 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+
+⚠️  Recent Errors:
+
+✅ Worker still running
+
+========================================
+Next check in 5 minutes...
+
+========================================
+🔍 Check #38 - Thu Nov 20 20:53:24 EST 2025
+========================================
+📊 Run Status:
+Stage: company_research
+Status: completed
+Target: 5
+Discovery Target: N/A
+
+🏢 Companies Found:
+Total: 14
+Validated: 14
+
+🧠 Recent Agent Reasoning (last 10 think calls):
+2025-11-20 19:51:51,057 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': "Ready to call get_blocked_domains_tool to retrieve suppressed domains. Plan: call functions.get_blocked_domains_tool() to get blocked domains list for filtering. After that I'll analyze and then query pms_subdomains for Buildium in Boulder, CO (limit 100)."}
+2025-11-20 19:51:56,331 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+--
+2025-11-20 19:52:40,882 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': "Observe: query_pms_subdomains_tool returned 1 Buildium company in Boulder: Matrix Real Estate, LLC (pms subdomain matrixrealestate.managebuilding.com). Analysis per company:\n1. Matrix Real Estate, LLC\n   - City: Boulder, CO ✓\n   - PMS: Buildium (pre-validated in pms_subdomains) ✓\n   - Domain: real_domain None, but pms_subdomain present → ACCEPT.\nAccepted: 1/10 companies. Progress: need 9 more. Next: search web for list pages for 'top property management Boulder CO' and fetch list pages (ipropertymanagement, expertise, etc.). Will call mcp_search_web with queries for Boulder list pages."}
+2025-11-20 19:52:40,940 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+--
+2025-11-20 20:16:20,002 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': "Starting run 0915b268... Goal: find 10 Boulder, CO companies using Buildium with 50+ units (2x oversample for target 5). Plan: 1) get blocked domains to filter; 2) query pms_subdomains for Buildium+Boulder (primary seed); 3) search web for list pages 'top property management Boulder CO' and fetch pages found; 4) for companies without PMS confirmation, run PMS analyzer; 5) for accepted companies, fetch contacts (1-3 each). Will call get_blocked_domains_tool first."}
+2025-11-20 20:16:20,095 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+--
+2025-11-20 20:16:24,995 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': 'Retrying initial mcp_think before calling get_blocked_domains_tool. Plan unchanged: call get_blocked_domains_tool next.'}
+2025-11-20 20:16:25,076 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+--
+2025-11-20 20:51:46,796 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': 'Start run_id 0915b268... Goal: find 10 Boulder, CO companies using Buildium with 50+ units. Plan: 1) get blocked domains; 2) query pms_subdomains for Buildium + Boulder, CO as primary seed; 3) if fewer than 10, run web searches for list pages (search_web) and fetch_page on list URLs; 4) for each candidate, verify PMS using Run_PMS_Analyzer or LangSearch_API if not already confirmed; 5) collect contacts with get_contacts and get_verified_emails. First action: call get_blocked_domains_tool to load suppressed domains.'}
+2025-11-20 20:51:46,909 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+--
+2025-11-20 20:51:52,883 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': 'Retrying: will call get_blocked_domains_tool to retrieve suppressed domains list. Then will call query_pms_subdomains_tool for Buildium in Boulder, CO.'}
+2025-11-20 20:51:52,963 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+--
+2025-11-20 20:52:06,345 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': "Observe: Retrieved large blocked domains list (~thousands). Will now query pms_subdomains for Buildium in Boulder, CO to get pre-validated companies. Parameters: pms='Buildium', state='CO', city='Boulder', limit=100. Next tool: query_pms_subdomains_tool."}
+2025-11-20 20:52:06,653 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+
+⚠️  Recent Errors:
+2025-11-20 20:51:36,510 [INFO] __main__: Retrying region Region 1 (previous error: Cancelled due to overall retry timeout)
+
+✅ Worker still running
+
+========================================
+Next check in 5 minutes...
+
+========================================
+🔍 Check #39 - Thu Nov 20 20:58:25 EST 2025
+========================================
+📊 Run Status:
+Stage: contact_discovery
+Status: completed
+Target: 5
+Discovery Target: N/A
+
+🏢 Companies Found:
+Total: 14
+Validated: 14
+
+🧠 Recent Agent Reasoning (last 10 think calls):
+2025-11-20 19:51:51,057 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': "Ready to call get_blocked_domains_tool to retrieve suppressed domains. Plan: call functions.get_blocked_domains_tool() to get blocked domains list for filtering. After that I'll analyze and then query pms_subdomains for Buildium in Boulder, CO (limit 100)."}
+2025-11-20 19:51:56,331 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+--
+2025-11-20 19:52:40,882 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': "Observe: query_pms_subdomains_tool returned 1 Buildium company in Boulder: Matrix Real Estate, LLC (pms subdomain matrixrealestate.managebuilding.com). Analysis per company:\n1. Matrix Real Estate, LLC\n   - City: Boulder, CO ✓\n   - PMS: Buildium (pre-validated in pms_subdomains) ✓\n   - Domain: real_domain None, but pms_subdomain present → ACCEPT.\nAccepted: 1/10 companies. Progress: need 9 more. Next: search web for list pages for 'top property management Boulder CO' and fetch list pages (ipropertymanagement, expertise, etc.). Will call mcp_search_web with queries for Boulder list pages."}
+2025-11-20 19:52:40,940 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+--
+2025-11-20 20:16:20,002 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': "Starting run 0915b268... Goal: find 10 Boulder, CO companies using Buildium with 50+ units (2x oversample for target 5). Plan: 1) get blocked domains to filter; 2) query pms_subdomains for Buildium+Boulder (primary seed); 3) search web for list pages 'top property management Boulder CO' and fetch pages found; 4) for companies without PMS confirmation, run PMS analyzer; 5) for accepted companies, fetch contacts (1-3 each). Will call get_blocked_domains_tool first."}
+2025-11-20 20:16:20,095 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+--
+2025-11-20 20:16:24,995 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': 'Retrying initial mcp_think before calling get_blocked_domains_tool. Plan unchanged: call get_blocked_domains_tool next.'}
+2025-11-20 20:16:25,076 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+--
+2025-11-20 20:51:46,796 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': 'Start run_id 0915b268... Goal: find 10 Boulder, CO companies using Buildium with 50+ units. Plan: 1) get blocked domains; 2) query pms_subdomains for Buildium + Boulder, CO as primary seed; 3) if fewer than 10, run web searches for list pages (search_web) and fetch_page on list URLs; 4) for each candidate, verify PMS using Run_PMS_Analyzer or LangSearch_API if not already confirmed; 5) collect contacts with get_contacts and get_verified_emails. First action: call get_blocked_domains_tool to load suppressed domains.'}
+2025-11-20 20:51:46,909 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+--
+2025-11-20 20:51:52,883 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': 'Retrying: will call get_blocked_domains_tool to retrieve suppressed domains list. Then will call query_pms_subdomains_tool for Buildium in Boulder, CO.'}
+2025-11-20 20:51:52,963 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+--
+2025-11-20 20:52:06,345 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': "Observe: Retrieved large blocked domains list (~thousands). Will now query pms_subdomains for Buildium in Boulder, CO to get pre-validated companies. Parameters: pms='Buildium', state='CO', city='Boulder', limit=100. Next tool: query_pms_subdomains_tool."}
+2025-11-20 20:52:06,653 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+
+⚠️  Recent Errors:
+
+✅ Worker still running
+
+========================================
+Next check in 5 minutes...
+
+========================================
+🔍 Check #40 - Thu Nov 20 21:03:26 EST 2025
+========================================
+📊 Run Status:
+Stage: contact_discovery
+Status: completed
+Target: 5
+Discovery Target: N/A
+
+🏢 Companies Found:
+Total: 14
+Validated: 14
+
+🧠 Recent Agent Reasoning (last 10 think calls):
+2025-11-20 19:52:40,882 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': "Observe: query_pms_subdomains_tool returned 1 Buildium company in Boulder: Matrix Real Estate, LLC (pms subdomain matrixrealestate.managebuilding.com). Analysis per company:\n1. Matrix Real Estate, LLC\n   - City: Boulder, CO ✓\n   - PMS: Buildium (pre-validated in pms_subdomains) ✓\n   - Domain: real_domain None, but pms_subdomain present → ACCEPT.\nAccepted: 1/10 companies. Progress: need 9 more. Next: search web for list pages for 'top property management Boulder CO' and fetch list pages (ipropertymanagement, expertise, etc.). Will call mcp_search_web with queries for Boulder list pages."}
+2025-11-20 19:52:40,940 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+--
+2025-11-20 20:16:20,002 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': "Starting run 0915b268... Goal: find 10 Boulder, CO companies using Buildium with 50+ units (2x oversample for target 5). Plan: 1) get blocked domains to filter; 2) query pms_subdomains for Buildium+Boulder (primary seed); 3) search web for list pages 'top property management Boulder CO' and fetch pages found; 4) for companies without PMS confirmation, run PMS analyzer; 5) for accepted companies, fetch contacts (1-3 each). Will call get_blocked_domains_tool first."}
+2025-11-20 20:16:20,095 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+--
+2025-11-20 20:16:24,995 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': 'Retrying initial mcp_think before calling get_blocked_domains_tool. Plan unchanged: call get_blocked_domains_tool next.'}
+2025-11-20 20:16:25,076 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+--
+2025-11-20 20:51:46,796 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': 'Start run_id 0915b268... Goal: find 10 Boulder, CO companies using Buildium with 50+ units. Plan: 1) get blocked domains; 2) query pms_subdomains for Buildium + Boulder, CO as primary seed; 3) if fewer than 10, run web searches for list pages (search_web) and fetch_page on list URLs; 4) for each candidate, verify PMS using Run_PMS_Analyzer or LangSearch_API if not already confirmed; 5) collect contacts with get_contacts and get_verified_emails. First action: call get_blocked_domains_tool to load suppressed domains.'}
+2025-11-20 20:51:46,909 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+--
+2025-11-20 20:51:52,883 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': 'Retrying: will call get_blocked_domains_tool to retrieve suppressed domains list. Then will call query_pms_subdomains_tool for Buildium in Boulder, CO.'}
+2025-11-20 20:51:52,963 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+--
+2025-11-20 20:52:06,345 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': "Observe: Retrieved large blocked domains list (~thousands). Will now query pms_subdomains for Buildium in Boulder, CO to get pre-validated companies. Parameters: pms='Buildium', state='CO', city='Boulder', limit=100. Next tool: query_pms_subdomains_tool."}
+2025-11-20 20:52:06,653 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+
+⚠️  Recent Errors:
+
+✅ Worker still running
+
+========================================
+Next check in 5 minutes...
+
+========================================
+🔍 Check #41 - Thu Nov 20 21:08:27 EST 2025
+========================================
+📊 Run Status:
+Stage: contact_discovery
+Status: error
+Target: 5
+Discovery Target: N/A
+
+🏢 Companies Found:
+Total: 14
+Validated: 14
+
+🧠 Recent Agent Reasoning (last 10 think calls):
+2025-11-20 20:16:20,002 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': "Starting run 0915b268... Goal: find 10 Boulder, CO companies using Buildium with 50+ units (2x oversample for target 5). Plan: 1) get blocked domains to filter; 2) query pms_subdomains for Buildium+Boulder (primary seed); 3) search web for list pages 'top property management Boulder CO' and fetch pages found; 4) for companies without PMS confirmation, run PMS analyzer; 5) for accepted companies, fetch contacts (1-3 each). Will call get_blocked_domains_tool first."}
+2025-11-20 20:16:20,095 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+--
+2025-11-20 20:16:24,995 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': 'Retrying initial mcp_think before calling get_blocked_domains_tool. Plan unchanged: call get_blocked_domains_tool next.'}
+2025-11-20 20:16:25,076 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+--
+2025-11-20 20:51:46,796 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': 'Start run_id 0915b268... Goal: find 10 Boulder, CO companies using Buildium with 50+ units. Plan: 1) get blocked domains; 2) query pms_subdomains for Buildium + Boulder, CO as primary seed; 3) if fewer than 10, run web searches for list pages (search_web) and fetch_page on list URLs; 4) for each candidate, verify PMS using Run_PMS_Analyzer or LangSearch_API if not already confirmed; 5) collect contacts with get_contacts and get_verified_emails. First action: call get_blocked_domains_tool to load suppressed domains.'}
+2025-11-20 20:51:46,909 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+--
+2025-11-20 20:51:52,883 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': 'Retrying: will call get_blocked_domains_tool to retrieve suppressed domains list. Then will call query_pms_subdomains_tool for Buildium in Boulder, CO.'}
+2025-11-20 20:51:52,963 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+--
+2025-11-20 20:52:06,345 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': "Observe: Retrieved large blocked domains list (~thousands). Will now query pms_subdomains for Buildium in Boulder, CO to get pre-validated companies. Parameters: pms='Buildium', state='CO', city='Boulder', limit=100. Next tool: query_pms_subdomains_tool."}
+2025-11-20 20:52:06,653 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+
+⚠️  Recent Errors:
+2025-11-20 21:06:36,526 [ERROR] __main__: Retry window exceeded overall timeout; cancelling remaining retry regions
+
+✅ Worker still running
+
+========================================
+Next check in 5 minutes...
+
+========================================
+🔍 Check #42 - Thu Nov 20 21:13:28 EST 2025
+========================================
+📊 Run Status:
+Stage: done
+Status: error
+Target: 5
+Discovery Target: N/A
+
+🏢 Companies Found:
+Total: 14
+Validated: 14
+
+🧠 Recent Agent Reasoning (last 10 think calls):
+2025-11-20 20:16:20,002 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': "Starting run 0915b268... Goal: find 10 Boulder, CO companies using Buildium with 50+ units (2x oversample for target 5). Plan: 1) get blocked domains to filter; 2) query pms_subdomains for Buildium+Boulder (primary seed); 3) search web for list pages 'top property management Boulder CO' and fetch pages found; 4) for companies without PMS confirmation, run PMS analyzer; 5) for accepted companies, fetch contacts (1-3 each). Will call get_blocked_domains_tool first."}
+2025-11-20 20:16:20,095 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+--
+2025-11-20 20:16:24,995 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': 'Retrying initial mcp_think before calling get_blocked_domains_tool. Plan unchanged: call get_blocked_domains_tool next.'}
+2025-11-20 20:16:25,076 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+--
+2025-11-20 20:51:46,796 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': 'Start run_id 0915b268... Goal: find 10 Boulder, CO companies using Buildium with 50+ units. Plan: 1) get blocked domains; 2) query pms_subdomains for Buildium + Boulder, CO as primary seed; 3) if fewer than 10, run web searches for list pages (search_web) and fetch_page on list URLs; 4) for each candidate, verify PMS using Run_PMS_Analyzer or LangSearch_API if not already confirmed; 5) collect contacts with get_contacts and get_verified_emails. First action: call get_blocked_domains_tool to load suppressed domains.'}
+2025-11-20 20:51:46,909 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+--
+2025-11-20 20:51:52,883 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': 'Retrying: will call get_blocked_domains_tool to retrieve suppressed domains list. Then will call query_pms_subdomains_tool for Buildium in Boulder, CO.'}
+2025-11-20 20:51:52,963 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+--
+2025-11-20 20:52:06,345 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': "Observe: Retrieved large blocked domains list (~thousands). Will now query pms_subdomains for Buildium in Boulder, CO to get pre-validated companies. Parameters: pms='Buildium', state='CO', city='Boulder', limit=100. Next tool: query_pms_subdomains_tool."}
+2025-11-20 20:52:06,653 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+
+⚠️  Recent Errors:
+2025-11-20 21:06:36,526 [ERROR] __main__: Retry window exceeded overall timeout; cancelling remaining retry regions
+2025-11-20 21:11:45,685 [INFO] __main__: Parallel multi-region discovery complete: 0 successful regions, 1 failed regions
+2025-11-20 21:11:46,586 [INFO] __main__: Agent quality notes: Parallel multi-region discovery: 0/1 regions succeeded (failed after retries: Region 1)
+
+❌ Worker stopped!
+Check #42 - Worker died unexpectedly

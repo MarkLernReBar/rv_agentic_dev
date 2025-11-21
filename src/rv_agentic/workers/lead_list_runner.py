@@ -32,6 +32,7 @@ from rv_agentic.services import supabase_client, retry, hubspot_client, notifica
 from rv_agentic.services.heartbeat import WorkerHeartbeat
 from rv_agentic.services.geography_decomposer import decompose_geography, format_region_for_prompt
 from rv_agentic.workers.utils import load_env_files
+from rv_agentic.tools import mcp_client
 
 
 class ActiveRunsFetcher(Protocol):
@@ -67,6 +68,13 @@ def _maybe_advance_run_stage(run_id: str) -> None:
     if stage == "company_discovery" and companies_gap <= 0:
         supabase_client.set_run_stage(run_id=run_id, stage="company_research")
         stage = "company_research"
+        supabase_client.insert_audit_event(
+            run_id=run_id,
+            entity_type="run",
+            entity_id=run_id,
+            event="stage_advanced",
+            meta={"to": "company_research"},
+        )
     # Cascade to contact_discovery when no research queue remains
     if stage == "company_research" and companies_gap <= 0:
         try:
@@ -75,6 +83,19 @@ def _maybe_advance_run_stage(run_id: str) -> None:
             has_research = True
         if not has_research:
             supabase_client.set_run_stage(run_id=run_id, stage="contact_discovery")
+            supabase_client.insert_audit_event(
+                run_id=run_id,
+                entity_type="run",
+                entity_id=run_id,
+                event="stage_advanced",
+                meta={"to": "contact_discovery"},
+            )
+
+
+def _log_run_event(run_id: str, stage: str, action: str, payload: dict[str, Any] | None = None) -> None:
+    """Emit a structured log line for UI/ops consumption (no DB schema changes)."""
+    data = payload or {}
+    logger.info("EVENT|run_id=%s|stage=%s|action=%s|data=%s", run_id, stage, action, json.dumps(data, ensure_ascii=False))
 
 
 def _deduplicate_companies_by_domain(companies: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -144,35 +165,54 @@ def _run_region_agent(
         region_prompt = format_region_for_prompt(region, criteria)
 
         agent = create_lead_list_agent()
-        prompt = (
-            "You are running in **worker mode** for an async lead list run.\n"
-            "This is a **parallel multi-region discovery strategy**: you are assigned a specific geographic region.\n\n"
-            f"{region_prompt}\n\n"
-            "In this environment, plain text explanations are not enough – your primary job is to\n"
-            "**populate your structured output (LeadListOutput)** with ALL high-quality companies\n"
-            "in your assigned region that meet the criteria.\n\n"
-            f"Run id (for your reasoning only): {run_id}\n"
-            f"Run criteria JSON (authoritative requirements): {json.dumps(criteria, ensure_ascii=False)}\n\n"
-            f"**Progress context**: This is region {region_num} of {total_regions} running IN PARALLEL.\n"
-            f"Target for this run: {target_qty} final companies.\n"
-            f"Discovery target: {discovery_target} companies ({oversample_factor:.1f}x oversample).\n\n"
-            "**Your goal for this region**: Find 8-12 high-quality companies in your assigned region.\n"
-            "Other regions are being covered SIMULTANEOUSLY by other agents, so focus ONLY on your assigned area.\n\n"
+
+        # Simplify prompt when running single region (the default)
+        if total_regions == 1:
+            prompt = (
+                "You are running in **worker mode** for an async lead list run.\n\n"
+                f"Run id (for your reasoning only): {run_id}\n"
+                f"Run criteria JSON (authoritative requirements): {json.dumps(criteria, ensure_ascii=False)}\n\n"
+                f"**Your goal**: Find {discovery_target} companies ({oversample_factor:.1f}x oversample of {target_qty} target).\n\n"
+                "In this environment, plain text explanations are not enough – your primary job is to\n"
+                "**populate your structured output (LeadListOutput)** with ALL high-quality companies\n"
+                "that meet the criteria.\n\n"
+            )
+        else:
+            prompt = (
+                "You are running in **worker mode** for an async lead list run.\n"
+                "This is a **parallel multi-region discovery strategy**: you are assigned a specific geographic region.\n\n"
+                f"{region_prompt}\n\n"
+                "In this environment, plain text explanations are not enough – your primary job is to\n"
+                "**populate your structured output (LeadListOutput)** with ALL high-quality companies\n"
+                "in your assigned region that meet the criteria.\n\n"
+                f"Run id (for your reasoning only): {run_id}\n"
+                f"Run criteria JSON (authoritative requirements): {json.dumps(criteria, ensure_ascii=False)}\n\n"
+                f"**Progress context**: This is region {region_num} of {total_regions} running IN PARALLEL.\n"
+                f"Target for this run: {target_qty} final companies.\n"
+                f"Discovery target: {discovery_target} companies ({oversample_factor:.1f}x oversample).\n\n"
+                "**Your goal for this region**: Find 8-12 high-quality companies in your assigned region.\n"
+                "Other regions are being covered SIMULTANEOUSLY by other agents, so focus ONLY on your assigned area.\n\n"
+            )
+
+        prompt += (
             "Your success criteria:\n"
-            "- Search exhaustively within YOUR ASSIGNED REGION using MCP search tools\n"
+            "- **PRIMARY STRATEGY**: Use `fetch_page` to extract companies from list pages\n"
+            "  - Search for 'top property management [city]' to find list pages\n"
+            "  - When you see a list URL (ipropertymanagement.com, expertise.com, etc.), IMMEDIATELY use `fetch_page`\n"
+            "  - Extract ALL companies from the page into your `companies` array\n"
+            "  - This is how you get 10-50 companies from one source\n"
             "- Add ALL matching companies to `companies` in LeadListOutput\n"
             "- **SORT** by quality/confidence - strongest matches FIRST\n"
             "- Skip companies whose domain is in the blocked domains list\n"
             "- For each company, try to find 1-3 decision makers in `contacts`\n"
-            "- Set `search_exhausted=True` if you've checked all sources in your region\n\n"
-            f"**Efficiency guard**: Use at most {region_query_budget} MCP search queries for this region. Stop early if you've already found enough strong companies.\n\n"
+            "- Set `search_exhausted=True` if you've checked all sources\n\n"
             "Tool sequence:\n"
             "1) Call get_blocked_domains_tool once\n"
-            "2) Use MCP search tools for your region (multiple searches with different strategies)\n"
-            "3) Use company profile tools to enrich\n"
-            "4) Use contact tools to find decision makers\n"
-            "5) Return structured LeadListOutput with your findings\n\n"
-            "Focus on your region only. Return your best 8-12 companies from this area.\n"
+            "2) Use `search_web` to find company list pages (3-5 searches)\n"
+            "3) **CRITICAL**: Use `fetch_page` on EVERY list page URL you find\n"
+            "4) Use `LangSearch_API` or `Run_PMS_Analyzer_Script` to verify PMS for each company\n"
+            "5) Use contact tools to find 1-3 decision makers per company\n"
+            "6) Return structured LeadListOutput with your findings\n\n"
         )
 
         # Call agent with increased turn limit
@@ -197,6 +237,18 @@ def _run_region_agent(
         except Exception as e:
             logger.warning(f"Region {region_num} ({region_name}) failed to parse structured output: {e}")
             typed = LeadListOutput()
+        finally:
+            # CRITICAL: Reset MCP counters after each agent run to prevent deluge
+            from rv_agentic.tools import mcp_client
+            mcp_client.reset_mcp_counters()
+
+            # Force garbage collection to clean up any orphaned async tasks
+            import gc
+            gc.collect()
+
+            # Extended pause for MCP session cleanup (1.0s instead of 0.3s)
+            import time
+            time.sleep(1.0)
 
         # Add discovery_source tracking with region name
         region_companies = [c.model_dump() for c in (typed.companies or [])]
@@ -247,7 +299,11 @@ def _discover_companies_multi_region(
     """
 
     # Decompose geography into regions
-    num_regions = 4
+    # Default to 1 region (single agent call) for simpler, more effective search
+    # Can override with LEAD_LIST_REGION_COUNT=4 for large geographies
+    num_regions = int(os.getenv("LEAD_LIST_REGION_COUNT", "1"))
+    region_workers = int(os.getenv("LEAD_LIST_REGION_WORKERS", "1"))
+    region_workers = max(1, min(region_workers, num_regions))
     regions = decompose_geography(criteria, num_regions=num_regions)
 
     logger.info(
@@ -261,7 +317,7 @@ def _discover_companies_multi_region(
     failed_regions = []
 
     # Launch all 4 regions in parallel using ThreadPoolExecutor
-    with ThreadPoolExecutor(max_workers=4) as executor:
+    with ThreadPoolExecutor(max_workers=region_workers) as executor:
         # Submit all region tasks
         futures = {}
         for i, region in enumerate(regions):
@@ -530,6 +586,18 @@ def _discover_companies_secondary(
     except Exception as e:
         logger.warning("Secondary strategy failed to parse structured output: %s", e)
         typed = LeadListOutput()
+    finally:
+        # CRITICAL: Reset MCP counters after agent run to prevent deluge
+        from rv_agentic.tools import mcp_client
+        mcp_client.reset_mcp_counters()
+
+        # Force garbage collection to clean up any orphaned async tasks
+        import gc
+        gc.collect()
+
+        # Extended pause for MCP session cleanup (1.0s instead of 0.3s)
+        import time
+        time.sleep(1.0)
 
     # Tag discovery source for traceability
     for ct in typed.contacts or []:
@@ -551,6 +619,9 @@ def process_run(run: Dict[str, Any], heartbeat: WorkerHeartbeat | None = None) -
     delegates reasoning and tool calls to the Lead List Agent.
     """
 
+    # Reset MCP counters per run to avoid cross-run leakage and runaway calls.
+    mcp_client.reset_mcp_counters()
+
     raw_criteria = run.get("criteria")
     criteria: Dict[str, Any]
     if isinstance(raw_criteria, dict):
@@ -565,6 +636,51 @@ def process_run(run: Dict[str, Any], heartbeat: WorkerHeartbeat | None = None) -
     else:
         criteria = {}
     run_id = str(run.get("id") or "")
+
+    def _promote_from_staging_until_gap_closed(
+        *,
+        max_passes: int = 3,
+        promotion_batch: int = 25,
+    ) -> int:
+        """Continuously promote staging companies until discovery gap closes or passes exhausted."""
+
+        promoted_total = 0
+        goal = discovery_target or target_qty or 0
+        for _ in range(max_passes):
+            try:
+                gap_info = supabase_client.get_pm_company_gap(run_id)
+                ready_now = int((gap_info or {}).get("companies_ready") or 0)
+            except Exception:
+                ready_now = 0
+            if goal and ready_now >= goal:
+                break
+            to_fetch = max(0, goal - ready_now)
+            if to_fetch <= 0:
+                break
+            promoted = supabase_client.promote_staging_companies_to_run(
+                search_run_id=run_id,
+                pm_run_id=run_id,
+                pms_required=pms_required or None,
+                max_companies=min(promotion_batch, to_fetch),
+            )
+            if promoted:
+                promoted_total += promoted
+                supabase_client.insert_audit_event(
+                    run_id=run_id,
+                    entity_type="run",
+                    entity_id=run_id,
+                    event="staging_promoted",
+                    meta={"count": promoted, "pass": promoted_total},
+                )
+                _log_run_event(
+                    run_id,
+                    "company_discovery",
+                    "staging_promoted",
+                    {"count": promoted, "ready_after": ready_now + promoted},
+                )
+            if promoted == 0:
+                break
+        return promoted_total
 
     def _insert_from_structured_output(
         typed: LeadListOutput,
@@ -616,6 +732,20 @@ def process_run(run: Dict[str, Any], heartbeat: WorkerHeartbeat | None = None) -
                 continue
 
             try:
+                supabase_client.insert_staging_company(
+                    search_run_id=run_id,
+                    name=cc.name or domain,
+                    domain=domain,
+                    website=f"https://{domain}",
+                    state=(cc.state or state or "NA"),
+                    pms_detected=getattr(cc, "pms_detected", None),
+                    pms_confidence=1.0,
+                    raw={"source": getattr(cc, "discovery_source", None) or "agent_structured"},
+                )
+            except Exception:
+                pass
+
+            try:
                 suppression_check = hubspot_client.check_company_suppression(domain, days=90)
                 if suppression_check.get('should_suppress'):
                     reason = suppression_check.get('reason')
@@ -637,12 +767,33 @@ def process_run(run: Dict[str, Any], heartbeat: WorkerHeartbeat | None = None) -
                         last_contact_type=details.get('last_contact_type'),
                         engagement_count=details.get('engagement_count'),
                     )
+                    supabase_client.insert_audit_event(
+                        run_id=run_id,
+                        entity_type="company",
+                        entity_id=None,
+                        event="company_suppressed",
+                        meta={"domain": domain, "reason": reason, "details": details},
+                    )
+                    _log_run_event(run_id, "company_discovery", "company_suppressed", {"domain": domain, "reason": reason})
                     continue
             except Exception as e:
                 logger.warning("HubSpot suppression check failed for domain=%s: %s", domain, e)
 
             name = cc.name or domain
             website = f"https://{domain}"
+            try:
+                supabase_client.insert_staging_company(
+                    search_run_id=run_id,
+                    name=name,
+                    domain=domain,
+                    website=website,
+                    state=(cc.state or state or "NA"),
+                    pms_detected=getattr(cc, "pms_detected", None),
+                    pms_confidence=1.0,
+                    raw={"source": getattr(cc, "discovery_source", None) or "agent_structured"},
+                )
+            except Exception:
+                pass
             try:
                 row = supabase_client.insert_company_candidate(
                     run_id=run_id,
@@ -664,6 +815,19 @@ def process_run(run: Dict[str, Any], heartbeat: WorkerHeartbeat | None = None) -
                         domain,
                         run_id,
                     )
+                    supabase_client.insert_audit_event(
+                        run_id=run_id,
+                        entity_type="company",
+                        entity_id=row.get("id"),
+                        event="company_inserted",
+                        meta={"domain": domain, "source": getattr(cc, "discovery_source", None) or "agent_structured"},
+                    )
+                    _log_run_event(
+                        run_id,
+                        "company_discovery",
+                        "company_inserted",
+                        {"company_id": row.get("id"), "domain": domain, "source": getattr(cc, "discovery_source", None) or "agent_structured"},
+                    )
                 else:
                     logger.info(
                         "Duplicate/blocked company skipped domain=%s run_id=%s (likely already present)",
@@ -677,24 +841,40 @@ def process_run(run: Dict[str, Any], heartbeat: WorkerHeartbeat | None = None) -
                     run_id,
                 )
 
+        # Check if companies were actually inserted (not just in THIS run of the worker)
+        # The 'companies' list only tracks NEW inserts in this worker run, but companies
+        # may already exist from previous runs. Check the actual database count.
         if not companies:
-            msg = (
-                f"Lead List Agent completed without inserting any companies for run {run_id}. "
-                "This most likely indicates that no companies match the given PMS/location "
-                "constraints after reasonable search."
-            )
-            logger.warning(msg)
-            try:
-                supabase_client.update_pm_run_status(run_id=run_id, status="needs_user_decision", error=msg)
-                notifications.send_run_notification(
-                    run_id=run_id,
-                    subject="Lead list run needs review (no companies inserted)",
-                    body=msg,
-                    to_email="mlerner@rebarhq.ai",
+            # Verify there truly are no companies before sending error notification
+            existing_count = supabase_client.count_company_candidates(run_id)
+            if existing_count == 0:
+                msg = (
+                    f"Lead List Agent completed without discovering any companies for run {run_id}. "
+                    "This indicates that no companies match the given PMS/location "
+                    "constraints after reasonable search."
                 )
-            except Exception:
-                logger.exception("Failed to update status/notify after empty company set for run %s", run_id)
-            return (0, 0)
+                logger.warning(msg)
+                try:
+                    supabase_client.update_pm_run_status(run_id=run_id, status="needs_user_decision", error=msg)
+                    notifications.send_run_notification(
+                        run_id=run_id,
+                        subject="Lead list run needs review (no companies discovered)",
+                        body=msg,
+                        to_email="mlerner@rebarhq.ai",
+                    )
+                except Exception:
+                    logger.exception("Failed to update status/notify after empty company set for run %s", run_id)
+                return (0, 0)
+            else:
+                # Companies exist from previous worker run - this is normal after restart
+                logger.info(
+                    "No NEW companies inserted in this worker run for %s, but %d companies already exist. "
+                    "This is expected when rerunning/restarting the worker.",
+                    run_id,
+                    existing_count,
+                )
+                # Return early since contact handling below requires the companies list
+                return (existing_count, 0)
 
         domain_to_company_id: Dict[str, str] = {}
         for row in companies:
@@ -730,6 +910,13 @@ def process_run(run: Dict[str, Any], heartbeat: WorkerHeartbeat | None = None) -
                 if row:
                     contacts.append(row)
                     per_company_counts[company_id] = count + 1
+                    supabase_client.insert_audit_event(
+                        run_id=run_id,
+                        entity_type="contact",
+                        entity_id=row.get("id"),
+                        event="contact_inserted",
+                        meta={"company_id": company_id, "email": row.get("email"), "name": row.get("full_name")},
+                    )
                     logger.info(
                         "Structured insert_contact_candidate id=%s company_id=%s email=%s",
                         row.get("id"),
@@ -749,6 +936,68 @@ def process_run(run: Dict[str, Any], heartbeat: WorkerHeartbeat | None = None) -
             len(companies),
             len(contacts),
         )
+        # Promote staged rows again now that structured inserts are done.
+        try:
+            _promote_from_staging_until_gap_closed(max_passes=2, promotion_batch=discovery_target or 50)
+        except Exception:
+            logger.exception("Staging promotion failed for run_id=%s", run_id)
+
+        # Final fallback: if we still have a gap, pull from research_database by PMS/geo.
+        try:
+            gap_info = supabase_client.get_pm_company_gap(run_id)
+            ready_now = int((gap_info or {}).get("companies_ready") or 0)
+        except Exception:
+            ready_now = len(companies)
+        gap_remaining = max(0, target_qty - ready_now) if target_qty else 0
+        if gap_remaining > 0 and pms_required:
+            try:
+                fallback_rows = supabase_client.find_company(
+                    pms=pms_required,
+                    city=city or None,
+                    limit=gap_remaining * 2 or 10,
+                ) or []
+            except Exception:
+                fallback_rows = []
+            for row in fallback_rows:
+                if gap_remaining <= 0:
+                    break
+                domain = (row.get("domain") or "").strip().lower()
+                if not domain or "." not in domain:
+                    continue
+                name = (row.get("company_name") or domain).strip() or domain
+                website = (row.get("company_url") or "").strip() or f"https://{domain}"
+                try:
+                    supabase_client.insert_staging_company(
+                        search_run_id=run_id,
+                        name=name,
+                        domain=domain,
+                        website=website,
+                        state=(row.get("hq_state") or state or "NA"),
+                        pms_detected=pms_required,
+                        pms_confidence=1.0,
+                        raw={"source": "research_database_fallback"},
+                    )
+                    res = supabase_client.insert_company_candidate(
+                        run_id=run_id,
+                        name=name,
+                        website=website,
+                        domain=domain,
+                        state=(row.get("hq_state") or state or "NA"),
+                        discovery_source="research_database_fallback",
+                        status="validated",
+                    )
+                    if res:
+                        gap_remaining -= 1
+                        supabase_client.insert_audit_event(
+                            run_id=run_id,
+                            entity_type="company",
+                            entity_id=res.get("id"),
+                            event="company_inserted",
+                            meta={"domain": domain, "source": "research_database_fallback"},
+                        )
+                except Exception:
+                    continue
+
         return (len(companies), len(contacts))
 
     # Update heartbeat with current task including batch progress
@@ -793,6 +1042,10 @@ def process_run(run: Dict[str, Any], heartbeat: WorkerHeartbeat | None = None) -
     except Exception:
         target_qty = 0
 
+    # Oversample to account for attrition in enrichment stages (suppression, ICP filters, contact failures).
+    oversample_factor = float(os.getenv("LEAD_LIST_OVERSAMPLE_FACTOR", "2.0"))
+    discovery_target = int(target_qty * oversample_factor) if target_qty > 0 else 0
+
     if pms_required:
         oversample = float(os.getenv("PM_PMS_SEED_OVERSAMPLE", "2.0"))
         seed_limit = int(max((target_qty or 10) * oversample, 10))
@@ -833,6 +1086,19 @@ def process_run(run: Dict[str, Any], heartbeat: WorkerHeartbeat | None = None) -
                 continue
             name = company_name or domain
             website = f"https://{domain}"
+            try:
+                supabase_client.insert_staging_company(
+                    search_run_id=run_id,
+                    name=name,
+                    domain=domain,
+                    website=website,
+                    state=state or "NA",
+                    pms_detected=pms_required,
+                    pms_confidence=1.0,
+                    raw={"source": "pms_subdomains"},
+                )
+            except Exception:
+                pass
             try:
                 # PMS subdomain seeds are already known to use the required PMS,
                 # so they can be treated as validated discovery-stage companies.
@@ -877,6 +1143,19 @@ def process_run(run: Dict[str, Any], heartbeat: WorkerHeartbeat | None = None) -
             neo_state = (row.get("hq_state") or "").strip().upper()
             neo_city = (row.get("target_city") or row.get("hq_city") or "").strip()
             try:
+                supabase_client.insert_staging_company(
+                    search_run_id=run_id,
+                    name=name,
+                    domain=domain,
+                    website=website,
+                    state=(neo_state or state or "NA"),
+                    pms_detected=pms_required,
+                    pms_confidence=1.0,
+                    raw={"source": "neo_pms", "city": neo_city},
+                )
+            except Exception:
+                pass
+            try:
                 supabase_client.insert_company_candidate(
                     run_id=run_id,
                     name=name,
@@ -894,10 +1173,11 @@ def process_run(run: Dict[str, Any], heartbeat: WorkerHeartbeat | None = None) -
                     run_id,
                 )
 
-    # Oversample to account for attrition in enrichment stages
-    # (company ICP filtering, contact discovery failures, etc.)
-    oversample_factor = float(os.getenv("LEAD_LIST_OVERSAMPLE_FACTOR", "2.0"))
-    discovery_target = int(target_qty * oversample_factor) if target_qty > 0 else 0
+        # Immediately promote any eligible staged seeds to reduce later MCP load.
+        try:
+            _promote_from_staging_until_gap_closed(max_passes=2, promotion_batch=seed_limit)
+        except Exception:
+            logger.exception("Staging promotion failed after seeding for run_id=%s", run_id)
 
     # Check how many companies we already have; treat errors as 0-ready.
     try:
@@ -990,6 +1270,10 @@ def process_run(run: Dict[str, Any], heartbeat: WorkerHeartbeat | None = None) -
                 discovery_target=discovery_target,
                 existing_ready=ready_after_first,
             )
+            try:
+                _promote_from_staging_until_gap_closed(max_passes=2, promotion_batch=discovery_target or 50)
+            except Exception:
+                logger.exception("Post-secondary staging promotion failed for run_id=%s", run_id)
 
     # Final check: if we are still below the final target quantity after all strategies,
     # surface a decision + alert to keep the workflow visible.
@@ -999,6 +1283,15 @@ def process_run(run: Dict[str, Any], heartbeat: WorkerHeartbeat | None = None) -
     except Exception:
         final_ready = 0
     if target_qty and final_ready < target_qty:
+        try:
+            # Last chance: promote any remaining staging rows to cover gap before surfacing decision.
+            _promote_from_staging_until_gap_closed(max_passes=2, promotion_batch=discovery_target or 50)
+            gap_info = supabase_client.get_pm_company_gap(run_id)
+            final_ready = int((gap_info or {}).get("companies_ready") or final_ready)
+        except Exception:
+            pass
+
+    if target_qty and final_ready < target_qty:
         gap = target_qty - final_ready
         msg = (
             f"Discovery still short after multi-pass search. Run {run_id} has {final_ready}/{target_qty} companies "
@@ -1006,13 +1299,26 @@ def process_run(run: Dict[str, Any], heartbeat: WorkerHeartbeat | None = None) -
         )
         logger.warning(msg)
         try:
-            supabase_client.update_pm_run_status(run_id=run_id, status="needs_user_decision", error=msg)
-            notifications.send_run_notification(
-                run_id=run_id,
-                subject="Lead list run needs your decision (discovery gap)",
-                body=msg,
-                to_email="mlerner@rebarhq.ai",
-            )
+            existing_run = supabase_client.get_pm_run(run_id) or {}
+            prior_status = str(existing_run.get("status") or "")
+            prior_error = (existing_run.get("error") or "").strip()
+            # Avoid spamming notifications if we've already raised this identical gap.
+            already_notified = prior_status == "needs_user_decision" and prior_error == msg
+            if not already_notified:
+                supabase_client.update_pm_run_status(run_id=run_id, status="needs_user_decision", error=msg)
+                supabase_client.insert_audit_event(
+                    run_id=run_id,
+                    entity_type="run",
+                    entity_id=run_id,
+                    event="gap_unresolved",
+                    meta={"ready": final_ready, "target": target_qty, "gap": gap},
+                )
+                notifications.send_run_notification(
+                    run_id=run_id,
+                    subject="Lead list run needs your decision (discovery gap)",
+                    body=msg,
+                    to_email="mlerner@rebarhq.ai",
+                )
         except Exception:
             logger.exception("Failed to update status/notify after discovery gap for run %s", run_id)
     _maybe_advance_run_stage(str(run.get("id") or ""))
@@ -1182,6 +1488,28 @@ def run_forever(fetch_active_runs: ActiveRunsFetcher, mark_run_complete: RunMark
 
     loops = 0
     while True:
+        # CRITICAL FIX: When running in targeted test mode (RUN_FILTER_ID set),
+        # exit immediately if that specific run has reached a terminal state.
+        # This prevents stale workers from continuing to poll after test completion.
+        if run_filter_id:
+            import uuid
+            try:
+                uuid.UUID(run_filter_id)  # Validate UUID format
+                # Fetch the specific run to check its status
+                filtered_run = supabase_client.get_run_by_id(run_filter_id)
+                if filtered_run:
+                    run_status = (filtered_run.get("status") or "").strip()
+                    # Terminal states: completed, error, archived
+                    if run_status in ("completed", "error", "archived"):
+                        logger.info(
+                            "RUN_FILTER_ID %s has reached terminal status '%s'; exiting worker to prevent stale polling",
+                            run_filter_id,
+                            run_status
+                        )
+                        break
+            except Exception as e:
+                logger.warning("Failed to check RUN_FILTER_ID %s status: %s", run_filter_id, e)
+
         runs: List[Dict[str, Any]] = fetch_active_runs()
         if not runs:
             # Avoid busy looping when there is no work.
@@ -1210,19 +1538,19 @@ def run_forever(fetch_active_runs: ActiveRunsFetcher, mark_run_complete: RunMark
                     # Check how many companies we have now
                     gap_info = supabase_client.get_pm_company_gap(run_id)
                     companies_ready = int(gap_info.get("companies_ready") or 0) if gap_info else 0
-                    discovery_remaining = max(0, discovery_target - companies_ready)
+                    final_gap = max(0, target_qty - companies_ready)
 
-                if discovery_remaining > 0:
-                    # Agent couldn't find enough companies to meet discovery target.
-                    # With the oversample strategy, if we can't meet the discovery target,
-                    # we may not have enough after enrichment attrition.
+                if final_gap > 0:
+                    # Agent couldn't find enough companies to meet the FINAL target.
+                    # Only fail if we don't have enough for the final requirement,
+                    # not the discovery target (which includes oversample buffer).
                     logger.warning(
-                        "Run %s discovery incomplete: %d/%d discovered (target: %d final), %d gap",
-                        run_id, companies_ready, discovery_target, target_qty, discovery_remaining
+                        "Run %s discovery incomplete: %d discovered (target: %d final, discovery_target: %d), %d gap",
+                        run_id, companies_ready, target_qty, discovery_target, final_gap
                     )
                     msg = (
-                        f"Discovery shortfall for run {run_id}: {companies_ready}/{discovery_target} discovered "
-                        f"(final target {target_qty}, gap {discovery_remaining}). Unique passes exhausted."
+                        f"Discovery shortfall for run {run_id}: {companies_ready} discovered "
+                        f"(final target {target_qty}, gap {final_gap}). Unique passes exhausted."
                     )
                     mark_run_complete(run, status="needs_user_decision", error=msg)
                     try:
@@ -1237,8 +1565,8 @@ def run_forever(fetch_active_runs: ActiveRunsFetcher, mark_run_complete: RunMark
                     continue
                 else:
                     logger.info(
-                        "Run %s discovery target met: %d/%d discovered (target: %d final after enrichment)",
-                        run_id, companies_ready, discovery_target, target_qty
+                        "Run %s discovery sufficient: %d discovered (target: %d final, discovery_target: %d with oversample)",
+                        run_id, companies_ready, target_qty, discovery_target
                     )
 
                 # Target met or no target specified - mark as complete
@@ -1278,6 +1606,13 @@ def _supabase_fetch_active_runs() -> List[Dict[str, Any]]:
 
     run_filter_id = os.getenv("RUN_FILTER_ID")
     if run_filter_id:
+        # Ignore non-UUID RUN_FILTER_ID to avoid crashes in testing.
+        import uuid
+        try:
+            uuid.UUID(run_filter_id)
+        except Exception:
+            logger.warning("RUN_FILTER_ID is not a valid UUID; ignoring filter: %s", run_filter_id)
+            return []
         # When a specific run id is provided, treat it as an explicit
         # override for debugging / targeted processing. We still only
         # allow runs in the company_discovery stage, but we will

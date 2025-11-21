@@ -3,6 +3,7 @@ import re
 import sys
 import time
 from datetime import datetime
+import json
 
 import streamlit as st
 
@@ -691,6 +692,26 @@ if st.session_state.current_agent == "Lead List Generator":
                         st.progress(min(contact_progress_pct, 100) / 100.0)
                         st.caption(f"Gap: {contacts_gap} contacts remaining to meet minimum")
 
+                        # Recent audit events for visibility (rich view)
+                        try:
+                            events = supabase_client.fetch_audit_events(rid, limit=50)
+                        except Exception:
+                            events = []
+                        if events:
+                            st.markdown("#### Run Events (latest)")
+                            # Normalize for table display
+                            data = []
+                            for ev in events:
+                                data.append(
+                                    {
+                                        "time": ev.get("created_at"),
+                                        "event": ev.get("event"),
+                                        "entity": ev.get("entity_type"),
+                                        "meta": json.dumps(ev.get("meta") or {}, ensure_ascii=False),
+                                    }
+                                )
+                            st.dataframe(data, use_container_width=True, hide_index=True, height=min(320, 24 * (len(data) + 1)))
+
                         # Export CSV button when run is completed
                         if str(progress.get("status")) == "completed":
                             st.markdown("#### Export")
@@ -1127,6 +1148,20 @@ def _process_prompt(prompt: str):
 
                     # Lead List Generator: use Agents SDK + pm_pipeline.runs
                     if current_agent_name == "Lead List Generator":
+                        # CRITICAL: Validate email is provided before creating run
+                        notification_email = st.session_state.get("lead_list_notification_email", "")
+                        email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+                        email_valid = bool(notification_email and re.match(email_pattern, notification_email))
+
+                        if not email_valid:
+                            error_msg = "❌ **Error:** Please provide a valid email address before submitting a lead list request"
+                            status_container.markdown(error_msg)
+                            status.update(label="⚠️ Email Required", state="error")
+                            content_placeholder.markdown(error_msg)
+                            content_buffer = error_msg
+                            st.session_state.messages.append({"role": "assistant", "content": error_msg})
+                            return
+
                         # Create a pm_pipeline run immediately so downstream workers can process it.
                         # Extract quantity
                         requested_qty = 10  # default
@@ -1165,6 +1200,7 @@ def _process_prompt(prompt: str):
                             "natural_request": prompt,
                             "source": "lead_list_generator_ui",
                             "created_via": "streamlit",
+                            "notification_email": notification_email,  # Store email for completion notification
                         }
 
                         pm_run = _sb.create_pm_run(
@@ -1386,6 +1422,37 @@ def _process_prompt(prompt: str):
         # Trigger a rerun so downstream sections (e.g., HubSpot Actions) render using the latest assistant output
         st.rerun()
 
+
+# Email validation for Lead List Generator (CRITICAL: Required before submission)
+if st.session_state.current_agent == "Lead List Generator":
+    st.markdown("---")
+    st.markdown("### 📧 Notification Email")
+
+    # Initialize email in session state if not present
+    if "lead_list_notification_email" not in st.session_state:
+        st.session_state.lead_list_notification_email = ""
+
+    notification_email = st.text_input(
+        "Email Address (Required)",
+        value=st.session_state.lead_list_notification_email,
+        placeholder="your@email.com",
+        help="You'll receive the final CSV files at this email when the lead list completes",
+        key="lead_list_email_input"
+    )
+
+    # Store email in session state
+    if notification_email:
+        st.session_state.lead_list_notification_email = notification_email
+
+    # Validate email format
+    import re
+    email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+    email_valid = bool(notification_email and re.match(email_pattern, notification_email))
+
+    if not email_valid and notification_email:
+        st.warning("⚠️ Please provide a valid email address")
+    elif not notification_email:
+        st.info("ℹ️ Please provide your email address to receive the completed lead list CSVs")
 
 # Chat input (agent-specific placeholder)
 placeholder_map = {

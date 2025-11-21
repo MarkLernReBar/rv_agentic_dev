@@ -1,0 +1,35 @@
+Could not fetch research data for sorting: module 'rv_agentic.services.supabase_client' has no attribute 'PM_COMPANY_RESEARCH_TABLE'
+Traceback (most recent call last):
+  File "/Users/marklerner/RV_Agentic_FrontEnd_Dev/test_export_promotion.py", line 68, in test_export_with_promotion
+    csv_output = export.export_companies_to_csv(run_id)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/marklerner/RV_Agentic_FrontEnd_Dev/src/rv_agentic/services/export.py", line 216, in export_companies_to_csv
+    promoted_count = _promote_top_companies_and_persist_rest(run_id)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/marklerner/RV_Agentic_FrontEnd_Dev/src/rv_agentic/services/export.py", line 153, in _promote_top_companies_and_persist_rest
+    supabase_client._update_pm(  # type: ignore[attr-defined]
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^
+AttributeError: module 'rv_agentic.services.supabase_client' has no attribute '_update_pm'
+================================================================================
+🧪 Testing Export Promotion & Persistence Logic
+================================================================================
+
+📊 Initial State:
+  Run ID: 0915b268-d820-46a2-aa9b-aa1164701538
+  Target Quantity: 5
+  Validated Companies: 14
+  Promoted Companies: 0
+
+🏆 First 5 Validated Companies (sorted by created_at):
+  1. Matrix Real Estate, LLC (domain: matrixrealestate.managebuilding.com)
+  2. Brass Key Property Management (domain: brasskey.biz)
+  3. Kurts Property Management (domain: kurtspropertymanagement.managebuilding.com)
+  4. Pier Property Services (domain: pier.managebuilding.com)
+  5. The Property Management Co. (domain: thepmco.managebuilding.com)
+
+📚 Checking research_database before export...
+  ⚠️  Could not count research_database: module 'rv_agentic.services.supabase_client' has no attribute '_execute_query'
+
+🚀 Running export_companies_to_csv()...
+
+❌ Export failed with error: module 'rv_agentic.services.supabase_client' has no attribute '_update_pm'

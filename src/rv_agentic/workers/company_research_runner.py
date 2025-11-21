@@ -164,6 +164,22 @@ def process_company_claim(agent, worker_id: str, lease_seconds: int, heartbeat: 
             company_id,
         )
     finally:
+        # CRITICAL: Reset MCP counters after each agent run to prevent deluge
+        try:
+            from rv_agentic.tools import mcp_client
+            mcp_client.reset_mcp_counters()
+            logger.debug("Reset MCP counters after company research for run_id=%s company_id=%s", run_id, company_id)
+        except Exception as mcp_err:
+            logger.warning("Failed to reset MCP counters: %s", mcp_err)
+
+        # Force garbage collection to clean up any orphaned async tasks
+        import gc
+        gc.collect()
+
+        # Extended pause for MCP session cleanup (1.0s instead of 0.3s)
+        import time
+        time.sleep(1.0)
+
         if company_id:
             supabase_client.release_company_lease(company_id)
         # Mark worker as idle after processing

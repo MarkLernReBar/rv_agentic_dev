@@ -1,0 +1,392 @@
+2025-11-20 20:37:41,434 [INFO] __main__: Lead list worker starting up worker_id=lead-list-0b5b94bf-51db-4c45-9ed2-7aaea2c960b5
+2025-11-20 20:37:42,003 [INFO] rv_agentic.services.heartbeat: Started heartbeat thread for worker lead-list-0b5b94bf-51db-4c45-9ed2-7aaea2c960b5 (interval: 30s)
+2025-11-20 20:37:42,868 [INFO] __main__: Found 1 active run(s) to process
+2025-11-20 20:37:43,431 [INFO] __main__: Progress check: target=5, discovery_target=10 (oversample=2.0x), existing=0, remaining=10
+2025-11-20 20:37:43,431 [INFO] __main__: Starting multi-region discovery for run id=0915b268-d820-46a2-aa9b-aa1164701538
+2025-11-20 20:37:43,431 [WARNING] rv_agentic.services.geography_decomposer: No specific geography in criteria, using generic regions
+2025-11-20 20:37:43,431 [INFO] __main__: Parallel multi-region discovery: 1 regions, discovery_target=10, already_found=0
+2025-11-20 20:37:43,431 [INFO] __main__: Starting parallel region 1/1: Region 1
+2025-11-20 20:37:46,652 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-20 20:38:02,188 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2025-11-20 20:38:02,231 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': "Starting run 0915b268... Goal: find 10 Boulder, CO companies using Buildium with 50+ units. First step per instructions: fetch blocked domains list to exclude suppressed domains. Then immediately query PMS subdomains for Buildium + Boulder, CO as seed data. Plan: call get_blocked_domains_tool, then query_pms_subdomains_tool(pms='Buildium', state='CO', city='Boulder', limit=100)."}
+2025-11-20 20:38:05,782 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-20 20:38:05,782 [INFO] mcp.client.streamable_http: Received session ID: 3a3a67a9-3c4b-4487-a463-1a38c677cb43
+2025-11-20 20:38:05,957 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-20 20:38:07,335 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-20 20:38:09,867 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-20 20:38:10,080 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-20 20:38:10,081 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-20 20:38:12,158 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-20 20:38:14,259 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-20 20:38:17,753 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-20 20:38:19,401 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2025-11-20 20:38:19,444 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': 'Retry: call get_blocked_domains_tool next. Planning parameters: none. Will retrieve suppressed domains to exclude from results.'}
+2025-11-20 20:38:19,926 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-20 20:38:19,926 [INFO] mcp.client.streamable_http: Received session ID: d3a62268-4a22-46f4-aaef-06a1226816cf
+2025-11-20 20:38:19,987 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-20 20:38:22,329 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-20 20:38:23,169 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-20 20:38:23,543 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-20 20:38:23,544 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-20 20:38:25,213 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-20 20:38:27,118 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-20 20:38:28,586 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-20 20:38:29,059 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2025-11-20 20:38:29,332 [INFO] rv_agentic.agents.lead_list_agent: [LeadListAgent] get_blocked_domains_tool -> 3500 domains
+2025-11-20 20:38:34,324 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-20 20:38:37,595 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2025-11-20 20:38:37,631 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': "Observe: Retrieved blocked domains list (large). Will now query pre-validated PMS subdomains for Buildium in Boulder, CO to get seed companies. Parameters: pms='Buildium', state='CO', city='Boulder', limit=100. This is highest-priority source per instructions."}
+2025-11-20 20:38:37,876 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-20 20:38:37,876 [INFO] mcp.client.streamable_http: Received session ID: 4ff9b624-2a77-4a2f-8c4a-f3a0211061fa
+2025-11-20 20:38:37,892 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-20 20:38:38,267 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-20 20:38:38,291 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-20 20:38:38,291 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-20 20:38:38,382 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-20 20:38:38,567 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-20 20:38:39,857 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-20 20:38:43,146 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2025-11-20 20:38:43,369 [INFO] rv_agentic.agents.lead_list_agent: [LeadListAgent] query_pms_subdomains_tool pms=Buildium state=CO city=Boulder -> 1 results
+2025-11-20 20:38:45,309 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-20 20:38:49,804 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2025-11-20 20:38:49,808 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=think url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'thought': "Observe: query_pms_subdomains_tool returned 1 Buildium company in Boulder: Matrix Real Estate, LLC (pms_subdomain matrixrealestate.managebuilding.com). Real domain missing. Evaluate: location Boulder ✓; PMS Buildium ✓ (pre-validated). Units unknown — need to infer 50+; check company size via web. ACCEPT tentatively (PMS confirmed). Progress: 1/10 companies. Next: search web for list pages like 'top property management Boulder CO' and use fetch_page on any list URLs found."}
+2025-11-20 20:38:50,124 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-20 20:38:50,125 [INFO] mcp.client.streamable_http: Received session ID: 4150be37-0d38-4e03-b915-fa96957a118c
+2025-11-20 20:38:50,145 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-20 20:38:50,722 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-20 20:38:50,909 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-20 20:38:50,910 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-20 20:38:51,023 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-20 20:38:51,469 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-20 20:38:51,734 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-20 20:38:54,084 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2025-11-20 20:38:54,091 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=search_web url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'query': 'top property management Boulder CO'}
+2025-11-20 20:38:54,679 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-20 20:38:54,679 [INFO] mcp.client.streamable_http: Received session ID: dc0f55e8-ee5c-48e1-83e8-1601137dcfee
+2025-11-20 20:38:54,698 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-20 20:38:54,941 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-20 20:38:55,048 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-20 20:38:55,049 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-20 20:38:56,110 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-20 20:39:05,021 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-20 20:39:05,894 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-20 20:39:07,226 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-20 20:39:07,227 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=search_web items=1
+2025-11-20 20:39:10,207 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2025-11-20 20:39:10,235 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=fetch_page url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'url': 'https://ipropertymanagement.com/companies/boulder-co'}
+2025-11-20 20:39:10,615 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-20 20:39:10,615 [INFO] mcp.client.streamable_http: Received session ID: e269437a-29bc-4dae-9023-fed3a9badd3b
+2025-11-20 20:39:10,653 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-20 20:39:11,299 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-20 20:39:11,300 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-20 20:39:11,417 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-20 20:39:11,719 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-20 20:39:12,247 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-20 20:39:12,654 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-20 20:39:12,657 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=fetch_page items=1
+2025-11-20 20:39:15,854 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2025-11-20 20:39:15,870 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=fetch_page url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'url': 'https://ipropertymanagement.com/companies/boulder-co'}
+2025-11-20 20:39:17,014 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-20 20:39:17,014 [INFO] mcp.client.streamable_http: Received session ID: 7cda6351-0089-4a3b-9ee4-79228156112e
+2025-11-20 20:39:17,080 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-20 20:39:17,199 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-20 20:39:18,837 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-20 20:39:18,838 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-20 20:39:19,104 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-20 20:39:20,438 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-20 20:39:21,322 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-20 20:39:21,324 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=fetch_page items=1
+2025-11-20 20:39:22,627 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-20 20:39:25,814 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2025-11-20 20:39:25,831 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=search_web url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'query': 'expertise property management Boulder CO list'}
+2025-11-20 20:39:26,474 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-20 20:39:26,475 [INFO] mcp.client.streamable_http: Received session ID: 06891c61-c8aa-453c-a16c-2c1ef4e6d933
+2025-11-20 20:39:26,565 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-20 20:39:26,904 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-20 20:39:26,938 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-20 20:39:26,939 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-20 20:39:28,029 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-20 20:39:44,735 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-20 20:39:45,891 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-20 20:39:46,897 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-20 20:39:46,898 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=search_web items=1
+2025-11-20 20:39:48,711 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-20 20:39:53,358 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2025-11-20 20:39:53,405 [INFO] rv_agentic.tools.mcp_client: MCP call start: tool=fetch_page url=http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 args={'url': 'https://www.expertise.com/business/property-management/colorado/boulder'}
+2025-11-20 20:39:53,648 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-20 20:39:53,648 [INFO] mcp.client.streamable_http: Received session ID: ec4506c2-f4fa-403d-9336-892ee045946a
+2025-11-20 20:39:53,665 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-20 20:39:53,958 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-20 20:39:53,959 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-20 20:39:53,987 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-20 20:39:54,170 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-20 20:39:54,295 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-20 20:39:54,493 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-20 20:39:54,493 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=fetch_page items=1
+2025-11-20 20:39:57,700 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2025-11-20 20:39:57,899 [INFO] rv_agentic.agents.lead_list_agent: [LeadListAgent] query_pms_subdomains_tool pms=Buildium state=CO city=None -> 31 results
+2025-11-20 20:39:59,699 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-20 20:40:06,181 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2025-11-20 20:40:06,415 [INFO] rv_agentic.agents.lead_list_agent: [LeadListAgent] query_pms_subdomains_tool pms=Buildium state=CO city=Longmont -> 0 results
+2025-11-20 20:40:09,844 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2025-11-20 20:40:10,023 [INFO] rv_agentic.agents.lead_list_agent: [LeadListAgent] query_pms_subdomains_tool pms=Buildium state=CO city=Longmont -> 0 results
+2025-11-20 20:40:10,203 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-20 20:40:10,416 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-20 20:40:11,734 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2025-11-20 20:40:12,009 [INFO] rv_agentic.agents.lead_list_agent: [LeadListAgent] query_pms_subdomains_tool pms=Buildium state=CO city=Longmont -> 0 results
+2025-11-20 20:40:13,504 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2025-11-20 20:40:13,703 [INFO] rv_agentic.agents.lead_list_agent: [LeadListAgent] query_pms_subdomains_tool pms=Buildium state=CO city=Longmont -> 0 results
+2025-11-20 20:40:15,812 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2025-11-20 20:40:15,882 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-20 20:40:15,991 [INFO] rv_agentic.agents.lead_list_agent: [LeadListAgent] query_pms_subdomains_tool pms=Buildium state=CO city=Longmont -> 0 results
+2025-11-20 20:40:16,152 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-20 20:40:16,337 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-20 20:40:18,688 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2025-11-20 20:40:19,852 [INFO] rv_agentic.agents.lead_list_agent: [LeadListAgent] query_pms_subdomains_tool pms=Buildium state=CO city=Longmont -> 0 results
+2025-11-20 20:40:21,775 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-20 20:40:23,090 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2025-11-20 20:40:23,294 [INFO] rv_agentic.agents.lead_list_agent: [LeadListAgent] query_pms_subdomains_tool pms=Buildium state=CO city=Longmont -> 0 results
+2025-11-20 20:40:25,503 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2025-11-20 20:40:25,716 [INFO] rv_agentic.agents.lead_list_agent: [LeadListAgent] query_pms_subdomains_tool pms=Buildium state=CO city=Longmont -> 0 results
+2025-11-20 20:40:27,150 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-20 20:40:27,332 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2025-11-20 20:40:27,517 [INFO] rv_agentic.agents.lead_list_agent: [LeadListAgent] query_pms_subdomains_tool pms=Buildium state=CO city=Longmont -> 0 results
+2025-11-20 20:40:29,799 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2025-11-20 20:40:29,991 [INFO] rv_agentic.agents.lead_list_agent: [LeadListAgent] query_pms_subdomains_tool pms=Buildium state=CO city=Longmont -> 0 results
+2025-11-20 20:40:32,104 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2025-11-20 20:40:32,292 [INFO] rv_agentic.agents.lead_list_agent: [LeadListAgent] query_pms_subdomains_tool pms=Buildium state=CO city=Longmont -> 0 results
+2025-11-20 20:40:32,580 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-20 20:40:32,787 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-20 20:40:34,301 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2025-11-20 20:40:34,516 [INFO] rv_agentic.agents.lead_list_agent: [LeadListAgent] query_pms_subdomains_tool pms=Buildium state=CO city=Longmont -> 0 results
+2025-11-20 20:40:37,316 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2025-11-20 20:40:37,513 [INFO] rv_agentic.agents.lead_list_agent: [LeadListAgent] query_pms_subdomains_tool pms=Buildium state=CO city=Longmont -> 0 results
+2025-11-20 20:40:38,226 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-20 20:40:39,115 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2025-11-20 20:40:39,295 [INFO] rv_agentic.agents.lead_list_agent: [LeadListAgent] query_pms_subdomains_tool pms=Buildium state=CO city=Longmont -> 0 results
+2025-11-20 20:40:41,011 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2025-11-20 20:40:41,235 [INFO] rv_agentic.agents.lead_list_agent: [LeadListAgent] query_pms_subdomains_tool pms=Buildium state=CO city=Longmont -> 0 results
+2025-11-20 20:40:43,174 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2025-11-20 20:40:43,391 [INFO] rv_agentic.agents.lead_list_agent: [LeadListAgent] query_pms_subdomains_tool pms=Buildium state=CO city=Louisville -> 0 results
+2025-11-20 20:40:43,650 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-20 20:40:43,893 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-20 20:40:45,358 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2025-11-20 20:40:45,528 [INFO] rv_agentic.agents.lead_list_agent: [LeadListAgent] query_pms_subdomains_tool pms=Buildium state=CO city=Lafayette -> 0 results
+2025-11-20 20:40:47,405 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2025-11-20 20:40:47,600 [INFO] rv_agentic.agents.lead_list_agent: [LeadListAgent] query_pms_subdomains_tool pms=Buildium state=CO city=Boulder -> 1 results
+2025-11-20 20:40:49,312 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-20 20:41:31,679 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/responses "HTTP/1.1 200 OK"
+2025-11-20 20:41:32,731 [INFO] __main__: Completed parallel region 1/1 (Region 1): found 10 companies, 0 contacts
+2025-11-20 20:41:32,733 [INFO] __main__: Collected results from Region 1: 10 companies, 0 contacts
+2025-11-20 20:41:32,733 [INFO] __main__: Discovery target satisfied mid-flight (10/10); cancelling remaining region tasks
+2025-11-20 20:41:32,733 [INFO] __main__: Parallel multi-region discovery complete: 1 successful regions, 0 failed regions
+2025-11-20 20:41:32,733 [INFO] __main__: Results: 10 total companies, 10 after dedup, 0 contacts
+2025-11-20 20:41:33,032 [INFO] __main__: Processing agent output: agent returned 10 companies (total_found=10, search_exhausted=False)
+2025-11-20 20:41:33,032 [INFO] __main__: Agent quality notes: Parallel multi-region discovery: 1/1 regions succeeded
+2025-11-20 20:41:33,032 [INFO] __main__: Inserting up to 10 companies (final_target=5, discovery_target=10, already_ready=0)
+2025-11-20 20:41:33,768 [INFO] __main__: Inserted company 1/10: id=9b89ba57-7da2-4d3b-b163-2354ea57e130 domain=matrixrealestate.managebuilding.com run_id=0915b268-d820-46a2-aa9b-aa1164701538
+2025-11-20 20:41:33,935 [ERROR] __main__: Structured insert_company_candidate failed for domain=matrixrealestate.managebuilding.com run_id=0915b268-d820-46a2-aa9b-aa1164701538
+Traceback (most recent call last):
+  File "/Users/marklerner/RV_Agentic_FrontEnd_Dev/src/rv_agentic/workers/lead_list_runner.py", line 825, in _insert_from_structured_output
+    _log_run_event(
+  File "/Users/marklerner/RV_Agentic_FrontEnd_Dev/src/rv_agentic/workers/lead_list_runner.py", line 98, in _log_run_event
+    logger.info("EVENT|run_id=%s|stage=%s|action=%s|data=%s", run_id, stage, action, json.dumps(data, ensure_ascii=False))
+                                                                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.11/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/__init__.py", line 238, in dumps
+    **kw).encode(obj)
+          ^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.11/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/encoder.py", line 200, in encode
+    chunks = self.iterencode(o, _one_shot=True)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.11/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/encoder.py", line 258, in iterencode
+    return _iterencode(o, 0)
+           ^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.11/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/encoder.py", line 180, in default
+    raise TypeError(f'Object of type {o.__class__.__name__} '
+TypeError: Object of type UUID is not JSON serializable
+2025-11-20 20:41:34,618 [INFO] __main__: Inserted company 2/10: id=87773a9a-c44c-4306-aa9a-849781a32d8b domain=brasskey.biz run_id=0915b268-d820-46a2-aa9b-aa1164701538
+2025-11-20 20:41:34,821 [ERROR] __main__: Structured insert_company_candidate failed for domain=brasskey.biz run_id=0915b268-d820-46a2-aa9b-aa1164701538
+Traceback (most recent call last):
+  File "/Users/marklerner/RV_Agentic_FrontEnd_Dev/src/rv_agentic/workers/lead_list_runner.py", line 825, in _insert_from_structured_output
+    _log_run_event(
+  File "/Users/marklerner/RV_Agentic_FrontEnd_Dev/src/rv_agentic/workers/lead_list_runner.py", line 98, in _log_run_event
+    logger.info("EVENT|run_id=%s|stage=%s|action=%s|data=%s", run_id, stage, action, json.dumps(data, ensure_ascii=False))
+                                                                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.11/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/__init__.py", line 238, in dumps
+    **kw).encode(obj)
+          ^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.11/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/encoder.py", line 200, in encode
+    chunks = self.iterencode(o, _one_shot=True)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.11/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/encoder.py", line 258, in iterencode
+    return _iterencode(o, 0)
+           ^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.11/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/encoder.py", line 180, in default
+    raise TypeError(f'Object of type {o.__class__.__name__} '
+TypeError: Object of type UUID is not JSON serializable
+2025-11-20 20:41:35,367 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+2025-11-20 20:41:35,691 [INFO] __main__: Inserted company 3/10: id=ae65c8cf-5ee0-4163-85f1-8ec67dbb31ed domain=kurtspropertymanagement.managebuilding.com run_id=0915b268-d820-46a2-aa9b-aa1164701538
+2025-11-20 20:41:35,834 [ERROR] __main__: Structured insert_company_candidate failed for domain=kurtspropertymanagement.managebuilding.com run_id=0915b268-d820-46a2-aa9b-aa1164701538
+Traceback (most recent call last):
+  File "/Users/marklerner/RV_Agentic_FrontEnd_Dev/src/rv_agentic/workers/lead_list_runner.py", line 825, in _insert_from_structured_output
+    _log_run_event(
+  File "/Users/marklerner/RV_Agentic_FrontEnd_Dev/src/rv_agentic/workers/lead_list_runner.py", line 98, in _log_run_event
+    logger.info("EVENT|run_id=%s|stage=%s|action=%s|data=%s", run_id, stage, action, json.dumps(data, ensure_ascii=False))
+                                                                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.11/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/__init__.py", line 238, in dumps
+    **kw).encode(obj)
+          ^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.11/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/encoder.py", line 200, in encode
+    chunks = self.iterencode(o, _one_shot=True)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.11/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/encoder.py", line 258, in iterencode
+    return _iterencode(o, 0)
+           ^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.11/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/encoder.py", line 180, in default
+    raise TypeError(f'Object of type {o.__class__.__name__} '
+TypeError: Object of type UUID is not JSON serializable
+2025-11-20 20:41:36,563 [INFO] __main__: Inserted company 4/10: id=cea07c9f-08ec-4667-b805-8963accfdf0b domain=pier.managebuilding.com run_id=0915b268-d820-46a2-aa9b-aa1164701538
+2025-11-20 20:41:36,723 [ERROR] __main__: Structured insert_company_candidate failed for domain=pier.managebuilding.com run_id=0915b268-d820-46a2-aa9b-aa1164701538
+Traceback (most recent call last):
+  File "/Users/marklerner/RV_Agentic_FrontEnd_Dev/src/rv_agentic/workers/lead_list_runner.py", line 825, in _insert_from_structured_output
+    _log_run_event(
+  File "/Users/marklerner/RV_Agentic_FrontEnd_Dev/src/rv_agentic/workers/lead_list_runner.py", line 98, in _log_run_event
+    logger.info("EVENT|run_id=%s|stage=%s|action=%s|data=%s", run_id, stage, action, json.dumps(data, ensure_ascii=False))
+                                                                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.11/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/__init__.py", line 238, in dumps
+    **kw).encode(obj)
+          ^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.11/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/encoder.py", line 200, in encode
+    chunks = self.iterencode(o, _one_shot=True)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.11/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/encoder.py", line 258, in iterencode
+    return _iterencode(o, 0)
+           ^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.11/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/encoder.py", line 180, in default
+    raise TypeError(f'Object of type {o.__class__.__name__} '
+TypeError: Object of type UUID is not JSON serializable
+2025-11-20 20:41:37,460 [INFO] __main__: Inserted company 5/10: id=67a531f5-e0a6-4115-af56-0419f9933a2f domain=thepmco.managebuilding.com run_id=0915b268-d820-46a2-aa9b-aa1164701538
+2025-11-20 20:41:37,637 [ERROR] __main__: Structured insert_company_candidate failed for domain=thepmco.managebuilding.com run_id=0915b268-d820-46a2-aa9b-aa1164701538
+Traceback (most recent call last):
+  File "/Users/marklerner/RV_Agentic_FrontEnd_Dev/src/rv_agentic/workers/lead_list_runner.py", line 825, in _insert_from_structured_output
+    _log_run_event(
+  File "/Users/marklerner/RV_Agentic_FrontEnd_Dev/src/rv_agentic/workers/lead_list_runner.py", line 98, in _log_run_event
+    logger.info("EVENT|run_id=%s|stage=%s|action=%s|data=%s", run_id, stage, action, json.dumps(data, ensure_ascii=False))
+                                                                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.11/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/__init__.py", line 238, in dumps
+    **kw).encode(obj)
+          ^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.11/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/encoder.py", line 200, in encode
+    chunks = self.iterencode(o, _one_shot=True)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.11/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/encoder.py", line 258, in iterencode
+    return _iterencode(o, 0)
+           ^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.11/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/encoder.py", line 180, in default
+    raise TypeError(f'Object of type {o.__class__.__name__} '
+TypeError: Object of type UUID is not JSON serializable
+2025-11-20 20:41:38,311 [INFO] __main__: Inserted company 6/10: id=98f431f6-37b4-4966-8a7c-1852238b8358 domain=barrettpropertymanagementrealty1.managebuilding.com run_id=0915b268-d820-46a2-aa9b-aa1164701538
+2025-11-20 20:41:38,485 [ERROR] __main__: Structured insert_company_candidate failed for domain=barrettpropertymanagementrealty1.managebuilding.com run_id=0915b268-d820-46a2-aa9b-aa1164701538
+Traceback (most recent call last):
+  File "/Users/marklerner/RV_Agentic_FrontEnd_Dev/src/rv_agentic/workers/lead_list_runner.py", line 825, in _insert_from_structured_output
+    _log_run_event(
+  File "/Users/marklerner/RV_Agentic_FrontEnd_Dev/src/rv_agentic/workers/lead_list_runner.py", line 98, in _log_run_event
+    logger.info("EVENT|run_id=%s|stage=%s|action=%s|data=%s", run_id, stage, action, json.dumps(data, ensure_ascii=False))
+                                                                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.11/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/__init__.py", line 238, in dumps
+    **kw).encode(obj)
+          ^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.11/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/encoder.py", line 200, in encode
+    chunks = self.iterencode(o, _one_shot=True)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.11/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/encoder.py", line 258, in iterencode
+    return _iterencode(o, 0)
+           ^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.11/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/encoder.py", line 180, in default
+    raise TypeError(f'Object of type {o.__class__.__name__} '
+TypeError: Object of type UUID is not JSON serializable
+2025-11-20 20:41:39,145 [INFO] __main__: Inserted company 7/10: id=bf72d70a-c98d-428d-812f-6d1f086d6013 domain=berganandcompany.managebuilding.com run_id=0915b268-d820-46a2-aa9b-aa1164701538
+2025-11-20 20:41:39,332 [ERROR] __main__: Structured insert_company_candidate failed for domain=berganandcompany.managebuilding.com run_id=0915b268-d820-46a2-aa9b-aa1164701538
+Traceback (most recent call last):
+  File "/Users/marklerner/RV_Agentic_FrontEnd_Dev/src/rv_agentic/workers/lead_list_runner.py", line 825, in _insert_from_structured_output
+    _log_run_event(
+  File "/Users/marklerner/RV_Agentic_FrontEnd_Dev/src/rv_agentic/workers/lead_list_runner.py", line 98, in _log_run_event
+    logger.info("EVENT|run_id=%s|stage=%s|action=%s|data=%s", run_id, stage, action, json.dumps(data, ensure_ascii=False))
+                                                                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.11/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/__init__.py", line 238, in dumps
+    **kw).encode(obj)
+          ^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.11/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/encoder.py", line 200, in encode
+    chunks = self.iterencode(o, _one_shot=True)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.11/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/encoder.py", line 258, in iterencode
+    return _iterencode(o, 0)
+           ^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.11/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/encoder.py", line 180, in default
+    raise TypeError(f'Object of type {o.__class__.__name__} '
+TypeError: Object of type UUID is not JSON serializable
+2025-11-20 20:41:40,099 [INFO] __main__: Inserted company 8/10: id=55e7aa84-d680-443a-975e-6c182d8b3bc0 domain=premierrem.managebuilding.com run_id=0915b268-d820-46a2-aa9b-aa1164701538
+2025-11-20 20:41:40,284 [ERROR] __main__: Structured insert_company_candidate failed for domain=premierrem.managebuilding.com run_id=0915b268-d820-46a2-aa9b-aa1164701538
+Traceback (most recent call last):
+  File "/Users/marklerner/RV_Agentic_FrontEnd_Dev/src/rv_agentic/workers/lead_list_runner.py", line 825, in _insert_from_structured_output
+    _log_run_event(
+  File "/Users/marklerner/RV_Agentic_FrontEnd_Dev/src/rv_agentic/workers/lead_list_runner.py", line 98, in _log_run_event
+    logger.info("EVENT|run_id=%s|stage=%s|action=%s|data=%s", run_id, stage, action, json.dumps(data, ensure_ascii=False))
+                                                                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.11/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/__init__.py", line 238, in dumps
+    **kw).encode(obj)
+          ^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.11/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/encoder.py", line 200, in encode
+    chunks = self.iterencode(o, _one_shot=True)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.11/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/encoder.py", line 258, in iterencode
+    return _iterencode(o, 0)
+           ^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.11/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/encoder.py", line 180, in default
+    raise TypeError(f'Object of type {o.__class__.__name__} '
+TypeError: Object of type UUID is not JSON serializable
+2025-11-20 20:41:41,002 [INFO] __main__: Inserted company 9/10: id=4ce8a057-e26f-4d01-8569-bf77592b0840 domain=streamlinepropertymanagement.managebuilding.com run_id=0915b268-d820-46a2-aa9b-aa1164701538
+2025-11-20 20:41:41,158 [ERROR] __main__: Structured insert_company_candidate failed for domain=streamlinepropertymanagement.managebuilding.com run_id=0915b268-d820-46a2-aa9b-aa1164701538
+Traceback (most recent call last):
+  File "/Users/marklerner/RV_Agentic_FrontEnd_Dev/src/rv_agentic/workers/lead_list_runner.py", line 825, in _insert_from_structured_output
+    _log_run_event(
+  File "/Users/marklerner/RV_Agentic_FrontEnd_Dev/src/rv_agentic/workers/lead_list_runner.py", line 98, in _log_run_event
+    logger.info("EVENT|run_id=%s|stage=%s|action=%s|data=%s", run_id, stage, action, json.dumps(data, ensure_ascii=False))
+                                                                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.11/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/__init__.py", line 238, in dumps
+    **kw).encode(obj)
+          ^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.11/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/encoder.py", line 200, in encode
+    chunks = self.iterencode(o, _one_shot=True)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.11/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/encoder.py", line 258, in iterencode
+    return _iterencode(o, 0)
+           ^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.11/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/encoder.py", line 180, in default
+    raise TypeError(f'Object of type {o.__class__.__name__} '
+TypeError: Object of type UUID is not JSON serializable
+2025-11-20 20:41:41,742 [INFO] __main__: Inserted company 10/10: id=affffe06-76f1-4f03-8568-27b437696e5a domain=realpropertymanagement2.managebuilding.com run_id=0915b268-d820-46a2-aa9b-aa1164701538
+2025-11-20 20:41:41,901 [ERROR] __main__: Structured insert_company_candidate failed for domain=realpropertymanagement2.managebuilding.com run_id=0915b268-d820-46a2-aa9b-aa1164701538
+Traceback (most recent call last):
+  File "/Users/marklerner/RV_Agentic_FrontEnd_Dev/src/rv_agentic/workers/lead_list_runner.py", line 825, in _insert_from_structured_output
+    _log_run_event(
+  File "/Users/marklerner/RV_Agentic_FrontEnd_Dev/src/rv_agentic/workers/lead_list_runner.py", line 98, in _log_run_event
+    logger.info("EVENT|run_id=%s|stage=%s|action=%s|data=%s", run_id, stage, action, json.dumps(data, ensure_ascii=False))
+                                                                                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.11/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/__init__.py", line 238, in dumps
+    **kw).encode(obj)
+          ^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.11/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/encoder.py", line 200, in encode
+    chunks = self.iterencode(o, _one_shot=True)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.11/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/encoder.py", line 258, in iterencode
+    return _iterencode(o, 0)
+           ^^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.12/3.12.11/Frameworks/Python.framework/Versions/3.12/lib/python3.12/json/encoder.py", line 180, in default
+    raise TypeError(f'Object of type {o.__class__.__name__} '
+TypeError: Object of type UUID is not JSON serializable
+2025-11-20 20:41:41,902 [INFO] __main__: Structured pass complete for run id=0915b268-d820-46a2-aa9b-aa1164701538 with 10 company candidate(s) and 0 contact(s)
+2025-11-20 20:41:43,396 [INFO] __main__: Run 0915b268-d820-46a2-aa9b-aa1164701538 discovery sufficient: 10 discovered (target: 5 final, discovery_target: 10 with oversample)
+2025-11-20 20:41:43,556 [INFO] __main__: WORKER_MAX_LOOPS=1 reached in lead_list_runner; exiting after 1 loop(s)
+2025-11-20 20:41:43,556 [INFO] rv_agentic.services.heartbeat: Stopping heartbeat thread for worker lead-list-0b5b94bf-51db-4c45-9ed2-7aaea2c960b5
+2025-11-20 20:41:43,806 [INFO] rv_agentic.services.heartbeat: Worker lead-list-0b5b94bf-51db-4c45-9ed2-7aaea2c960b5 marked as stopped

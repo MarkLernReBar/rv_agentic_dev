@@ -138,6 +138,9 @@ PM_CONTACT_GAP_PER_COMPANY_VIEW = os.getenv(
 PM_STAGING_COMPANIES_TABLE = os.getenv(
     "SUPABASE_PM_STAGING_COMPANIES_TABLE", "pm_pipeline.staging_companies"
 )
+PM_AUDIT_EVENTS_TABLE = os.getenv(
+    "SUPABASE_PM_AUDIT_EVENTS_TABLE", "pm_pipeline.audit_events"
+)
 FOCUS_ACCOUNT_METRICS_VIEW = os.getenv(
     "SUPABASE_FOCUS_ACCOUNT_METRICS_VIEW", "mv_focus_account_metrics"
 )
@@ -859,6 +862,24 @@ def fetch_active_pm_runs(limit: Optional[int] = None) -> List[Dict[str, Any]]:
         return []
 
 
+def count_company_candidates(run_id: str) -> int:
+    """Count the number of company candidates for a given run.
+
+    Args:
+        run_id: The run UUID
+
+    Returns:
+        The count of company candidates for this run
+    """
+    try:
+        client = get_client()
+        result = client.from_(PM_COMPANY_CANDIDATES_TABLE).select("id", count="exact").eq("run_id", run_id).execute()
+        return result.count or 0
+    except Exception:
+        logger.exception("Failed to count company candidates for run %s", run_id)
+        return 0
+
+
 def insert_company_candidate(
     *,
     run_id: str,
@@ -1121,6 +1142,89 @@ def get_contact_gap_for_top_companies(
     ready = sum(1 for g in gaps if g <= 0)
     gap_total = sum(max(0, g) for g in gaps)
     return {"ready_companies": ready, "gap_total": gap_total}
+
+
+def insert_audit_event(
+    *,
+    run_id: Optional[str],
+    entity_type: Optional[str],
+    entity_id: Optional[str],
+    event: str,
+    meta: Optional[Dict[str, Any]] = None,
+) -> None:
+    """Insert an audit/event record (best-effort)."""
+    sql = f"""
+    INSERT INTO {PM_AUDIT_EVENTS_TABLE} (run_id, entity_type, entity_id, event, meta)
+    VALUES (%s, %s, %s, %s, %s::jsonb)
+    """
+    with _pg_conn() as conn, conn.cursor() as cur:
+        cur.execute(sql, (run_id, entity_type, entity_id, event, Json(meta or {})))
+
+
+def fetch_audit_events(run_id: str, limit: int = 50) -> list[dict[str, Any]]:
+    """Fetch recent audit events for a run (most recent first)."""
+    if not run_id:
+        return []
+    sql = f"""
+    SELECT id, created_at, entity_type, entity_id, event, meta
+    FROM {PM_AUDIT_EVENTS_TABLE}
+    WHERE run_id = %s
+    ORDER BY created_at DESC
+    LIMIT %s
+    """
+    with _pg_conn() as conn, conn.cursor(row_factory=psycopg.rows.dict_row) as cur:
+        cur.execute(sql, (run_id, limit))
+        return list(cur.fetchall())
+
+
+def insert_staging_company(
+    *,
+    search_run_id: str,
+    name: str,
+    domain: str,
+    website: Optional[str] = None,
+    state: Optional[str] = None,
+    pms_detected: Optional[str] = None,
+    pms_confidence: Optional[float] = None,
+    raw: Optional[Dict[str, Any]] = None,
+) -> None:
+    """Insert a row into staging_companies (best-effort, ignore duplicates)."""
+    if not search_run_id or not domain:
+        return
+    row = {
+        "run_id": search_run_id,
+        "raw_name": name,
+        "normalized_name": name,
+        "raw_domain": domain,
+        "normalized_domain": domain,
+        "raw_state": state,
+        "normalized_state": state,
+        "raw_website": website or f"https://{domain}",
+        "pms_detected": pms_detected,
+        "pms_confidence": pms_confidence,
+        "status": "eligible",
+        "evidence": raw or {},
+    }
+    sql = f"""
+    INSERT INTO {PM_STAGING_COMPANIES_TABLE} (
+        run_id, raw_name, normalized_name, raw_domain, normalized_domain,
+        raw_state, normalized_state, raw_website, pms_detected, pms_confidence,
+        status, evidence
+    ) VALUES (
+        %(run_id)s, %(raw_name)s, %(normalized_name)s, %(raw_domain)s, %(normalized_domain)s,
+        %(raw_state)s, %(normalized_state)s, %(raw_website)s, %(pms_detected)s, %(pms_confidence)s,
+        %(status)s, %(evidence)s
+    )
+    ON CONFLICT DO NOTHING;
+    """
+    with _pg_conn() as conn, conn.cursor() as cur:
+        try:
+            cur.execute(sql, row)
+            conn.commit()
+        except Exception:
+            conn.rollback()
+            # Silent fail to keep pipeline running; staging is best-effort.
+            return
 
 
 def get_contact_gap_for_company(run_id: str, company_id: str) -> Optional[Dict[str, Any]]:
@@ -1546,6 +1650,13 @@ def promote_staging_companies_to_run(
             )
             if res:
                 inserted += 1
+                insert_audit_event(
+                    run_id=pm_run_id,
+                    entity_type="company",
+                    entity_id=res.get("id") if isinstance(res, dict) else None,
+                    event="staging_promoted",
+                    meta={"domain": domain, "source": "staging_companies"},
+                )
         except Exception:
             # Any hard failure should be surfaced, but duplicates are
             # already treated as benign inside insert_company_candidate.
@@ -1588,8 +1699,14 @@ def upsert_worker_heartbeat(
             cur.execute(
                 """
                 SELECT pm_pipeline.upsert_worker_heartbeat(
-                    %s, %s, %s, %s, %s, %s, %s
-                )
+                    %s::text,
+                    %s::text,
+                    %s::text,
+                    %s::uuid,
+                    %s::text,
+                    %s::timestamptz,
+                    %s::json
+                );
                 """,
                 (
                     worker_id,

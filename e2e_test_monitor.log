@@ -1,0 +1,190 @@
+========================================
+E2E Test Monitor - Thu Nov 20 17:17:46 EST 2025
+Run ID: 0915b268-d820-46a2-aa9b-aa1164701538
+========================================
+
+📊 Run Status:
+
+🏢 Company Discovery Progress:
+ total_companies | validated | promoted 
+-----------------+-----------+----------
+               0 |         0 |        0
+(1 row)
+
+
+🔬 Company Research Progress:
+ researched_companies 
+----------------------
+                    0
+(1 row)
+
+
+👥 Contact Discovery Progress:
+ total_contacts | validated | promoted 
+----------------+-----------+----------
+              0 |         0 |        0
+(1 row)
+
+
+⚙️  Worker Status:
+Lead List Worker:
+2025-11-20 17:17:43,371 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-20 17:17:43,509 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-20 17:17:44,147 [INFO] httpx: HTTP Request: DELETE http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-20 17:17:44,149 [INFO] rv_agentic.tools.mcp_client: MCP call complete: tool=fetch_page items=1
+2025-11-20 17:17:45,614 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+
+Company Research Worker:
+2025-11-20 17:17:33,246 [INFO] __main__: No companies ready for research; sleeping 5 seconds
+2025-11-20 17:17:39,042 [INFO] __main__: No companies ready for research; sleeping 5 seconds
+2025-11-20 17:17:44,421 [INFO] __main__: No companies ready for research; sleeping 5 seconds
+
+Contact Research Worker:
+2025-11-20 17:17:33,792 [INFO] __main__: No contact gaps available; sleeping 5 seconds
+2025-11-20 17:17:39,212 [INFO] __main__: No contact gaps available; sleeping 5 seconds
+2025-11-20 17:17:44,627 [INFO] __main__: No contact gaps available; sleeping 5 seconds
+
+⚠️  Recent Errors:
+Lead List Worker Errors:
+
+Company Research Worker Errors:
+
+Contact Research Worker Errors:
+
+========================================
+Monitor check complete at Thu Nov 20 17:17:47 EST 2025
+========================================
+
+========================================
+E2E Test Monitor - Thu Nov 20 17:24:12 EST 2025
+Run ID: 0915b268-d820-46a2-aa9b-aa1164701538
+========================================
+
+📊 Run Status:
+                  id                  |       stage       |       status        | target_quantity |       email       |          created_at           
+--------------------------------------+-------------------+---------------------+-----------------+-------------------+-------------------------------
+ 0915b268-d820-46a2-aa9b-aa1164701538 | company_discovery | needs_user_decision |               5 | test@rentvine.com | 2025-11-20 22:16:46.227919+00
+(1 row)
+
+
+🏢 Company Discovery Progress:
+ total_companies | validated | promoted 
+-----------------+-----------+----------
+               0 |         0 |        0
+(1 row)
+
+
+🔬 Company Research Progress:
+ researched_companies 
+----------------------
+                    0
+(1 row)
+
+
+👥 Contact Discovery Progress:
+ total_contacts | validated | promoted 
+----------------+-----------+----------
+              0 |         0 |        0
+(1 row)
+
+
+⚙️  Worker Status:
+Lead List Worker:
+2025-11-20 17:24:10,994 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-20 17:24:11,113 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-20 17:24:11,170 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-20 17:24:11,171 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-20 17:24:12,348 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+
+Company Research Worker:
+2025-11-20 17:23:59,430 [INFO] __main__: No companies ready for research; sleeping 5 seconds
+2025-11-20 17:24:04,807 [INFO] __main__: No companies ready for research; sleeping 5 seconds
+2025-11-20 17:24:10,158 [INFO] __main__: No companies ready for research; sleeping 5 seconds
+
+Contact Research Worker:
+2025-11-20 17:23:59,695 [INFO] __main__: No contact gaps available; sleeping 5 seconds
+2025-11-20 17:24:05,100 [INFO] __main__: No contact gaps available; sleeping 5 seconds
+2025-11-20 17:24:10,454 [INFO] __main__: No contact gaps available; sleeping 5 seconds
+
+⚠️  Recent Errors:
+Lead List Worker Errors:
+2025-11-20 17:23:34,503 [INFO] __main__: Parallel multi-region discovery complete: 1 successful regions, 0 failed regions
+
+Company Research Worker Errors:
+
+Contact Research Worker Errors:
+
+========================================
+Monitor check complete at Thu Nov 20 17:24:13 EST 2025
+========================================
+
+========================================
+E2E Test Monitor - Thu Nov 20 19:59:59 EST 2025
+Run ID: 0915b268-d820-46a2-aa9b-aa1164701538
+========================================
+
+📊 Run Status:
+                  id                  |       stage       | status | target_quantity |       email       |          created_at           
+--------------------------------------+-------------------+--------+-----------------+-------------------+-------------------------------
+ 0915b268-d820-46a2-aa9b-aa1164701538 | company_discovery | active |               5 | test@rentvine.com | 2025-11-20 22:16:46.227919+00
+(1 row)
+
+
+🏢 Company Discovery Progress:
+ total_companies | validated | promoted 
+-----------------+-----------+----------
+               0 |         0 |        0
+(1 row)
+
+
+🔬 Company Research Progress:
+ researched_companies 
+----------------------
+                    0
+(1 row)
+
+
+👥 Contact Discovery Progress:
+ total_contacts | validated | promoted 
+----------------+-----------+----------
+              0 |         0 |        0
+(1 row)
+
+
+⚙️  Worker Status:
+Lead List Worker:
+2025-11-20 19:59:58,716 [INFO] mcp.client.streamable_http: Negotiated protocol version: 2025-03-26
+2025-11-20 19:59:58,775 [INFO] httpx: HTTP Request: GET http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 200 OK"
+2025-11-20 19:59:58,775 [WARNING] mcp.client.streamable_http: Unknown SSE event: endpoint
+2025-11-20 19:59:58,795 [INFO] httpx: HTTP Request: POST http://10.0.131.72:5678/mcp/dec85e01-ae93-49f9-a296-0d0c7b34c853 "HTTP/1.1 202 Accepted"
+2025-11-20 19:59:59,061 [INFO] httpx: HTTP Request: POST https://api.openai.com/v1/traces/ingest "HTTP/1.1 204 No Content"
+
+Company Research Worker:
+2025-11-20 19:59:44,961 [INFO] __main__: No companies ready for research; sleeping 5 seconds
+2025-11-20 19:59:50,394 [INFO] __main__: No companies ready for research; sleeping 5 seconds
+2025-11-20 19:59:55,745 [INFO] __main__: No companies ready for research; sleeping 5 seconds
+
+Contact Research Worker:
+2025-11-20 19:59:45,300 [INFO] __main__: No contact gaps available; sleeping 5 seconds
+2025-11-20 19:59:50,703 [INFO] __main__: No contact gaps available; sleeping 5 seconds
+2025-11-20 19:59:56,087 [INFO] __main__: No contact gaps available; sleeping 5 seconds
+
+⚠️  Recent Errors:
+Lead List Worker Errors:
+2025-11-20 17:49:48,197 [ERROR] __main__: Structured insert_company_candidate failed for domain=4star.managebuilding.com run_id=0915b268-d820-46a2-aa9b-aa1164701538
+    raise TypeError(f'Object of type {o.__class__.__name__} '
+TypeError: Object of type UUID is not JSON serializable
+
+Company Research Worker Errors:
+2025-11-20 17:48:55,261 [ERROR] __main__: Error while processing company research for run_id=0915b268-d820-46a2-aa9b-aa1164701538 company_id=ea136836-504e-4bb1-9ee3-a153a5e9448f
+psycopg.errors.ForeignKeyViolation: insert or update on table "company_research" violates foreign key constraint "company_research_company_id_fkey"
+
+Contact Research Worker Errors:
+2025-11-20 18:17:52,187 [ERROR] rv_agentic.services.research_backfill: Error backfilling run 0915b268-d820-46a2-aa9b-aa1164701538 contacts: column cand.company_id does not exist
+2025-11-20 18:17:52,192 [ERROR] __main__: Completion flow failed for run_id=0915b268-d820-46a2-aa9b-aa1164701538
+TypeError: 'UUID' object is not subscriptable
+
+========================================
+Monitor check complete at Thu Nov 20 19:59:59 EST 2025
+========================================
+
